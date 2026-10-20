@@ -93,7 +93,8 @@ class ProductDetector:
         self.conf = conf
         self.imgsz = imgsz
         self.device = device
-        self.name = Path(weights).parent.parent.name or Path(weights).stem
+        w = Path(weights)
+        self.name = w.parent.parent.name if w.parent.name == "weights" else w.stem  # Ultralytics run dir, else file name
 
     def detect(self, image_path: str | Path, rel_to: Path | None = None, **kw) -> DetectionOutput:
         image_path = Path(image_path)

@@ -47,7 +47,7 @@ def ground_truth(img: Path, size):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", default=str(ROOT / "outputs/runs/grozi_v1/weights/best.pt"))
+    ap.add_argument("--weights", default=str(ROOT / "models/product_detector.pt"))
     ap.add_argument("--adapter", default=str(ROOT / "models/sku_adapter.npy"))
     a = ap.parse_args()
 

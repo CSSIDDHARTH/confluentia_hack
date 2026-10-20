@@ -10,8 +10,11 @@ data/*
 !data/mock/
 !data/README.md
 !data/test_images/
-models/
+models/*
+!models/product_detector.pt
+!models/sku_adapter.npy
 *.pt
+!models/product_detector.pt
 *.onnx
 *.engine
 

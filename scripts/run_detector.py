@@ -52,7 +52,7 @@ def grozi_ground_truth(img: Path, size: tuple[int, int], with_skus: bool = False
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", required=True)
+    ap.add_argument("--weights", default=str(ROOT / "models" / "product_detector.pt"))
     ap.add_argument("--images", nargs="+", required=True)
     ap.add_argument("--out", default=str(ROOT / "outputs" / "detections"))
     ap.add_argument("--conf", type=float, default=0.25)
