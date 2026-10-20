@@ -1,12 +1,16 @@
 # data/
 
-Everything here is git-ignored except `data/mock/` and this file. Fetch with `python scripts/download_data.py all`.
+Everything here is git-ignored except `data/mock/`, `data/test_images/`
+and this file. Fetch the two main datasets with
+`python scripts/download_data.py all` (needs `pip install py7zr`, about 2 GB).
 
-| Folder | Contents | Used for | Licence |
+| Folder | Contents | Used for | Source / licence |
 |---|---|---|---|
-| `mock/` | Synthetic shelf matching `contracts/detection_output.example.json` (`python scripts/make_mock_image.py`) | Dashboard development | — |
-| `grozi/` | **Grocery Products / Grozi-3.2K.** Real Swiss supermarket shelves (Migros/Coop) with visible shelf-edge price labels. | Phases 1–5 | Academic research only |
-| `price_tags/` | **Open Food Facts price-tag detection.** 2,229 real shop photos (1,982 train / 247 val), 1 class `price-tag`. Mix of full shelves and close-ups. | Phase 5 (label detector) | CC BY-SA 4.0 |
+| `mock/` | Synthetic shelf images matching their `.json` detection outputs (and `contracts/detection_output.example.json`) | Dashboard and report development | `python scripts/make_mock_image.py`, `python scripts/gen_scenario.py` |
+| `test_images/` | The fixed 8 images every phase is evaluated on. Real shelf photos, no annotations (detection/vision testing only -- see `test_images/README.md`). | Vision checks | SKU-110K, academic use only |
+| `grozi/` | **Grocery Products / Grozi-3.2K.** 680 real Swiss supermarket shelf photos with product boxes, studio reference images and planograms, and visible shelf-edge price labels. Details below. | Phases 1-5 (detection, SKU matching, planogram diff, price labels) | Academic research only |
+| `price_tags/` | **Open Food Facts price-tag detection.** 2,229 real shop photos (1,982 train / 247 val), 1 class `price-tag`. Mix of full shelves and close-ups. Details below. | Phase 5 (label detector) | CC BY-SA 4.0 |
+| `supermarket_shelves/` | Not tracked (~140MB, git-ignored). 45 real shelf images with `Product`/`Price` bounding-box annotations (Supervisely format, `meta.json` + `annotations/*.jpg.json`). Used to build `tests/fixtures/price_tags/` (see `scripts/prep_price_tag_fixtures.py`). | Label OCR fixtures | [Humans in the Loop](https://humansintheloop.org/resources/datasets/supermarket-shelves-dataset/), CC0. Requires filling in a form on their site to get the download link -- ask whoever last did this if you need it again. |
 
 ## grozi/
 
@@ -24,5 +28,18 @@ Parquet with columns `image_id`, `image.bytes`, `width`, `height`, `objects.bbox
 
 ## Not used
 
-- Grocery Dataset (Varol & Kuzu): every shelf is a tobacco gantry, 79% of boxes are "other brand".
-- `D-Shatnev/price-tag-detection`: mostly motion-blurred video frames from non-grocery stores.
+- `grocery_dataset/` (Varol & Kuzu, 2014, https://github.com/gulvarol/grocerydataset): entirely cigarette-shelf photos with graphic tobacco health warnings, and 79% of boxes are "other brand". Unsuitable for this project.
+- `D-Shatnev/price-tag-detection` (Hugging Face): mostly motion-blurred video frames from non-grocery stores.
+- SKU-110K in full (~12 GB): single class `object`, no product IDs. Only the 8 `test_images/` are used.
+
+Later phases: Roboflow empty-shelf sets (gaps).
+
+## Label OCR
+
+`shelfsense.pricing.label_ocr.read_label_text()` needs the `tesseract`
+binary (`sudo apt install tesseract-ocr`), not just `pip install
+pytesseract` (that's just the Python wrapper, see pyproject.toml's `ocr`
+extra). It isn't installed in every dev environment, so
+`tests/test_label_ocr.py`'s OCR-against-real-images tests skip
+gracefully without it; `parse_price()`'s text-parsing tests don't need
+it and always run.
