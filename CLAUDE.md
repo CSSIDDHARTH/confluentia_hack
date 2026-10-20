@@ -59,6 +59,8 @@ These must appear in the final submission. Add to the list as you go.
 7. No public dataset has planograms with violations, real prices, or price-tag text. Violations are created by editing compliant shelves, prices are synthetic, and OCR accuracy is measured on hand-transcribed or synthetic tags.
 8. Data: Grozi-3.2K (Swiss supermarket shelves with product boxes, reference images and planograms; academic use only) and Open Food Facts price tags (CC BY-SA 4.0). See `data/README.md`.
 9. Grozi boxes cover a whole product block (all facings of a product), not single packs, so facing counts need a separate per-pack detector or an estimate.
+10. The price-label detector (YOLOv8n) is trained only on Open Food Facts price tags (`data/price_tags/`), with no Grozi shelves in training. It was tested on 31 hand-boxed Grozi labels: all 31 found, 27 prices read correctly, 2 wrong, 2 unreadable. A price mismatch resting on OCR confidence below 0.5 is still reported but flagged "verify".
+11. A label is tied to a slot by position: it goes on the same shelf, to the slot whose first facing is closest in x, with at most one label per slot. A slot's left edge comes from the vision stage's items and gaps in it, so a slot with nothing detected cannot receive a label.
 
 ## Working agreements
 
