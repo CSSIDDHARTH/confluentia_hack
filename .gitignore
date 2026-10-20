@@ -14,8 +14,10 @@ data/*
 models/*
 !models/product_detector.pt
 !models/sku_adapter.npy
+!models/pack_detector.pt
 *.pt
 !models/product_detector.pt
+!models/pack_detector.pt
 *.onnx
 *.engine
 
