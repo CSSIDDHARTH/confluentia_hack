@@ -11,10 +11,14 @@ Everything here is geometry on boxes, so it is independent of which detector mad
 from dataclasses import dataclass
 from statistics import median
 
+import numpy as np
+
 # A stretch is an empty space when it is at least this many median pack widths wide.
 MIN_GAP_WIDTHS = 0.8
 # Rows whose fill ratio is below this are low stock.
 LOW_FILL_RATIO = 0.6
+# Rows with fewer packs than this are too sparse to judge gaps from.
+MIN_PACKS_PER_ROW = 2
 
 
 @dataclass
@@ -34,27 +38,47 @@ class GapCandidate:
     estimated_missing: int
 
 
-def cluster_rows(boxes: list[list[float]]) -> list[Row]:
+def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = 0.3) -> list[Row]:
     """Group pack boxes into shelf rows, top to bottom, each sorted left to right.
 
-    Boxes are sorted by vertical centre; a box starts a new row when its centre is more
-    than half a median pack height below the current row's median centre.
+    Rows are found from a vertical profile: how much pack width covers each height. Shelf
+    edges show up as dips in that profile, so a row is a stretch between dips. This copes
+    with stacked packs and mixed heights, which fool grouping by individual box position.
+    A dip is any height where coverage falls below `valley` times the typical row coverage.
     """
     if not boxes:
         return []
-    med_h = median(b[3] - b[1] for b in boxes)
-    order = sorted(range(len(boxes)), key=lambda i: (boxes[i][1] + boxes[i][3]) / 2)
-    groups: list[list[int]] = []
-    for i in order:
-        cy = (boxes[i][1] + boxes[i][3]) / 2
-        if groups and cy - median((boxes[j][1] + boxes[j][3]) / 2 for j in groups[-1]) <= 0.5 * med_h:
-            groups[-1].append(i)
-        else:
-            groups.append([i])
+    y_min = min(b[1] for b in boxes)
+    span = max(max(b[3] for b in boxes) - y_min, 1e-6)
+    profile = np.zeros(bins)
+    for b in boxes:
+        lo = min(bins - 1, int((b[1] - y_min) / span * bins))
+        hi = min(bins, int((b[3] - y_min) / span * bins) + 1)
+        profile[lo:hi] += b[2] - b[0]
+    smooth = np.convolve(profile, np.ones(3) / 3, mode="same")
+    typical = float(np.percentile(smooth[smooth > 0], 75))
+    high = smooth >= valley * typical
+
+    runs: list[list[int]] = []  # [start, end] bins of each row band
+    for i, h in enumerate(high):
+        if h and runs and i - runs[-1][1] <= 2:  # bridge dips shorter than 3 bins
+            runs[-1][1] = i
+        elif h:
+            runs.append([i, i])
+    runs = [r for r in runs if r[1] - r[0] >= 1] or [[0, bins - 1]]
+
+    groups: list[list[int]] = [[] for _ in runs]
+    for idx, b in enumerate(boxes):
+        c = min(bins - 1, int(((b[1] + b[3]) / 2 - y_min) / span * bins))
+        k = min(range(len(runs)), key=lambda k: 0 if runs[k][0] <= c <= runs[k][1] else min(abs(c - runs[k][0]), abs(c - runs[k][1])))
+        groups[k].append(idx)
+
     rows = []
-    for k, g in enumerate(groups):
+    for g in groups:
+        if not g:
+            continue
         row_boxes = sorted((boxes[i] for i in g), key=lambda b: b[0])
-        rows.append(Row(k, row_boxes, median(b[1] for b in row_boxes), median(b[3] for b in row_boxes)))
+        rows.append(Row(len(rows), row_boxes, median(b[1] for b in row_boxes), median(b[3] for b in row_boxes)))
     return rows
 
 
@@ -86,7 +110,7 @@ def find_gaps(boxes: list[list[float]], min_gap_widths: float = MIN_GAP_WIDTHS) 
         row.fill_ratio = min(1.0, covered / bay_width)
         for start, end in spans:
             width = end - start
-            if width >= min_gap_widths * w_med:
+            if len(row.boxes) >= MIN_PACKS_PER_ROW and width >= min_gap_widths * w_med:
                 gaps.append(
                     GapCandidate(
                         row=row.index,

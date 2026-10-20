@@ -63,3 +63,24 @@ def test_confidence_grows_with_gap_width():
     _, large = find_gaps(row_of([0, 250, 300]))  # 200 wide gap
     assert large[0].confidence > small[0].confidence
     assert 0.5 <= small[0].confidence <= 0.95
+
+
+def test_stacked_packs_stay_in_one_row_and_a_shelf_edge_splits_rows():
+    # two layers of cans stacked on one shelf (0-100 and 100-200), then a clear gap, then a second shelf
+    upper = row_of([0, 50, 100, 150], 0, 100)
+    lower = row_of([0, 50, 100, 150], 100, 200)
+    second_shelf = row_of([0, 50, 100, 150], 300, 400)
+    rows = cluster_rows(upper + lower + second_shelf)
+    assert [len(r.boxes) for r in rows] == [8, 4]
+
+
+def test_packs_of_mixed_heights_in_one_row_are_not_split():
+    # tall and short products on the same shelf, same base line
+    boxes = [[0, 0, 50, 200], [50, 100, 100, 200], [100, 40, 150, 200], [150, 120, 200, 200]]
+    assert len(cluster_rows(boxes)) == 1
+
+
+def test_a_row_of_a_single_pack_reports_no_gaps():
+    boxes = row_of([0, 50, 100, 150], 0, 100) + row_of([0], 300, 400)  # one lonely pack below
+    _, gaps = find_gaps(boxes)
+    assert gaps == []

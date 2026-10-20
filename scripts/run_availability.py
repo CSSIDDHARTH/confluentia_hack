@@ -66,11 +66,12 @@ def main() -> None:
     ap.add_argument("--out", default=str(ROOT / "outputs" / "availability"))
     ap.add_argument("--conf", type=float, default=0.25)
     ap.add_argument("--imgsz", type=int, default=1024)
+    ap.add_argument("--device", default=None, help="e.g. cpu (default: GPU if available)")
     a = ap.parse_args()
 
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    detector = ProductDetector(a.weights, conf=a.conf, imgsz=a.imgsz, max_det=600)
+    detector = ProductDetector(a.weights, conf=a.conf, imgsz=a.imgsz, max_det=600, device=a.device)
     paths = []
     for p in map(Path, a.images):
         paths += sorted(f for f in p.iterdir() if f.suffix.lower() in IMAGE_EXTS) if p.is_dir() else [p]
