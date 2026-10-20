@@ -140,6 +140,7 @@ if price_issues:
                 "slot": issue.slot_id,
                 "sku": issue.sku,
                 "issue": ISSUE_LABELS[issue.issue_type],
+                "verify": issue.low_confidence,
                 "ocr_text": issue.ocr_text,
                 "label_price": issue.label_price,
                 "catalogue_price": issue.catalogue_price,

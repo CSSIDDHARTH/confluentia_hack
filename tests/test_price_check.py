@@ -71,6 +71,16 @@ def test_mismatched_price_flagged_with_signed_difference():
     assert round(issues[0].difference, 2) == 0.50
 
 
+def test_mismatch_on_low_confidence_read_is_flagged_to_verify():
+    catalogue = load_catalogue(CONTRACTS / "catalogue.example.csv")
+    shaky = check_prices(_det_with(_label(price=3.99, ocr_confidence=0.4)), catalogue)
+    firm = check_prices(_det_with(_label(price=3.99, ocr_confidence=0.6)), catalogue)
+
+    assert shaky[0].issue_type == PriceIssueType.PRICE_MISMATCH
+    assert shaky[0].low_confidence
+    assert not firm[0].low_confidence
+
+
 def test_unreadable_price_flagged():
     catalogue = load_catalogue(CONTRACTS / "catalogue.example.csv")
     det = _det_with(_label(sku="SKU-1001", price=None, ocr_text="$?.??"))
