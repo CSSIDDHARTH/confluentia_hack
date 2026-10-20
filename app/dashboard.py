@@ -86,7 +86,8 @@ st.title("shelfSense: shelf audit (mock)")
 
 PRESETS = {
     "Mock shelf (as shipped)": "contracts/detection_output.example.json",
-    "Low-stock demo": "tests/fixtures/detection_output_lowstock.json",
+    "Low-stock demo (all 5 violation types)": "data/mock/mock_shelf_002_lowstock.json",
+    "Near-clean shelf (one unreadable label)": "data/mock/mock_shelf_003_clean.json",
 }
 
 with st.sidebar:
