@@ -16,6 +16,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+# Real label OCR (shelfsense.pricing.label_ocr.read_label_text) also
+# needs the `tesseract` binary on PATH -- not pip-installable, see
+# data/README.md. Without it, parse_price() and price_check still work
+# fully; only OCR-from-image-crop is unavailable.
+ocr = ["pytesseract>=0.3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
