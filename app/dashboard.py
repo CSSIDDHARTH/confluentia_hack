@@ -18,6 +18,7 @@ from shelfsense.contracts import (
     load_detection_output,
     load_planogram,
 )
+from shelfsense.pricing.price_check import PriceIssueType, check_prices
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,22 +26,34 @@ ITEM_COLOUR = "#2e9e44"
 UNKNOWN_COLOUR = "#f0a020"
 GAP_COLOUR = "#d62828"
 LABEL_COLOUR = "#1d6fd6"
+LABEL_ISSUE_COLOUR = "#d62828"
+
+ISSUE_LABELS = {
+    PriceIssueType.PRICE_MISMATCH: "price mismatch",
+    PriceIssueType.UNREADABLE_PRICE: "unreadable price",
+    PriceIssueType.UNKNOWN_PRODUCT: "unknown product",
+}
 
 
-def overlay(det: DetectionOutput) -> Image.Image:
+def overlay(det: DetectionOutput, price_issues: list) -> Image.Image:
     path = ROOT / det.image_path
     if path.exists():
         img = Image.open(path).convert("RGB")
     else:
         img = Image.new("RGB", (det.image_width, det.image_height), "white")
     draw = ImageDraw.Draw(img)
+    flagged_label_ids = {issue.label_id for issue in price_issues}
     for it in det.items:
         draw.rectangle(it.bbox, outline=ITEM_COLOUR if it.sku else UNKNOWN_COLOUR, width=4)
     for gap in det.gaps:
         draw.rectangle(gap.bbox, outline=GAP_COLOUR, width=5)
         draw.text((gap.bbox[0] + 8, gap.bbox[1] + 8), "EMPTY", fill=GAP_COLOUR)
     for lb in det.labels:
-        draw.rectangle(lb.bbox, outline=LABEL_COLOUR, width=3)
+        flagged = lb.label_id in flagged_label_ids
+        colour = LABEL_ISSUE_COLOUR if flagged else LABEL_COLOUR
+        draw.rectangle(lb.bbox, outline=colour, width=3)
+        if flagged:
+            draw.text((lb.bbox[0], lb.bbox[1] - 14), "PRICE?", fill=LABEL_ISSUE_COLOUR)
     return img
 
 
@@ -80,18 +93,49 @@ catalogue = load_catalogue(ROOT / cat_path)
 if det.planogram_id != planogram.planogram_id:
     st.warning(f"Image is for planogram {det.planogram_id}, but {planogram.planogram_id} is loaded.")
 
-c1, c2, c3, c4 = st.columns(4)
+price_issues = check_prices(det, catalogue)
+
+c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("Items detected", len(det.items))
 c2.metric("Unrecognised", sum(i.sku is None for i in det.items))
 c3.metric("Gaps", len(det.gaps))
 c4.metric("Labels read", len(det.labels))
+c5.metric("Price issues", len(price_issues))
 
 left, right = st.columns([3, 2])
 with left:
-    st.image(overlay(det), caption=f"{det.image_id}: green = product, orange = unrecognised, red = empty, blue = label")
+    st.image(
+        overlay(det, price_issues),
+        caption=(
+            f"{det.image_id}: green = product, orange = unrecognised, "
+            "red = empty/price issue, blue = label"
+        ),
+    )
 with right:
     st.subheader("Planogram vs. detected, per slot")
     st.dataframe(slot_table(det, planogram, catalogue), hide_index=True, width="stretch")
+
+st.subheader("Price-label checks")
+if price_issues:
+    issue_rows = pd.DataFrame(
+        [
+            {
+                "label": issue.label_id,
+                "slot": issue.slot_id,
+                "sku": issue.sku,
+                "issue": ISSUE_LABELS[issue.issue_type],
+                "ocr_text": issue.ocr_text,
+                "label_price": issue.label_price,
+                "catalogue_price": issue.catalogue_price,
+                "difference": issue.difference,
+                "detail": issue.detail,
+            }
+            for issue in price_issues
+        ]
+    )
+    st.dataframe(issue_rows, hide_index=True, width="stretch")
+else:
+    st.success("No price-label issues found.")
 
 with st.expander("Raw detection output"):
     st.json(det.model_dump())
