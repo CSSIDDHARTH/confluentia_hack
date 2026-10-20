@@ -32,9 +32,28 @@ from __future__ import annotations
 import re
 import shutil
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from shelfsense.contracts import Label
+
+# Label crops tend to be small (the dataset in tests/fixtures/price_tags/
+# averages ~200px wide) and often tilted; Tesseract's default settings
+# read these as empty far more often than not. Upscaling + contrast
+# stretch + a page-segmentation mode for "one block of text" (rather
+# than the default "assume a page layout") recovers real signal on most
+# of them, though accuracy on these small, cluttered, tilted real-world
+# crops is still well below a scene-text-tuned model -- see
+# tests/test_label_ocr.py's accuracy test and data/README.md.
+_TARGET_WIDTH = 500
+_TESSERACT_CONFIG = "--psm 6"
+
+
+def _preprocess(image: Image.Image) -> Image.Image:
+    grey = image.convert("L")
+    scale = max(1, _TARGET_WIDTH // grey.width)
+    if scale > 1:
+        grey = grey.resize((grey.width * scale, grey.height * scale), Image.LANCZOS)
+    return ImageOps.autocontrast(grey)
 
 _NUMBER_RE = re.compile(r"\d[\d.,]*\d|\d")
 _CURRENCY_SYMBOLS = "$€£¥₹"
@@ -55,7 +74,7 @@ def read_label_text(image: Image.Image) -> str:
         )
     import pytesseract  # deferred: only needed when OCR actually runs
 
-    return pytesseract.image_to_string(image).strip()
+    return pytesseract.image_to_string(_preprocess(image), config=_TESSERACT_CONFIG).strip()
 
 
 def _score(text: str, match: re.Match) -> tuple[int, int]:

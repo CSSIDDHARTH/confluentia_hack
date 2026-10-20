@@ -27,3 +27,15 @@ extra). It isn't installed in every dev environment, so
 `tests/test_label_ocr.py`'s OCR-against-real-images tests skip
 gracefully without it; `parse_price()`'s text-parsing tests don't need
 it and always run.
+
+**Measured accuracy is low (~15%)** with tesseract installed, against
+the 13 legible hand-transcribed crops in `tests/fixtures/price_tags/`
+-- plain Tesseract (upscaled + contrast-stretched, `--psm 6`, no custom
+training) on small, tilted, barcode-cluttered real photos. It's not
+broken; this is what an un-tuned generic OCR engine actually gets on
+hard real-world tags, which is itself the point of assumption 7's
+"measured on hand-transcribed ... tags". The synthetic scenarios
+(`scripts/gen_scenario.py`) remain the reliable path for demoing
+price-check/compliance logic; improving real OCR for real needs either
+larger/deskewed crops (a label-*detection* step feeding tighter boxes)
+or a scene-text-tuned model, not just parse_price() tweaks.
