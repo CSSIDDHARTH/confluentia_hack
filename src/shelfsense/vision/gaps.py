@@ -17,6 +17,8 @@ import numpy as np
 MIN_GAP_WIDTHS = 0.8
 # Rows whose fill ratio is below this are low stock.
 LOW_FILL_RATIO = 0.6
+# A height is a shelf edge when pack coverage there falls below this share of the typical row coverage.
+ROW_VALLEY = 0.3
 # Rows with fewer packs than this are too sparse to judge gaps from.
 MIN_PACKS_PER_ROW = 2
 
@@ -38,7 +40,7 @@ class GapCandidate:
     estimated_missing: int
 
 
-def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = 0.3) -> list[Row]:
+def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = ROW_VALLEY) -> list[Row]:
     """Group pack boxes into shelf rows, top to bottom, each sorted left to right.
 
     Rows are found from a vertical profile: how much pack width covers each height. Shelf
@@ -82,13 +84,15 @@ def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = 0.3)
     return rows
 
 
-def find_gaps(boxes: list[list[float]], min_gap_widths: float = MIN_GAP_WIDTHS) -> tuple[list[Row], list[GapCandidate]]:
+def find_gaps(
+    boxes: list[list[float]], min_gap_widths: float = MIN_GAP_WIDTHS, valley: float = ROW_VALLEY
+) -> tuple[list[Row], list[GapCandidate]]:
     """Return the shelf rows (with fill ratios set) and the empty spaces found in them.
 
     The bay's left and right edges are the outermost pack edges over all rows, so a row
     that stops short of them has a gap at its end.
     """
-    rows = cluster_rows(boxes)
+    rows = cluster_rows(boxes, valley=valley)
     if not rows:
         return [], []
     bay_left = min(r.boxes[0][0] for r in rows)

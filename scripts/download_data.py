@@ -3,6 +3,7 @@
     python scripts/download_data.py grozi        # Grocery Products / Grozi-3.2K, 1.7 GB (needs: pip install py7zr)
     python scripts/download_data.py price_tags   # Open Food Facts price-tag detection, 0.4 GB
     python scripts/download_data.py sku110k      # SKU-110K subset (800 train + 200 val images), 1 GB
+    python scripts/download_data.py sku110k_more # 800 more train images (optional, retrains a stronger pack detector), 0.8 GB
     python scripts/download_data.py all
 
 Archives are checked for absolute / '..' paths before extraction.
@@ -46,6 +47,11 @@ DATASETS = {
         },
         "licence": "SKU-110K (Goldman et al., CVPR 2019): academic and non-commercial use only; "
         "single class 'object' (one box per pack), mirrored on Hugging Face as adnankhan-11/smart-retail-shelf-auditing-v1",
+    },
+    "sku110k_more": {
+        "dir": "sku110k_subset",
+        "files": {f"train-{i:05d}-of-00035.parquet": f"{HF_SKU110K}/train-{i:05d}-of-00035.parquet" for i in range(4, 8)},
+        "licence": "SKU-110K: academic and non-commercial use only (same dataset, shards 4-7)",
     },
 }
 
