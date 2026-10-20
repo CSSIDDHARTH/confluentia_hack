@@ -19,6 +19,7 @@ from shelfsense.contracts import (
     load_detection_output,
     load_planogram,
 )
+from shelfsense.pricing.label_detector import DEFAULT_WEIGHTS, detect_labels
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
 from shelfsense.report.compliance import compute_report
 from shelfsense.report.export import report_to_json, violations_to_csv
@@ -186,6 +187,37 @@ dl2.download_button(
     file_name=f"{det.image_id}_violations.csv",
     mime="text/csv",
 )
+
+st.subheader("Find price labels in a shelf photo")
+st.caption(
+    "Runs the trained label detector and OCR on a real photo. Labels are not yet "
+    "tied to slots or SKUs (that needs the vision stage), so there is no catalogue check here."
+)
+if not DEFAULT_WEIGHTS.exists():
+    st.info(f"Label detector weights not found at {DEFAULT_WEIGHTS.relative_to(ROOT)}; train it first.")
+else:
+    photo = st.file_uploader("Shelf photo", type=["jpg", "jpeg", "png"])
+    if photo is not None:
+        with st.spinner("Detecting labels and reading prices..."):
+            shelf_img = Image.open(photo).convert("RGB")
+            found = detect_labels(shelf_img)
+        shown = shelf_img.copy()
+        draw = ImageDraw.Draw(shown)
+        line = max(3, shown.width // 300)
+        for lb in found:
+            draw.rectangle(lb.bbox, outline=LABEL_COLOUR if lb.price is not None else LABEL_ISSUE_COLOUR, width=line)
+        pl, pr = st.columns([3, 2])
+        pl.image(shown, caption=f"{len(found)} labels detected (blue = price read, red = unreadable)")
+        pr.dataframe(
+            pd.DataFrame(
+                [
+                    {"label": lb.label_id, "price": lb.price, "confidence": lb.ocr_confidence, "ocr_text": lb.ocr_text}
+                    for lb in found
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
 
 with st.expander("Raw detection output"):
     st.json(det.model_dump())
