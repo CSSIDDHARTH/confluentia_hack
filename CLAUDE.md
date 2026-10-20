@@ -36,6 +36,14 @@ pytest                                 # must pass before every merge
 streamlit run app/dashboard.py
 ```
 
+Dashboard with live photo upload (the Shelf availability page runs the detector on an uploaded photo when `ultralytics` and `models/pack_detector.pt` are present). If your system Python has torch and ultralytics but not Streamlit, add Streamlit in a venv that reuses them, so nothing in your system packages changes:
+
+```bash
+python3 -m venv --system-site-packages .venv
+PYTHONPATH= .venv/bin/pip install streamlit "pyarrow<18"   # pyarrow 18+ needs NumPy 2
+PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # then open the Shelf availability page
+```
+
 If ROS is sourced in your shell, its pytest plugins crash on load. Run `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest` or `unset PYTHONPATH` first.
 
 ## Data contracts
