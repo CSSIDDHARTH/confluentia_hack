@@ -1,0 +1,32 @@
+{
+  "image_id": "shelf_05_footcare_de",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 20,
+      "fill_ratio": 0.842,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 24,
+      "fill_ratio": 0.849,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 84,
+      "fill_ratio": 0.997,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 4,
+  "missing_facings": 5,
+  "overall_fill": 0.896,
+  "actions": [
+    "Shelf S2: empty space on the middle, about 2 packs wide. Refill it.",
+    "Shelf S1: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S1: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S2: empty space on the left, about 1 pack wide. Refill it."
+  ]
+}

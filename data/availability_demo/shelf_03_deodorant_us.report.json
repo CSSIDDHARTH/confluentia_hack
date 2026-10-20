@@ -1,0 +1,52 @@
+{
+  "image_id": "shelf_03_deodorant_us",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 25,
+      "fill_ratio": 0.903,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 23,
+      "fill_ratio": 0.931,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 22,
+      "fill_ratio": 0.887,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S4",
+      "packs": 21,
+      "fill_ratio": 0.849,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S5",
+      "packs": 24,
+      "fill_ratio": 0.867,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S6",
+      "packs": 22,
+      "fill_ratio": 0.817,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 6,
+  "missing_facings": 8,
+  "overall_fill": 0.876,
+  "actions": [
+    "Shelf S5: empty space on the middle, about 2 packs wide. Refill it.",
+    "Shelf S6: empty space on the right, about 2 packs wide. Refill it.",
+    "Shelf S3: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S4: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S4: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S6: empty space on the left, about 1 pack wide. Refill it."
+  ]
+}

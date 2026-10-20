@@ -11,6 +11,7 @@ data/*
 !data/README.md
 !data/test_images/
 !data/demo_bays/
+!data/availability_demo/
 models/*
 !models/product_detector.pt
 !models/sku_adapter.npy

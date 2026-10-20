@@ -1,0 +1,36 @@
+{
+  "image_id": "shelf_01_health_beauty_uk",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 39,
+      "fill_ratio": 0.925,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 19,
+      "fill_ratio": 0.826,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 27,
+      "fill_ratio": 0.792,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S4",
+      "packs": 64,
+      "fill_ratio": 0.989,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 2,
+  "missing_facings": 4,
+  "overall_fill": 0.883,
+  "actions": [
+    "Shelf S3: empty space on the right, about 3 packs wide. Refill it.",
+    "Shelf S1: empty space on the right, about 1 pack wide. Refill it."
+  ]
+}

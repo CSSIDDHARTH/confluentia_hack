@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel
 
 from shelfsense.contracts import DetectionOutput, Gap, Item, ShelfRegion
-from shelfsense.vision.gaps import LOW_FILL_RATIO, find_gaps
+from shelfsense.vision.gaps import LOW_FILL_RATIO, MIN_GAP_WIDTHS, find_gaps
 
 
 class RowStatus(BaseModel):
@@ -43,11 +43,12 @@ def analyze_packs(
     confidences: list[float],
     produced_by: str = "vision-0",
     low_fill: float = LOW_FILL_RATIO,
+    min_gap_widths: float = MIN_GAP_WIDTHS,
 ) -> tuple[DetectionOutput, AvailabilityReport]:
     width, height = image_size
     clipped = [[max(0.0, b[0]), max(0.0, b[1]), min(float(width), b[2]), min(float(height), b[3])] for b in boxes]
     conf_of = {tuple(c): conf for c, conf in zip(clipped, confidences)}
-    rows, gap_cands = find_gaps(clipped)
+    rows, gap_cands = find_gaps(clipped, min_gap_widths)
 
     shelves, items = [], []
     for row in rows:

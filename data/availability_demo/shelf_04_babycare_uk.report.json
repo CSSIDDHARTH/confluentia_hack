@@ -1,0 +1,64 @@
+{
+  "image_id": "shelf_04_babycare_uk",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 16,
+      "fill_ratio": 0.921,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 18,
+      "fill_ratio": 0.879,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 15,
+      "fill_ratio": 0.788,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S4",
+      "packs": 18,
+      "fill_ratio": 0.907,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S5",
+      "packs": 17,
+      "fill_ratio": 0.873,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S6",
+      "packs": 14,
+      "fill_ratio": 0.655,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S7",
+      "packs": 17,
+      "fill_ratio": 0.797,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S8",
+      "packs": 12,
+      "fill_ratio": 0.636,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 6,
+  "missing_facings": 9,
+  "overall_fill": 0.807,
+  "actions": [
+    "Shelf S3: empty space on the left, about 2 packs wide. Refill it.",
+    "Shelf S6: empty space on the left, about 2 packs wide. Refill it.",
+    "Shelf S8: empty space on the right, about 2 packs wide. Refill it.",
+    "Shelf S6: empty space on the middle, about 1 pack wide. Refill it.",
+    "Shelf S7: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S8: empty space on the left, about 1 pack wide. Refill it."
+  ]
+}
