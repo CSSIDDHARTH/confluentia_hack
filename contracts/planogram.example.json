@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.1",
+  "planogram_id": "PG-001",
+  "fixture_name": "Aisle 3 - Bay 2 (Breakfast)",
+  "effective_from": "2026-10-01",
+  "shelves": [
+    {
+      "shelf_id": "S1",
+      "index": 0,
+      "slots": [
+        { "slot_id": "S1-01", "position": 0, "sku": "SKU-1001", "facings": 3, "min_facings": 2 },
+        { "slot_id": "S1-02", "position": 1, "sku": "SKU-1002", "facings": 2, "min_facings": 1 },
+        { "slot_id": "S1-03", "position": 2, "sku": "SKU-1003", "facings": 2, "min_facings": 1 }
+      ]
+    },
+    {
+      "shelf_id": "S2",
+      "index": 1,
+      "slots": [
+        { "slot_id": "S2-01", "position": 0, "sku": "SKU-2001", "facings": 2, "min_facings": 1 },
+        { "slot_id": "S2-02", "position": 1, "sku": "SKU-2002", "facings": 3, "min_facings": 2 },
+        { "slot_id": "S2-03", "position": 2, "sku": "SKU-2003", "facings": 2, "min_facings": 1 }
+      ]
+    },
+    {
+      "shelf_id": "S3",
+      "index": 2,
+      "slots": [
+        { "slot_id": "S3-01", "position": 0, "sku": "SKU-3001", "facings": 4, "min_facings": 2 },
+        { "slot_id": "S3-02", "position": 1, "sku": "SKU-3002", "facings": 3, "min_facings": 2 }
+      ]
+    }
+  ]
+}

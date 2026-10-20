@@ -1,0 +1,9 @@
+sku,name,brand,category,size,price,currency
+SKU-1001,Morning Oats Classic,Sunfield,Cereal,500g,3.49,USD
+SKU-1002,Morning Oats Honey,Sunfield,Cereal,500g,3.79,USD
+SKU-1003,Crunchy Granola Berry,Valley Farm,Cereal,400g,4.99,USD
+SKU-2001,Corn Flakes Original,Golden Mill,Cereal,375g,2.99,USD
+SKU-2002,Choco Puffs,Golden Mill,Cereal,350g,3.29,USD
+SKU-2003,Muesli Fruit & Nut,Valley Farm,Cereal,750g,5.49,USD
+SKU-3001,Instant Porridge Plain,Sunfield,Hot Cereal,10x27g,2.49,USD
+SKU-3002,Instant Porridge Apple,Sunfield,Hot Cereal,10x27g,2.69,USD

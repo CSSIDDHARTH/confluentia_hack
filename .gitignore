@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+
+# Datasets and model weights stay out of git (use scripts to fetch them)
+data/*
+!data/mock/
+!data/README.md
+models/
+*.pt
+*.onnx
+*.engine
+
+# Run outputs
+outputs/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+.claude/
