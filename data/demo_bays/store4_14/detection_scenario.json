@@ -1,0 +1,108 @@
+{
+  "schema_version": "0.1",
+  "image_id": "store4_14",
+  "image_path": "data/grozi/Testing/store4/images/14.jpg",
+  "image_width": 3264,
+  "image_height": 2448,
+  "planogram_id": "PG-store4-14-scenario",
+  "captured_at": "2026-10-20T08:31:11+00:00",
+  "produced_by": {
+    "vision": "yolo:product_detector",
+    "matcher": "dinov2-vits14+adapter",
+    "alignment": "nw-v1"
+  },
+  "shelves": [
+    {
+      "bbox": [
+        138.15924072265625,
+        3.5300629138946533,
+        3264.0,
+        648.71435546875
+      ],
+      "shelf_id": "S1"
+    },
+    {
+      "bbox": [
+        7.327307224273682,
+        1231.38818359375,
+        3085.135498046875,
+        2438.3466796875
+      ],
+      "shelf_id": "S2"
+    }
+  ],
+  "items": [
+    {
+      "bbox": [
+        138.2,
+        11.2,
+        1996.6,
+        634.1
+      ],
+      "item_id": "i001",
+      "det_confidence": 0.5996,
+      "sku": "G26-160",
+      "sku_confidence": 0.5494,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        328.8,
+        12.0,
+        3264.0,
+        628.5
+      ],
+      "item_id": "i002",
+      "det_confidence": 0.4584,
+      "sku": "G26-153",
+      "sku_confidence": 0.7563,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        1968.9,
+        3.5,
+        3262.1,
+        648.7
+      ],
+      "item_id": "i003",
+      "det_confidence": 0.3143,
+      "sku": "G26-153",
+      "sku_confidence": 0.5089,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        7.3,
+        1231.4,
+        1678.0,
+        2438.3
+      ],
+      "item_id": "i004",
+      "det_confidence": 0.7837,
+      "sku": "G26-153",
+      "sku_confidence": 0.6379,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        2020.3,
+        1303.2,
+        3085.1,
+        2424.1
+      ],
+      "item_id": "i005",
+      "det_confidence": 0.4927,
+      "sku": "G26-160",
+      "sku_confidence": 0.667,
+      "shelf_id": "S2",
+      "slot_id": "S2-02"
+    }
+  ],
+  "gaps": [],
+  "labels": []
+}

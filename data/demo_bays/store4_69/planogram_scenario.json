@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1",
+  "planogram_id": "PG-store4-69-scenario",
+  "fixture_name": "store4 photo 69 (planned changes)",
+  "effective_from": "2026-10-01",
+  "shelves": [
+    {
+      "shelf_id": "S1",
+      "index": 0,
+      "slots": [
+        {
+          "slot_id": "S1-01",
+          "position": 0,
+          "sku": "G33-34",
+          "facings": 1,
+          "min_facings": 1
+        },
+        {
+          "slot_id": "S1-02",
+          "position": 1,
+          "sku": "G33-35",
+          "facings": 1,
+          "min_facings": 1
+        },
+        {
+          "slot_id": "S1-03",
+          "position": 2,
+          "sku": "G02-123121",
+          "facings": 1,
+          "min_facings": 1
+        }
+      ]
+    }
+  ]
+}

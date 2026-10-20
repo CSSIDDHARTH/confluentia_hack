@@ -10,6 +10,7 @@ data/*
 !data/mock/
 !data/README.md
 !data/test_images/
+!data/demo_bays/
 models/*
 !models/product_detector.pt
 !models/sku_adapter.npy

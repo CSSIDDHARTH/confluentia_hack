@@ -58,7 +58,9 @@ These must appear in the final submission. Add to the list as you go.
 6. Catalogue prices are the source of truth, and a label is a mismatch if its price differs from the catalogue price. Promotions are out of scope for now.
 7. No public dataset has planograms with violations, real prices, or price-tag text. Violations are created by editing compliant shelves, prices are synthetic, and OCR accuracy is measured on hand-transcribed or synthetic tags.
 8. Data: Grozi-3.2K (Swiss supermarket shelves with product boxes, reference images and planograms; academic use only) and Open Food Facts price tags (CC BY-SA 4.0). See `data/README.md`.
-9. Grozi boxes cover a whole product block (all facings of a product), not single packs, so facing counts need a separate per-pack detector or an estimate.
+9. Grozi boxes cover a whole product block (all facings of a product), not single packs, so demo planograms use one block per slot (`facings: 1`). The report counts one item as one facing, so low-stock is not exercised on Grozi bays; that needs a per-pack detector.
+10. The demo planograms (`data/demo_bays/<bay>/planogram_compliant.json`) are written from the human labels of held-out Grozi shelves, and each has a `planogram_scenario.json` with planted changes (two products swapped, one slot expecting a product that is absent). No public data has real planogram violations (assumption 7).
+11. Product identification is restricted to the planogram's SKUs (plus 20 distractors). Closed-set matching tends to confirm a lookalike product the plan expects, so planted "absent" products are taken from a different category. On held-out stores the whole chain (detect, name, align) scores a perfect 100 on the compliant plan for only 3 of 51 shelves (>= 85 for 7), so demo bays are chosen by that ranking, not at random.
 
 ## Working agreements
 

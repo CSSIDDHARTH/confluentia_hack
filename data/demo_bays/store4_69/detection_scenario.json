@@ -1,0 +1,94 @@
+{
+  "schema_version": "0.1",
+  "image_id": "store4_69",
+  "image_path": "data/grozi/Testing/store4/images/69.jpg",
+  "image_width": 3264,
+  "image_height": 2448,
+  "planogram_id": "PG-store4-69-scenario",
+  "captured_at": "2026-10-20T08:31:12+00:00",
+  "produced_by": {
+    "vision": "yolo:product_detector",
+    "matcher": "dinov2-vits14+adapter",
+    "alignment": "nw-v1"
+  },
+  "shelves": [
+    {
+      "bbox": [
+        0.0,
+        802.98046875,
+        3233.956298828125,
+        1956.12939453125
+      ],
+      "shelf_id": "S1"
+    },
+    {
+      "bbox": [
+        12.416309356689453,
+        2084.223388671875,
+        2623.568359375,
+        2448.0
+      ],
+      "shelf_id": "S2"
+    }
+  ],
+  "items": [
+    {
+      "bbox": [
+        0.0,
+        803.0,
+        456.0,
+        1816.1
+      ],
+      "item_id": "i001",
+      "det_confidence": 0.602,
+      "sku": "G33-35",
+      "sku_confidence": 0.8697,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        388.4,
+        854.0,
+        1864.0,
+        1882.9
+      ],
+      "item_id": "i002",
+      "det_confidence": 0.599,
+      "sku": "G33-34",
+      "sku_confidence": 0.8596,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        1834.6,
+        916.7,
+        3234.0,
+        1956.1
+      ],
+      "item_id": "i003",
+      "det_confidence": 0.6404,
+      "sku": null,
+      "sku_confidence": 0.373,
+      "shelf_id": "S1",
+      "slot_id": "S1-03"
+    },
+    {
+      "bbox": [
+        12.4,
+        2084.2,
+        2623.6,
+        2448.0
+      ],
+      "item_id": "i004",
+      "det_confidence": 0.3043,
+      "sku": null,
+      "sku_confidence": 0.3743,
+      "shelf_id": "S2",
+      "slot_id": null
+    }
+  ],
+  "gaps": [],
+  "labels": []
+}

@@ -1,0 +1,108 @@
+{
+  "schema_version": "0.1",
+  "image_id": "store4_9",
+  "image_path": "data/grozi/Testing/store4/images/9.jpg",
+  "image_width": 2448,
+  "image_height": 3264,
+  "planogram_id": "PG-store4-9",
+  "captured_at": "2026-10-20T08:31:13+00:00",
+  "produced_by": {
+    "vision": "yolo:product_detector",
+    "matcher": "dinov2-vits14+adapter",
+    "alignment": "nw-v1"
+  },
+  "shelves": [
+    {
+      "bbox": [
+        15.29662799835205,
+        16.56389808654785,
+        2446.681396484375,
+        1493.7335205078125
+      ],
+      "shelf_id": "S1"
+    },
+    {
+      "bbox": [
+        315.69183349609375,
+        1900.732421875,
+        2377.289794921875,
+        3123.768310546875
+      ],
+      "shelf_id": "S2"
+    }
+  ],
+  "items": [
+    {
+      "bbox": [
+        15.3,
+        149.4,
+        297.8,
+        1426.3
+      ],
+      "item_id": "i001",
+      "det_confidence": 0.2543,
+      "sku": "G30-53",
+      "sku_confidence": 0.8868,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        165.4,
+        34.7,
+        2411.9,
+        1453.2
+      ],
+      "item_id": "i002",
+      "det_confidence": 0.5408,
+      "sku": "G30-50",
+      "sku_confidence": 0.7985,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        1689.4,
+        16.6,
+        2446.7,
+        1493.7
+      ],
+      "item_id": "i003",
+      "det_confidence": 0.2514,
+      "sku": "G30-50",
+      "sku_confidence": 0.9608,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        315.7,
+        1963.5,
+        1406.9,
+        3123.8
+      ],
+      "item_id": "i004",
+      "det_confidence": 0.6898,
+      "sku": "G30-52",
+      "sku_confidence": 0.9817,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        1401.7,
+        1900.7,
+        2377.3,
+        3118.6
+      ],
+      "item_id": "i005",
+      "det_confidence": 0.65,
+      "sku": "G30-51",
+      "sku_confidence": 0.9068,
+      "shelf_id": "S2",
+      "slot_id": "S2-02"
+    }
+  ],
+  "gaps": [],
+  "labels": []
+}
