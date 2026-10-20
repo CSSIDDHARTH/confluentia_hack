@@ -126,6 +126,9 @@ def _tallest_price(image: Image.Image, psm: int) -> float | None:
         # so a word only counts with a separator or currency marker.
         if not _MARKED_RE.search(word):
             continue
+        # "(100ml = 1.62)": a unit price, never the label's price
+        if word.startswith("(") or word.endswith(")"):
+            continue
         price = parse_price(word.strip())
         if price is not None and (best is None or height > best[0]):
             best = (height, price)
