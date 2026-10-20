@@ -84,10 +84,20 @@ def slot_table(det, planogram, catalogue) -> pd.DataFrame:
 st.set_page_config(page_title="shelfSense", layout="wide")
 st.title("shelfSense: shelf audit (mock)")
 
+PRESETS = {
+    "Mock shelf (as shipped)": "contracts/detection_output.example.json",
+    "Low-stock demo": "tests/fixtures/detection_output_lowstock.json",
+}
+
 with st.sidebar:
-    det_path = st.text_input("Detection output", "contracts/detection_output.example.json")
-    pg_path = st.text_input("Planogram", "contracts/planogram.example.json")
-    cat_path = st.text_input("Catalogue", "contracts/catalogue.example.csv")
+    preset = st.selectbox("Scenario", list(PRESETS))
+    with st.expander("Advanced: custom paths"):
+        det_path = st.text_input("Detection output", "", placeholder=PRESETS[preset])
+        pg_path = st.text_input("Planogram", "", placeholder="contracts/planogram.example.json")
+        cat_path = st.text_input("Catalogue", "", placeholder="contracts/catalogue.example.csv")
+    det_path = det_path or PRESETS[preset]
+    pg_path = pg_path or "contracts/planogram.example.json"
+    cat_path = cat_path or "contracts/catalogue.example.csv"
 
 det = load_detection_output(ROOT / det_path)
 planogram = load_planogram(ROOT / pg_path)

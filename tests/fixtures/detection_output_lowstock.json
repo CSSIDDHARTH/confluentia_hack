@@ -1,0 +1,405 @@
+{
+  "schema_version": "0.1",
+  "image_id": "lowstock_demo_001",
+  "image_path": "data/mock/mock_shelf_001.png",
+  "image_width": 900,
+  "image_height": 900,
+  "planogram_id": "PG-001",
+  "captured_at": "2026-10-20T09:30:00Z",
+  "produced_by": {
+    "vision": "mock-0",
+    "pricing": "mock-0",
+    "note": "hand-edited fixture, see tests/fixtures/README.md"
+  },
+  "shelves": [
+    {
+      "shelf_id": "S1",
+      "bbox": [
+        20,
+        60,
+        880,
+        310
+      ]
+    },
+    {
+      "shelf_id": "S2",
+      "bbox": [
+        20,
+        340,
+        880,
+        590
+      ]
+    },
+    {
+      "shelf_id": "S3",
+      "bbox": [
+        20,
+        620,
+        880,
+        870
+      ]
+    }
+  ],
+  "items": [
+    {
+      "item_id": "i01",
+      "bbox": [
+        40,
+        80,
+        140,
+        270
+      ],
+      "det_confidence": 0.97,
+      "sku": "SKU-1001",
+      "sku_confidence": 0.94,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "item_id": "i04",
+      "bbox": [
+        390,
+        80,
+        490,
+        270
+      ],
+      "det_confidence": 0.96,
+      "sku": "SKU-1002",
+      "sku_confidence": 0.88,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "item_id": "i05",
+      "bbox": [
+        500,
+        80,
+        600,
+        270
+      ],
+      "det_confidence": 0.94,
+      "sku": "SKU-2002",
+      "sku_confidence": 0.91,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "item_id": "i06",
+      "bbox": [
+        630,
+        80,
+        730,
+        270
+      ],
+      "det_confidence": 0.95,
+      "sku": "SKU-1003",
+      "sku_confidence": 0.89,
+      "shelf_id": "S1",
+      "slot_id": "S1-03"
+    },
+    {
+      "item_id": "i07",
+      "bbox": [
+        40,
+        360,
+        140,
+        550
+      ],
+      "det_confidence": 0.97,
+      "sku": "SKU-2001",
+      "sku_confidence": 0.95,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "item_id": "i08",
+      "bbox": [
+        150,
+        360,
+        250,
+        550
+      ],
+      "det_confidence": 0.96,
+      "sku": "SKU-2001",
+      "sku_confidence": 0.93,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "item_id": "i09",
+      "bbox": [
+        630,
+        360,
+        730,
+        550
+      ],
+      "det_confidence": 0.95,
+      "sku": "SKU-2003",
+      "sku_confidence": 0.9,
+      "shelf_id": "S2",
+      "slot_id": "S2-03"
+    },
+    {
+      "item_id": "i10",
+      "bbox": [
+        740,
+        360,
+        840,
+        550
+      ],
+      "det_confidence": 0.94,
+      "sku": "SKU-2003",
+      "sku_confidence": 0.87,
+      "shelf_id": "S2",
+      "slot_id": "S2-03"
+    },
+    {
+      "item_id": "i11",
+      "bbox": [
+        40,
+        640,
+        140,
+        830
+      ],
+      "det_confidence": 0.96,
+      "sku": "SKU-3001",
+      "sku_confidence": 0.93,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "item_id": "i12",
+      "bbox": [
+        150,
+        640,
+        250,
+        830
+      ],
+      "det_confidence": 0.95,
+      "sku": "SKU-3001",
+      "sku_confidence": 0.91,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "item_id": "i13",
+      "bbox": [
+        260,
+        640,
+        360,
+        830
+      ],
+      "det_confidence": 0.9,
+      "sku": null,
+      "sku_confidence": 0.41,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "item_id": "i14",
+      "bbox": [
+        370,
+        640,
+        470,
+        830
+      ],
+      "det_confidence": 0.95,
+      "sku": "SKU-3001",
+      "sku_confidence": 0.9,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "item_id": "i15",
+      "bbox": [
+        500,
+        640,
+        600,
+        830
+      ],
+      "det_confidence": 0.96,
+      "sku": "SKU-3002",
+      "sku_confidence": 0.92,
+      "shelf_id": "S3",
+      "slot_id": "S3-02"
+    },
+    {
+      "item_id": "i16",
+      "bbox": [
+        610,
+        640,
+        710,
+        830
+      ],
+      "det_confidence": 0.95,
+      "sku": "SKU-3002",
+      "sku_confidence": 0.91,
+      "shelf_id": "S3",
+      "slot_id": "S3-02"
+    },
+    {
+      "item_id": "i17",
+      "bbox": [
+        720,
+        640,
+        820,
+        830
+      ],
+      "det_confidence": 0.94,
+      "sku": "SKU-3002",
+      "sku_confidence": 0.9,
+      "shelf_id": "S3",
+      "slot_id": "S3-02"
+    }
+  ],
+  "gaps": [
+    {
+      "gap_id": "g01",
+      "bbox": [
+        740,
+        80,
+        840,
+        270
+      ],
+      "shelf_id": "S1",
+      "slot_id": "S1-03",
+      "confidence": 0.86,
+      "estimated_missing_facings": 1
+    },
+    {
+      "gap_id": "g02",
+      "bbox": [
+        280,
+        360,
+        600,
+        550
+      ],
+      "shelf_id": "S2",
+      "slot_id": "S2-02",
+      "confidence": 0.93,
+      "estimated_missing_facings": 3
+    }
+  ],
+  "labels": [
+    {
+      "label_id": "l01",
+      "bbox": [
+        40,
+        278,
+        130,
+        302
+      ],
+      "shelf_id": "S1",
+      "slot_id": "S1-01",
+      "sku": "SKU-1001",
+      "ocr_text": "$3.49",
+      "price": 3.49,
+      "ocr_confidence": 0.95
+    },
+    {
+      "label_id": "l02",
+      "bbox": [
+        390,
+        278,
+        480,
+        302
+      ],
+      "shelf_id": "S1",
+      "slot_id": "S1-02",
+      "sku": "SKU-1002",
+      "ocr_text": "$3.79",
+      "price": 3.79,
+      "ocr_confidence": 0.93
+    },
+    {
+      "label_id": "l03",
+      "bbox": [
+        630,
+        278,
+        720,
+        302
+      ],
+      "shelf_id": "S1",
+      "slot_id": "S1-03",
+      "sku": "SKU-1003",
+      "ocr_text": "$4.99",
+      "price": 4.99,
+      "ocr_confidence": 0.94
+    },
+    {
+      "label_id": "l04",
+      "bbox": [
+        40,
+        558,
+        130,
+        582
+      ],
+      "shelf_id": "S2",
+      "slot_id": "S2-01",
+      "sku": "SKU-2001",
+      "ocr_text": "$2.99",
+      "price": 2.99,
+      "ocr_confidence": 0.96
+    },
+    {
+      "label_id": "l05",
+      "bbox": [
+        280,
+        558,
+        370,
+        582
+      ],
+      "shelf_id": "S2",
+      "slot_id": "S2-02",
+      "sku": "SKU-2002",
+      "ocr_text": "$3.29",
+      "price": 3.29,
+      "ocr_confidence": 0.92
+    },
+    {
+      "label_id": "l06",
+      "bbox": [
+        630,
+        558,
+        720,
+        582
+      ],
+      "shelf_id": "S2",
+      "slot_id": "S2-03",
+      "sku": "SKU-2003",
+      "ocr_text": "$5.99",
+      "price": 5.99,
+      "ocr_confidence": 0.91
+    },
+    {
+      "label_id": "l07",
+      "bbox": [
+        40,
+        838,
+        130,
+        862
+      ],
+      "shelf_id": "S3",
+      "slot_id": "S3-01",
+      "sku": "SKU-3001",
+      "ocr_text": "$2.49",
+      "price": 2.49,
+      "ocr_confidence": 0.95
+    },
+    {
+      "label_id": "l08",
+      "bbox": [
+        500,
+        838,
+        590,
+        862
+      ],
+      "shelf_id": "S3",
+      "slot_id": "S3-02",
+      "sku": "SKU-3002",
+      "ocr_text": "$2.69",
+      "price": 2.69,
+      "ocr_confidence": 0.94
+    }
+  ]
+}

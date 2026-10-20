@@ -122,3 +122,28 @@ def test_counts_sum_to_number_of_violations():
     report = compute_report(det, planogram, catalogue)
 
     assert sum(report.counts.values()) == len(report.violations)
+
+
+def test_lowstock_fixture_exercises_low_stock_alongside_the_other_categories():
+    # The canonical example never trips LOW_STOCK (see its module
+    # docstring note); this fixture does, without disturbing the other
+    # four planted violations.
+    fixtures = Path(__file__).resolve().parent / "fixtures"
+    det = load_detection_output(fixtures / "detection_output_lowstock.json")
+    planogram = load_planogram(CONTRACTS / "planogram.example.json")
+    catalogue = load_catalogue(CONTRACTS / "catalogue.example.csv")
+
+    report = compute_report(det, planogram, catalogue)
+    kinds = {v.kind for v in report.violations}
+
+    assert kinds == {
+        ViolationKind.STOCK_OUT,
+        ViolationKind.LOW_STOCK,
+        ViolationKind.MISPLACED,
+        ViolationKind.UNRECOGNISED_ITEM,
+        ViolationKind.PRICE_MISMATCH,
+    }
+
+    low_stock = [v for v in report.violations if v.kind == ViolationKind.LOW_STOCK]
+    assert len(low_stock) == 1
+    assert low_stock[0].slot_id == "S1-01"
