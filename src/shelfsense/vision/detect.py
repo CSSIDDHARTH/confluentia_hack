@@ -86,29 +86,42 @@ def build_detection_output(
 class ProductDetector:
     """Thin wrapper over an Ultralytics YOLO model fine-tuned for product blocks."""
 
-    def __init__(self, weights: str | Path, conf: float = 0.25, imgsz: int = 960, device: str | int | None = None):
+    def __init__(
+        self,
+        weights: str | Path,
+        conf: float = 0.25,
+        imgsz: int = 960,
+        device: str | int | None = None,
+        max_det: int = 300,
+    ):
         from ultralytics import YOLO  # heavy import, kept out of module load
 
         self.model = YOLO(str(weights))
         self.conf = conf
         self.imgsz = imgsz
         self.device = device
+        self.max_det = max_det  # raise for dense shelves (SKU-110K has up to ~275 packs per photo)
         w = Path(weights)
         self.name = w.parent.parent.name if w.parent.name == "weights" else w.stem  # Ultralytics run dir, else file name
 
-    def detect(self, image_path: str | Path, rel_to: Path | None = None, **kw) -> DetectionOutput:
-        image_path = Path(image_path)
+    def boxes(self, image_path: str | Path) -> tuple[list[list[float]], list[float], tuple[int, int]]:
+        """Raw detections: ([x1, y1, x2, y2] pixel boxes, confidences, (width, height))."""
         res = self.model.predict(
-            str(image_path), conf=self.conf, imgsz=self.imgsz, device=self.device, verbose=False
+            str(image_path), conf=self.conf, imgsz=self.imgsz, device=self.device, max_det=self.max_det, verbose=False
         )[0]
         h, w = res.orig_shape
+        return res.boxes.xyxy.cpu().tolist(), res.boxes.conf.cpu().tolist(), (w, h)
+
+    def detect(self, image_path: str | Path, rel_to: Path | None = None, **kw) -> DetectionOutput:
+        image_path = Path(image_path)
+        boxes, confs, (w, h) = self.boxes(image_path)
         shown = image_path.relative_to(rel_to) if rel_to else image_path
         return build_detection_output(
             image_id=image_path.stem,
             image_path=str(shown),
             image_size=(w, h),
-            boxes=res.boxes.xyxy.cpu().tolist(),
-            confidences=res.boxes.conf.cpu().tolist(),
+            boxes=boxes,
+            confidences=confs,
             produced_by=f"yolo:{self.name}",
             **kw,
         )
