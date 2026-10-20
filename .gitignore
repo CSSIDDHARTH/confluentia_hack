@@ -9,6 +9,7 @@ __pycache__/
 data/*
 !data/mock/
 !data/README.md
+!data/test_images/
 models/
 *.pt
 *.onnx
