@@ -16,6 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+# Person A (vision pipeline): detector, embeddings. Heavy: pulls PyTorch.
+vision = ["ultralytics>=8.3", "opencv-python-headless>=4.9"]
 # Real label OCR (shelfsense.pricing.label_ocr.read_label_text) also
 # needs the `tesseract` binary on PATH -- not pip-installable, see
 # data/README.md. Without it, parse_price() and price_check still work

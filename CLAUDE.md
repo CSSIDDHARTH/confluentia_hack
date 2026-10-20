@@ -19,14 +19,16 @@ src/shelfsense/
 app/dashboard.py      Person B: Streamlit dashboard
 scripts/              Data download, mock generation, utilities
 tests/                pytest; test_contracts.py checks the contracts agree with each other
-data/                 Git-ignored except data/mock/ (see data/README.md)
+data/                 Git-ignored except data/mock/; fetch with `python scripts/download_data.py all` (see data/README.md)
 ```
 
 ## Setup and run
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+# Use your own Python env if it already has the packages, or make a venv:
+#   python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"            # contracts, dashboard, tests
+pip install -e ".[vision]"         # Person A only: ultralytics + opencv (skip if already installed)
 python scripts/make_mock_image.py     # renders data/mock/mock_shelf_001.png
 pytest                                 # must pass before every merge
 streamlit run app/dashboard.py
@@ -50,12 +52,13 @@ These must appear in the final submission. Add to the list as you go.
 
 1. Input is a roughly front-facing photo of one shelf bay (fixture). Video is handled by sampling frames.
 2. Each image is tagged with its planogram ID (in practice the store app would know which bay is being photographed).
-3. Planograms are ordinal (shelf, slot order, facings), because public planogram data (GP-180) only gives relative positions.
+3. Planograms are ordinal (shelf, slot order, facings), because the public planograms (Grozi, `data/grozi/**/N_plano.json`) only give relative neighbour positions.
 4. Each slot has one shelf-edge label, below and left-aligned with the slot's first facing.
 5. A slot is low-stock when matching facings < `min_facings`, and a stock-out when it has none.
 6. Catalogue prices are the source of truth, and a label is a mismatch if its price differs from the catalogue price. Promotions are out of scope for now.
 7. No public dataset has planograms with violations, real prices, or price-tag text. Violations are created by editing compliant shelves, prices are synthetic, and OCR accuracy is measured on hand-transcribed or synthetic tags.
-8. The datasets used (SKU-110K, Grocery Dataset) are licensed for research or non-commercial use only.
+8. Data: Grozi-3.2K (Swiss supermarket shelves with product boxes, reference images and planograms; academic use only) and Open Food Facts price tags (CC BY-SA 4.0). See `data/README.md`.
+9. Grozi boxes cover a whole product block (all facings of a product), not single packs, so facing counts need a separate per-pack detector or an estimate.
 
 ## Working agreements
 

@@ -5,7 +5,7 @@ An AI retail compliance agent. It analyses shelf images to find planogram violat
 ## Quick start
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+# optional: python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 python scripts/make_mock_image.py
 pytest
