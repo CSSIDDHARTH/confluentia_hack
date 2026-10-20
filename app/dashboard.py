@@ -21,6 +21,7 @@ from shelfsense.contracts import (
 )
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
 from shelfsense.report.compliance import compute_report
+from shelfsense.report.export import report_to_json, violations_to_csv
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -159,6 +160,20 @@ if report.violations:
     st.dataframe(violation_rows, hide_index=True, width="stretch")
 else:
     st.success("No violations found; shelf is fully compliant.")
+
+dl1, dl2 = st.columns(2)
+dl1.download_button(
+    "Download report (JSON)",
+    data=report_to_json(report),
+    file_name=f"{det.image_id}_compliance_report.json",
+    mime="application/json",
+)
+dl2.download_button(
+    "Download violations (CSV)",
+    data=violations_to_csv(report),
+    file_name=f"{det.image_id}_violations.csv",
+    mime="text/csv",
+)
 
 with st.expander("Raw detection output"):
     st.json(det.model_dump())
