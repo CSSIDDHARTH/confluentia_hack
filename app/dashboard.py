@@ -1,7 +1,8 @@
 """shelfSense dashboard (mock stage).
 
-Reads the three contracts and shows them joined per slot. This proves the
-A -> B handoff works; compliance scoring and recommendations come later.
+Reads the three contracts, shows them joined per slot, and runs the
+price-check and compliance-report modules on top: price mismatches, a
+compliance score, and a violations/recommended-actions table.
 
     streamlit run app/dashboard.py
 """
@@ -19,6 +20,7 @@ from shelfsense.contracts import (
     load_planogram,
 )
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
+from shelfsense.report.compliance import compute_report
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -94,8 +96,10 @@ if det.planogram_id != planogram.planogram_id:
     st.warning(f"Image is for planogram {det.planogram_id}, but {planogram.planogram_id} is loaded.")
 
 price_issues = check_prices(det, catalogue)
+report = compute_report(det, planogram, catalogue)
 
-c1, c2, c3, c4, c5 = st.columns(5)
+score_col, c1, c2, c3, c4, c5 = st.columns([1.3, 1, 1, 1, 1, 1])
+score_col.metric("Compliance score", f"{report.score:.0f} / 100")
 c1.metric("Items detected", len(det.items))
 c2.metric("Unrecognised", sum(i.sku is None for i in det.items))
 c3.metric("Gaps", len(det.gaps))
@@ -136,6 +140,25 @@ if price_issues:
     st.dataframe(issue_rows, hide_index=True, width="stretch")
 else:
     st.success("No price-label issues found.")
+
+st.subheader(f"Violations & recommended actions ({len(report.violations)})")
+if report.violations:
+    violation_rows = pd.DataFrame(
+        [
+            {
+                "kind": v.kind.value.replace("_", " "),
+                "shelf": v.shelf_id,
+                "slot": v.slot_id,
+                "sku": v.sku,
+                "detail": v.detail,
+                "recommended_action": v.recommended_action,
+            }
+            for v in report.violations
+        ]
+    )
+    st.dataframe(violation_rows, hide_index=True, width="stretch")
+else:
+    st.success("No violations found; shelf is fully compliant.")
 
 with st.expander("Raw detection output"):
     st.json(det.model_dump())
