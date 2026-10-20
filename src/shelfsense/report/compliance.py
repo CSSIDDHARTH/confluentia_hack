@@ -76,7 +76,10 @@ def _product_name(catalogue: dict[str, CatalogueItem], sku: str | None) -> str:
 
 
 def _slot_violations(
-    det: DetectionOutput, planogram: Planogram, catalogue: dict[str, CatalogueItem]
+    det: DetectionOutput,
+    planogram: Planogram,
+    catalogue: dict[str, CatalogueItem],
+    group_items: bool = False,
 ) -> list[Violation]:
     violations: list[Violation] = []
 
@@ -127,36 +130,53 @@ def _slot_violations(
                     )
                 )
 
-            for item in misplaced:
-                found_name = _product_name(catalogue, item.sku)
+            if group_items:
+                # pack-level detections: one violation per wrong product in the slot, not per pack
+                by_sku: dict[str, list] = {}
+                for item in misplaced:
+                    by_sku.setdefault(item.sku, []).append(item)
+                misplaced_groups = [
+                    (f"v-{slot.slot_id}-{sku}-misplaced", sku, len(group), group[0].item_id)
+                    for sku, group in by_sku.items()
+                ]
+            else:
+                misplaced_groups = [(f"v-{i.item_id}-misplaced", i.sku, 1, i.item_id) for i in misplaced]
+            for vid, sku, count, first_id in misplaced_groups:
+                found_name = _product_name(catalogue, sku)
+                what = f"Item {first_id}" if count == 1 else f"{count} items of {sku}"
                 violations.append(
                     Violation(
-                        violation_id=f"v-{item.item_id}-misplaced",
+                        violation_id=vid,
                         kind=ViolationKind.MISPLACED,
                         shelf_id=shelf.shelf_id,
                         slot_id=slot.slot_id,
-                        sku=item.sku,
+                        sku=sku,
                         detail=(
-                            f"Item {item.item_id} ({item.sku}, {found_name}) found "
+                            f"{what} ({sku}, {found_name}) found "
                             f"in slot {slot.slot_id}, which expects {slot.sku}."
                         ),
                         recommended_action=(
-                            f"Move {found_name} out of {slot.slot_id}; that slot "
+                            f"Move {found_name}{f' ({count} packs)' if count > 1 else ''} out of {slot.slot_id}; that slot "
                             f"should hold {expected_name}."
                         ),
                     )
                 )
 
-            for item in unrecognised:
+            if group_items and unrecognised:
+                unrecognised_groups = [(f"v-{slot.slot_id}-unrecognised", len(unrecognised), unrecognised[0].item_id)]
+            else:
+                unrecognised_groups = [(f"v-{i.item_id}-unrecognised", 1, i.item_id) for i in unrecognised]
+            for vid, count, first_id in unrecognised_groups:
+                what = f"Item {first_id}" if count == 1 else f"{count} items"
                 violations.append(
                     Violation(
-                        violation_id=f"v-{item.item_id}-unrecognised",
+                        violation_id=vid,
                         kind=ViolationKind.UNRECOGNISED_ITEM,
                         shelf_id=shelf.shelf_id,
                         slot_id=slot.slot_id,
                         sku=None,
                         detail=(
-                            f"Item {item.item_id} in slot {slot.slot_id} could not "
+                            f"{what} in slot {slot.slot_id} could not "
                             "be identified."
                         ),
                         recommended_action=(
@@ -204,10 +224,18 @@ def _price_violations(
 
 
 def compute_report(
-    det: DetectionOutput, planogram: Planogram, catalogue: dict[str, CatalogueItem]
+    det: DetectionOutput,
+    planogram: Planogram,
+    catalogue: dict[str, CatalogueItem],
+    group_items: bool = False,
 ) -> ComplianceReport:
-    """Build the full compliance report for one image."""
-    violations = _slot_violations(det, planogram, catalogue) + _price_violations(det, catalogue)
+    """Build the full compliance report for one image.
+
+    group_items: for pack-level detections (one item per pack). Misplaced and unrecognised
+    items are then reported once per slot and product instead of once per pack, so a swapped
+    block of eight packs is one violation, not eight. Off by default (one item = one violation).
+    """
+    violations = _slot_violations(det, planogram, catalogue, group_items) + _price_violations(det, catalogue)
 
     penalty = sum(WEIGHTS[v.kind] for v in violations)
     score = round(max(0.0, 100.0 - penalty), 1)

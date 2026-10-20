@@ -1,0 +1,319 @@
+{
+  "schema_version": "0.1",
+  "image_id": "store4_2",
+  "image_path": "data/demo_bays/store4_2/photo.jpg",
+  "image_width": 1200,
+  "image_height": 1600,
+  "planogram_id": "PG-store4-2-scenario",
+  "captured_at": "2026-10-20T10:17:07+00:00",
+  "produced_by": {
+    "vision": "yolo:product_detector",
+    "matcher": "dinov2-vits14+adapter",
+    "alignment": "nw-v1",
+    "facings": "yolo:pack_detector"
+  },
+  "shelves": [
+    {
+      "bbox": [
+        15.2,
+        6.1,
+        1180.5,
+        692.3
+      ],
+      "shelf_id": "S1"
+    },
+    {
+      "bbox": [
+        18.2,
+        823.9,
+        1184.9,
+        1530.1
+      ],
+      "shelf_id": "S2"
+    }
+  ],
+  "items": [
+    {
+      "bbox": [
+        16.4,
+        252.4,
+        160.5,
+        694.7
+      ],
+      "item_id": "i001",
+      "det_confidence": 0.5111,
+      "sku": "G30-27",
+      "sku_confidence": 0.6597,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        356.8,
+        242.1,
+        508.9,
+        655.2
+      ],
+      "item_id": "i002",
+      "det_confidence": 0.4485,
+      "sku": "G30-27",
+      "sku_confidence": 0.6597,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        558.1,
+        196.7,
+        666.6,
+        651.5
+      ],
+      "item_id": "i003",
+      "det_confidence": 0.459,
+      "sku": "G30-28",
+      "sku_confidence": 0.7029,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        565.8,
+        70.5,
+        665.4,
+        521.8
+      ],
+      "item_id": "i004",
+      "det_confidence": 0.2546,
+      "sku": "G30-28",
+      "sku_confidence": 0.7029,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        672.5,
+        198.6,
+        812.5,
+        627.1
+      ],
+      "item_id": "i005",
+      "det_confidence": 0.3524,
+      "sku": "G30-28",
+      "sku_confidence": 0.7029,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        681.4,
+        2.4,
+        778.4,
+        177.7
+      ],
+      "item_id": "i006",
+      "det_confidence": 0.3184,
+      "sku": "G30-28",
+      "sku_confidence": 0.7029,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        815.6,
+        76.6,
+        921.7,
+        490.2
+      ],
+      "item_id": "i007",
+      "det_confidence": 0.3075,
+      "sku": "G30-28",
+      "sku_confidence": 0.7029,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        983.3,
+        246.8,
+        1119.8,
+        615.5
+      ],
+      "item_id": "i008",
+      "det_confidence": 0.328,
+      "sku": "G30-28",
+      "sku_confidence": 0.7029,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        0.0,
+        1027.6,
+        113.4,
+        1465.2
+      ],
+      "item_id": "i009",
+      "det_confidence": 0.3534,
+      "sku": "G30-30",
+      "sku_confidence": 0.993,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        121.2,
+        992.2,
+        273.6,
+        1367.0
+      ],
+      "item_id": "i010",
+      "det_confidence": 0.5078,
+      "sku": "G30-30",
+      "sku_confidence": 0.993,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        124.0,
+        1101.9,
+        279.4,
+        1485.9
+      ],
+      "item_id": "i011",
+      "det_confidence": 0.3009,
+      "sku": "G30-30",
+      "sku_confidence": 0.993,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        286.7,
+        952.3,
+        442.9,
+        1378.2
+      ],
+      "item_id": "i012",
+      "det_confidence": 0.628,
+      "sku": "G30-30",
+      "sku_confidence": 0.993,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        456.9,
+        951.2,
+        612.6,
+        1392.9
+      ],
+      "item_id": "i013",
+      "det_confidence": 0.2984,
+      "sku": "G30-30",
+      "sku_confidence": 0.993,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        458.8,
+        1025.9,
+        620.6,
+        1462.5
+      ],
+      "item_id": "i014",
+      "det_confidence": 0.4946,
+      "sku": "G30-30",
+      "sku_confidence": 0.993,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        635.5,
+        1024.2,
+        832.2,
+        1466.1
+      ],
+      "item_id": "i015",
+      "det_confidence": 0.408,
+      "sku": "G30-30",
+      "sku_confidence": 0.9517,
+      "shelf_id": "S2",
+      "slot_id": "S2-02"
+    },
+    {
+      "bbox": [
+        640.5,
+        879.7,
+        816.3,
+        1342.8
+      ],
+      "item_id": "i016",
+      "det_confidence": 0.2844,
+      "sku": "G30-30",
+      "sku_confidence": 0.9517,
+      "shelf_id": "S2",
+      "slot_id": "S2-02"
+    },
+    {
+      "bbox": [
+        837.9,
+        1025.9,
+        1040.0,
+        1466.3
+      ],
+      "item_id": "i017",
+      "det_confidence": 0.4596,
+      "sku": "G30-30",
+      "sku_confidence": 0.9517,
+      "shelf_id": "S2",
+      "slot_id": "S2-02"
+    },
+    {
+      "bbox": [
+        850.5,
+        875.6,
+        1028.9,
+        1343.3
+      ],
+      "item_id": "i018",
+      "det_confidence": 0.3835,
+      "sku": "G30-30",
+      "sku_confidence": 0.9517,
+      "shelf_id": "S2",
+      "slot_id": "S2-02"
+    },
+    {
+      "bbox": [
+        1098.9,
+        1001.5,
+        1200.0,
+        1448.5
+      ],
+      "item_id": "i019",
+      "det_confidence": 0.3807,
+      "sku": "G30-30",
+      "sku_confidence": 0.9517,
+      "shelf_id": "S2",
+      "slot_id": "S2-02"
+    }
+  ],
+  "gaps": [
+    {
+      "bbox": [
+        160.5,
+        197.6,
+        356.8,
+        621.3
+      ],
+      "gap_id": "g001",
+      "shelf_id": "S1",
+      "slot_id": null,
+      "confidence": 0.701,
+      "estimated_missing_facings": 2
+    }
+  ],
+  "labels": []
+}

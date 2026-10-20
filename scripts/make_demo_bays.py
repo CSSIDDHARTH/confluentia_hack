@@ -2,16 +2,23 @@
 
     python scripts/make_demo_bays.py [--top 5]
 
-For each held-out shelf photo whose products are all labelled, this writes a planogram from
-the human labels (the "compliant" reference) and a scenario planogram with planted changes
-(two products swapped; one slot expecting a product that is not on the shelf). The vision
-pipeline (detect, identify, align) is run against both and scored with the report code.
-The shelves where the compliant plan scores highest are the safest to demo; the top ones
-are written to data/demo_bays/<id>/.
+One pass per photo covers everything (src/shelfsense/vision/bay.py): product blocks are named
+and aligned to a planogram, packs are counted inside each block (its facings), and empty
+space is found between packs. Each bay gets two planograms:
+
+  compliant  written from the human labels, with facings taken from the pack counts on the
+             photo, so a correct pipeline scores 100;
+  scenario   a planned change: two neighbouring products swapped (misplaced), one slot now
+             expecting a product that is not on the shelf (stock-out), and one product's
+             facings raised by two (a promotion reset the shelf has not caught up with: low stock).
+
+Shelves where the compliant plan scores highest are the safest to demo; the top ones are
+written to data/demo_bays/<id>/ with a downsized copy of the photo so the dashboard works
+without the full Grozi download.
 
 Assumptions (also in CLAUDE.md): Grozi has no prices, so catalogue prices are synthetic and
-deterministic. Each slot holds one product block (facings 1), because Grozi boxes cover a
-whole block of packs.
+deterministic; a facing is one visible pack (stacked packs count separately); the pack
+detector is the SKU-110K one and is not tuned to Grozi.
 """
 
 import argparse
@@ -19,27 +26,29 @@ import csv
 import hashlib
 import random
 import shutil
+import textwrap
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from shelfsense.contracts import CatalogueItem, Planogram, Shelf, Slot, save_detection_output
-from shelfsense.report.compliance import ViolationKind, compute_report
+from shelfsense.contracts import CatalogueItem, DetectionOutput, Planogram, Shelf, Slot, save_detection_output
+from shelfsense.report.compliance import ComplianceReport, ViolationKind, compute_report
+from shelfsense.vision.bay import analyze_bay
 from shelfsense.vision.detect import ProductDetector, group_into_rows
 from shelfsense.vision.grozi import VAL_STORES, labelled_boxes
-from shelfsense.vision.pipeline import identify_items
-from shelfsense.vision.planogram_align import assign_slots
 from shelfsense.vision.sku_match import SkuMatcher, class_index
 
 ROOT = Path(__file__).resolve().parents[1]
 GROZI = ROOT / "data" / "grozi"
 OUT = ROOT / "data" / "demo_bays"
+MAX_SIDE = 1600  # longest side of the photo copy stored with each bay
+MIN_FACINGS_SHARE = 0.6  # min_facings = 60% of the facings the plan expects
+DISTRACTORS = 0  # extra random candidate products per bay (0 = the planogram's own SKUs only)
 
 
 def all_labelled(img: Path) -> bool:
     """True when every annotated block on the image has a known product."""
-    ann = img.parent.parent / "annotation" / f"{img.stem}.csv"
-    with open(ann, newline="") as f:
+    with open(img.parent.parent / "annotation" / f"{img.stem}.csv", newline="") as f:
         return all(r["label"] != "-1" for r in csv.DictReader(f))
 
 
@@ -54,12 +63,21 @@ def plan_from_boxes(plan_id: str, name: str, skus: list[str], boxes: list[list[f
     return Planogram(planogram_id=plan_id, fixture_name=name, effective_from="2026-10-01", shelves=shelves)
 
 
-def make_scenario(plan: Planogram, pool: list[str], present: set[str]) -> tuple[Planogram, list[str]]:
-    """Plant two changes: swap two neighbouring products, and make one slot expect an absent one."""
+def with_facings(plan: Planogram, det: DetectionOutput) -> Planogram:
+    """Copy of the plan whose facings are the packs the photo actually shows in each slot."""
     p = plan.model_copy(deep=True)
-    notes = []
+    for slot in (s for sh in p.shelves for s in sh.slots):
+        n = max(1, sum(1 for i in det.items if i.slot_id == slot.slot_id))
+        slot.facings = n
+        slot.min_facings = max(1, round(MIN_FACINGS_SHARE * n))
+    return p
+
+
+def make_scenario(plan: Planogram, pool: list[str], present: set[str]) -> tuple[Planogram, list[str]]:
+    """Plant three planned changes: a swap, an absent product, and more facings than the shelf holds."""
+    p = plan.model_copy(deep=True)
+    notes, used = [], set()
     widest = max(p.shelves, key=lambda s: len(s.slots))
-    used = set()
     if len(widest.slots) >= 2 and widest.slots[0].sku != widest.slots[1].sku:
         a, b = widest.slots[0], widest.slots[1]
         a.sku, b.sku = b.sku, a.sku
@@ -70,12 +88,18 @@ def make_scenario(plan: Planogram, pool: list[str], present: set[str]) -> tuple[
         if slot is None:
             continue
         # a different category on purpose: closed-set matching tends to 'confirm' a lookalike the plan
-        # expects, so a same-category absent product would often go unflagged (see README)
-        same_class = sorted(s for s in pool if s[:3] != slot.sku[:3] and s not in present)
-        if same_class:
-            notes.append(f"{slot.slot_id} now expects {same_class[0]}, which is not on the shelf")
-            slot.sku = same_class[0]
+        # expects, so a same-category absent product would often go unflagged (see CLAUDE.md)
+        other = sorted(s for s in pool if s[:3] != slot.sku[:3] and s not in present)
+        if other:
+            notes.append(f"{slot.slot_id} now expects {other[0]}, which is not on the shelf")
+            slot.sku = other[0]
+            used.add(slot.slot_id)
             break
+    promo = max((s for sh in p.shelves for s in sh.slots if s.slot_id not in used), key=lambda s: s.facings, default=None)
+    if promo is not None:
+        promo.facings += 2
+        promo.min_facings = promo.facings - 1
+        notes.append(f"{promo.slot_id} promotion reset: now {promo.facings} facings planned")
     p.planogram_id = plan.planogram_id + "-scenario"
     p.fixture_name = plan.fixture_name + " (planned changes)"
     return p, notes
@@ -101,36 +125,52 @@ def write_catalogue(cat: dict[str, CatalogueItem], path: Path) -> None:
             w.writerow(item.model_dump())
 
 
-def run_pipeline(img, detector, matcher, plan, extra, rng):
-    """Detect, identify (candidates = plan SKUs + 20 distractors) and align to the plan."""
-    cands = {s.sku for sh in plan.shelves for s in sh.slots} | extra
-    det = detector.detect(img.resolve(), rel_to=ROOT)
-    det.image_id = f"{img.parent.parent.name}_{img.stem}"
-    im = Image.open(img).convert("RGB")
-    identify_items(det, im, matcher, cands)
-    return assign_slots(det, plan), im
+def downscale(det: DetectionOutput, factor: float, shown_path: str) -> DetectionOutput:
+    """Scale all coordinates so the output matches the stored (downsized) photo copy."""
+    det = det.model_copy(deep=True)
+    for obj in [*det.shelves, *det.items, *det.gaps, *det.labels]:
+        obj.bbox = [round(v * factor, 1) for v in obj.bbox]
+    det.image_width, det.image_height = round(det.image_width * factor), round(det.image_height * factor)
+    det.image_path = shown_path
+    return det
 
 
-def draw_report(im: Image.Image, det, report, title: str) -> Image.Image:
-    bad = {v.violation_id.split("-")[1]: v.kind for v in report.violations if v.violation_id.startswith("v-i")}
+def draw_report(im: Image.Image, det: DetectionOutput, report: ComplianceReport, title: str) -> Image.Image:
+    """Packs coloured by problem (red misplaced, orange unrecognised), empty spaces in red, banner on top and
+    the recommended actions under the photo."""
+    # every pack of a flagged product: (slot, sku) for misplaced, (slot, None) for unrecognised
+    bad = {(v.slot_id, v.sku): v.kind for v in report.violations if v.kind in (ViolationKind.MISPLACED, ViolationKind.UNRECOGNISED_ITEM)}
     colours = {ViolationKind.MISPLACED: (214, 40, 40), ViolationKind.UNRECOGNISED_ITEM: (240, 160, 32)}
-    im = im.copy()
+    im = im.convert("RGB")
     d = ImageDraw.Draw(im)
-    font = ImageFont.load_default(size=max(18, im.width // 55))
-    lw = max(4, im.width // 400)
+    font = ImageFont.load_default(size=max(16, im.width // 60))
+    lw = max(3, im.width // 450)
     for it in det.items:
-        colour = colours.get(bad.get(it.item_id), (46, 158, 68))
-        d.rectangle(it.bbox, outline=colour, width=lw)
-        label = f"{it.slot_id or 'no slot'} {it.sku[4:] if it.sku else '?'}"
-        tx, ty = it.bbox[0] + 8, it.bbox[1] + 8
-        d.rectangle(d.textbbox((tx, ty), label, font=font), fill=(0, 0, 0))
-        d.text((tx, ty), label, fill=(255, 255, 0), font=font)
-    banner = f"{title}: score {report.score:.0f}  " + "  ".join(f"{k.replace('_', ' ')} {n}" for k, n in report.counts.items())
-    strip = font.size + 24
-    canvas = Image.new("RGB", (im.width, im.height + strip), (0, 0, 0))  # header sits above the photo
-    canvas.paste(im, (0, strip))
-    ImageDraw.Draw(canvas).text((10, 10), banner, fill=(255, 255, 255), font=font)
-    canvas.thumbnail((1400, 1400))
+        d.rectangle(it.bbox, outline=colours.get(bad.get((it.slot_id, it.sku)), (46, 158, 68)), width=lw)
+    for g in det.gaps:
+        d.rectangle(g.bbox, outline=(214, 40, 40), width=lw + 2)
+        d.text((g.bbox[0] + 6, g.bbox[1] + 4), f"EMPTY ~{g.estimated_missing_facings}", fill=(255, 255, 255), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+    seen = set()
+    for it in det.items:  # one slot label per slot, on its leftmost pack
+        if it.slot_id and it.slot_id not in seen:
+            seen.add(it.slot_id)
+            n = sum(1 for o in det.items if o.slot_id == it.slot_id)
+            label = f"{it.slot_id} x{n}"
+            tx, ty = it.bbox[0] + 6, it.bbox[1] + 6
+            d.rectangle(d.textbbox((tx, ty), label, font=font), fill=(0, 0, 0))
+            d.text((tx, ty), label, fill=(255, 255, 0), font=font)
+
+    head = f"{title}: score {report.score:.0f}  " + "  ".join(f"{k.replace('_', ' ')} {n}" for k, n in report.counts.items())
+    lines = [f"- {v.recommended_action}" for v in report.violations[:8]]
+    wrapped = [w for ln in lines for w in textwrap.wrap(ln, width=max(40, im.width // (font.size // 2 + 1)))]
+    line_h = font.size + 8
+    top = font.size + 24
+    canvas = Image.new("RGB", (im.width, top + im.height + line_h * len(wrapped) + 16), (20, 20, 20))
+    canvas.paste(im, (0, top))
+    cd = ImageDraw.Draw(canvas)
+    cd.text((10, 10), head, fill=(255, 255, 255), font=font)
+    for k, ln in enumerate(wrapped):
+        cd.text((10, top + im.height + 8 + k * line_h), ln, fill=(255, 255, 255), font=font)
     return canvas
 
 
@@ -139,29 +179,32 @@ def main() -> None:
     ap.add_argument("--top", type=int, default=5)
     a = ap.parse_args()
 
-    detector = ProductDetector(ROOT / "models" / "product_detector.pt")
+    blocks = ProductDetector(ROOT / "models" / "product_detector.pt")
+    packs = ProductDetector(ROOT / "models" / "pack_detector.pt", imgsz=1024, max_det=600)
     matcher = SkuMatcher.load(GROZI / "sku_index.npz", ROOT / "models" / "sku_adapter.npy")
     names = class_index(GROZI)
     known = sorted(matcher.index.unique_skus)
-    rng = random.Random(0)
-
     by_img: dict[Path, list] = {}
     for img, sku, rel in labelled_boxes(GROZI, VAL_STORES, set(known)):
         by_img.setdefault(img, []).append((sku, rel))
 
     ranked = []
     for img, items in by_img.items():
-        if len(items) < 3 or not all_labelled(img):
+        if len(items) < 4 or not all_labelled(img):  # four blocks: room for all three planted changes
             continue
         w, h = Image.open(img).size
         boxes = [[l * w, t * h, r * w, b * h] for _, (l, t, r, b) in items]
-        plan = plan_from_boxes(f"PG-{img.parent.parent.name}-{img.stem}", f"{img.parent.parent.name} photo {img.stem}", [s for s, _ in items], boxes)
+        base = plan_from_boxes(f"PG-{img.parent.parent.name}-{img.stem}", f"{img.parent.parent.name} photo {img.stem}", [s for s, _ in items], boxes)
         present = {s for s, _ in items}
+        # In deployment the candidates for a bay are the planogram's own products. DISTRACTORS adds that many random
+        # extra products (seeded per photo) as a stress test: 0 = planogram only.
+        distractors = set(random.Random(f"{img.parent.parent.name}-{img.stem}").sample(known, DISTRACTORS)) if DISTRACTORS else set()
+        cands = {s.sku for sh in base.shelves for s in sh.slots} | distractors
+        det0 = analyze_bay(img, blocks, packs, matcher, base, cands)
+        plan = with_facings(base, det0)
         cat = synthetic_catalogue(present, names)
-        distractors = set(rng.sample(known, 20))
-        det, _ = run_pipeline(img, detector, matcher, plan, distractors, rng)
-        report = compute_report(det, plan, cat)
-        ranked.append((report.score, len(items), img, plan, present, distractors, cat))
+        report = compute_report(det0, plan, cat, group_items=True)
+        ranked.append((report.score, len(det0.items), img, plan, present, distractors, cat))
 
     ranked.sort(key=lambda r: (-r[0], -r[1]))
     print(f"{len(ranked)} candidate shelves; compliant-plan score distribution: "
@@ -173,19 +216,27 @@ def main() -> None:
         bay = OUT / f"{img.parent.parent.name}_{img.stem}"
         bay.mkdir(parents=True)
         scenario, notes = make_scenario(plan, known, present)
-        scen_cat = synthetic_catalogue(present | {s.sku for sh in scenario.shelves for s in sh.slots}, names)
-        pool_cat = {**cat, **scen_cat}
+        pool_cat = {**cat, **synthetic_catalogue({s.sku for sh in scenario.shelves for s in sh.slots}, names)}
         write_catalogue(pool_cat, bay / "catalogue.csv")
+
+        photo = Image.open(img).convert("RGB")
+        factor = min(1.0, MAX_SIDE / max(photo.size))
+        small = photo.resize((round(photo.width * factor), round(photo.height * factor)), Image.LANCZOS)
+        small.save(bay / "photo.jpg", quality=88)
+        shown = str((bay / "photo.jpg").relative_to(ROOT))
+
         for tag, pl in (("compliant", plan), ("scenario", scenario)):
             (bay / f"planogram_{tag}.json").write_text(pl.model_dump_json(indent=2))
-            det, im = run_pipeline(img, detector, matcher, pl, distractors, rng)
-            report = compute_report(det, pl, pool_cat)
+            cands = {s.sku for sh in pl.shelves for s in sh.slots} | distractors
+            det = downscale(analyze_bay(img, blocks, packs, matcher, pl, cands), factor, shown)
+            det.image_id = bay.name
+            report = compute_report(det, pl, pool_cat, group_items=True)
             save_detection_output(det, bay / f"detection_{tag}.json")
-            draw_report(im, det, report, tag).convert("RGB").save(bay / f"overlay_{tag}.jpg", quality=85)
-            print(f"  {bay.name:12s} {tag:9s} score {report.score:5.1f}  {report.counts}")
+            draw_report(small, det, report, tag).save(bay / f"overlay_{tag}.jpg", quality=85)
+            print(f"  {bay.name:10s} {tag:9s} score {report.score:5.1f}  {report.counts}  packs {len(det.items)}, empty spaces {len(det.gaps)}")
         (bay / "README.txt").write_text(
-            f"Held-out Grozi shelf {img.relative_to(ROOT)}\n"
-            f"compliant: planogram written from the human labels\n"
+            f"Held-out Grozi shelf {img.relative_to(ROOT)} (downsized copy: photo.jpg)\n"
+            f"compliant: planogram from the human labels, facings from the pack counts on the photo\n"
             f"scenario : {'; '.join(notes) or 'no changes possible'}\n"
         )
         print(f"    scenario: {'; '.join(notes)}")

@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1",
+  "planogram_id": "PG-store1-36-scenario",
+  "fixture_name": "store1 photo 36 (planned changes)",
+  "effective_from": "2026-10-01",
+  "shelves": [
+    {
+      "shelf_id": "S1",
+      "index": 0,
+      "slots": [
+        {
+          "slot_id": "S1-01",
+          "position": 0,
+          "sku": "G26-23",
+          "facings": 15,
+          "min_facings": 9
+        },
+        {
+          "slot_id": "S1-02",
+          "position": 1,
+          "sku": "G26-22",
+          "facings": 2,
+          "min_facings": 1
+        },
+        {
+          "slot_id": "S1-03",
+          "position": 2,
+          "sku": "G26-6",
+          "facings": 10,
+          "min_facings": 9
+        }
+      ]
+    },
+    {
+      "shelf_id": "S2",
+      "index": 1,
+      "slots": [
+        {
+          "slot_id": "S2-01",
+          "position": 0,
+          "sku": "G26-19",
+          "facings": 6,
+          "min_facings": 4
+        },
+        {
+          "slot_id": "S2-02",
+          "position": 1,
+          "sku": "G26-27",
+          "facings": 8,
+          "min_facings": 5
+        },
+        {
+          "slot_id": "S2-03",
+          "position": 2,
+          "sku": "G02-123121",
+          "facings": 3,
+          "min_facings": 2
+        }
+      ]
+    }
+  ]
+}
