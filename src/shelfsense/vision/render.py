@@ -39,9 +39,12 @@ def draw_availability(
         return im
 
     lines = [f"Overall fill {report.overall_fill:.0%} | empty spaces {report.empty_spaces} | about {report.missing_facings} packs to refill"]
+    width = max(40, im.width // (font.size // 2 + 1))
+    for w in report.warnings:
+        lines += textwrap.wrap("WARNING: " + w, width=width)
     for a in report.actions:
-        lines += textwrap.wrap("- " + a, width=max(40, im.width // (font.size // 2 + 1)))
-    if not report.actions:
+        lines += textwrap.wrap("- " + a, width=width)
+    if not report.actions and not report.warnings:
         lines.append("No replenishment needed.")
     line_h = font.size + 8
     canvas = Image.new("RGB", (im.width, im.height + line_h * len(lines) + 20), (20, 20, 20))

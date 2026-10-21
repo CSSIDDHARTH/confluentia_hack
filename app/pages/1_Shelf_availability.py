@@ -111,6 +111,9 @@ c3.metric("Packs to refill", report.missing_facings)
 c4.metric("Low-stock rows", len(low_rows), help=", ".join(low_rows) or "none")
 c5.metric("Packs found", len(det.items))
 
+for w in report.warnings:
+    st.warning(w)
+
 left, right = st.columns([3, 2])
 with left:
     view = draw_availability(image, det, report, footer=False)
@@ -121,7 +124,7 @@ with right:
     if report.actions:
         for a in report.actions:
             st.markdown(f"- {a}")
-    else:
+    elif not report.warnings:
         st.success("No replenishment needed at these settings.")
     st.subheader("Shelf rows")
     rows = pd.DataFrame(

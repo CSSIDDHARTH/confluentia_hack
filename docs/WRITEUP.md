@@ -43,8 +43,22 @@ All on held-out data (different stores or different images from training).
 - Planograms are ordinal (shelf, slot order, facings); public planograms carry no physical measurements.
 - **No public dataset has real planogram violations, real prices or price-tag text.** The violations are planted by editing the planogram of a real photo, and prices are synthetic. We did not edit photos, because erased packs looked fake.
 - Demo shelves are the best of the held-out set. Other held-out shelves score 80 or lower.
+- Use packaged-goods shelves photographed with the whole bay in view. Loose produce and close-ups are outside what the pack detector handles.
 - Empty-space accuracy is relative to gaps derived from human pack boxes, not to measured empty shelf. Missed packs appear as false gaps.
 - Datasets are academic-use only (Grozi-3.2K, SKU-110K).
+
+## Robustness on photos we did not train on
+
+24 real phone photos of shops (Open Food Facts price-tag set, random draw, never used to train the pack detector), run through the live upload path and judged by eye. No ground truth, so this is a qualitative check, not an accuracy number.
+
+| Kind of photo | Count | What happened |
+|---|---|---|
+| Shelves of packaged goods, whole bay in view | 9 | Packs found and counted sensibly. 4 of the 9 also had a false empty space or low-stock flag, usually a price-label strip read as a shelf row or a missed pack. |
+| Loose produce (fruit, vegetables) | 6 | Fruit boxed as "packs"; fill percentages are not meaningful. Out of scope for a pack detector. |
+| Close-ups, price tags, too few packs (under 8) | 8 | Now flagged "looks like a close-up, retake from 1-2 m" and no refill list is given. Before the guard these produced false "low stock" alerts. |
+| Cluttered shelf with overlapping products | 1 | False empty spaces over products the detector missed. |
+
+The 8-pack guard separated every close-up from every usable shelf in this sample and does not trigger on any of the 8 test shelves (125-189 packs each). Its threshold was set after looking at these 24 photos, so treat it as a sanity check, not a tuned result.
 
 ## What we tried and rejected, with numbers
 

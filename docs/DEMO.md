@@ -10,7 +10,7 @@ PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # http://localhost:8
 ```
 
 - Open the app once and click through both pages so the detector is loaded (first upload otherwise waits a few seconds).
-- Have 2-3 fresh shop photos on the desktop, **already tried once**. Pick the ones that worked.
+- Have 2-3 fresh shop photos on the desktop, **already tried once**. Pick the ones that worked. Good photos: shelves of packaged goods (bottles, jars, boxes, cans), whole bay in view, shot from 1-2 m, straight on. Avoid fruit and vegetables, close-ups, and price tags alone: the page then shows a "retake" warning instead of a refill list.
 - Fallback if the live upload fails or the GPU is busy: the Shelf availability page works from saved results (no GPU), and the planogram demo needs only files. Nothing below needs the internet.
 
 ## 1. The problem, in one breath (30 s)
@@ -61,6 +61,6 @@ Teammate shows label reading and the price mismatches. Say plainly that the pric
 | Are the violations real? | Planted. No public dataset has real planogram violations, so we edited the plan of a real photo. We say so rather than fake the photo. |
 | Why these shelves? | Best of the held-out set: 98, 88 and 86 on the compliant plan. Others score 80 or lower. |
 | Are the prices real? | No, synthetic catalogue. |
-| What fails? | Missed packs show up as false gaps, and lookalike products can be confused. Bad angles and glare hurt. |
+| What fails? | Missed packs show up as false gaps, and lookalike products can be confused. On 24 unseen phone photos, packaged shelves worked, with false flags on about 4 of 9; loose produce does not work; close-ups now get a "retake" warning instead of a wrong refill list. |
 | What did you try that did not work? | Larger input sizes, a texture check on gaps, flip and view-blending for naming, and a detector retrained on twice the data (better mAP, worse gap quality). All measured, none shipped. |
 | Why not a big vision-language model? | Small specialised models run on the shelf-edge device, cost nothing per image and are measurable. |

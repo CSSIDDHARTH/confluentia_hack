@@ -13,6 +13,11 @@ from pydantic import BaseModel
 from shelfsense.contracts import DetectionOutput, Gap, Item, ShelfRegion
 from shelfsense.vision.gaps import LOW_FILL_RATIO, MIN_GAP_WIDTHS, find_gaps
 
+# Below this many packs the photo is a close-up, a price tag or not a shelf of packaged goods. Row fill
+# and gaps then rest on a handful of boxes, so no refill list is given. Checked by eye on 24 phone photos
+# from outside the training data: every photo with fewer than 8 packs was such a case.
+MIN_PACKS_FOR_REPORT = 8
+
 
 class RowStatus(BaseModel):
     shelf_id: str
@@ -28,6 +33,7 @@ class AvailabilityReport(BaseModel):
     missing_facings: int  # estimated packs needed to fill every empty space
     overall_fill: float  # mean fill ratio over rows, 0-1
     actions: list[str]  # most urgent first
+    warnings: list[str] = []  # reasons the numbers should not be trusted, shown before the actions
 
 
 def _where(x_center: float, left: float, right: float) -> str:
@@ -44,6 +50,7 @@ def analyze_packs(
     produced_by: str = "vision-0",
     low_fill: float = LOW_FILL_RATIO,
     min_gap_widths: float = MIN_GAP_WIDTHS,
+    min_packs: int = MIN_PACKS_FOR_REPORT,
 ) -> tuple[DetectionOutput, AvailabilityReport]:
     width, height = image_size
     clipped = [[max(0.0, b[0]), max(0.0, b[1]), min(float(width), b[2]), min(float(height), b[3])] for b in boxes]
@@ -96,10 +103,18 @@ def analyze_packs(
     for s in sorted((s for s in statuses if s.low_stock), key=lambda s: s.fill_ratio):
         actions.append(f"Shelf {s.shelf_id} is only {s.fill_ratio:.0%} stocked ({s.packs} packs). Replenish the whole row.")
 
+    warnings = []
+    if len(items) < min_packs:
+        warnings.append(
+            f"Only {len(items)} packs found (at least {min_packs} needed). This looks like a close-up, a price tag or "
+            "loose produce, not a shelf of packaged goods. Retake from 1-2 m away with the whole bay in view."
+        )
+        actions = []
+
     report = AvailabilityReport(
         image_id=image_id, rows=statuses, empty_spaces=len(gaps),
         missing_facings=sum(g.estimated_missing_facings for g in gaps),
         overall_fill=round(sum(s.fill_ratio for s in statuses) / len(statuses), 3) if statuses else 0.0,
-        actions=actions,
+        actions=actions, warnings=warnings,
     )
     return det, report
