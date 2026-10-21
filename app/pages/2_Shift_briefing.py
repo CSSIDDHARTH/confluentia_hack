@@ -11,15 +11,20 @@ two slots, and the score and steps update. The photo reading stays fixed; only t
 Part of the same app as dashboard.py (Streamlit multipage): `streamlit run app/dashboard.py`.
 """
 
+import hashlib
+import re
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from PIL import Image
 
 from shelfsense.advisor.edit import apply_rows, changes, plan_rows, swap_products
 from shelfsense.advisor.plan import plan as plan_steps
 from shelfsense.contracts import load_catalogue, load_detection_output, load_planogram
 from shelfsense.report.compliance import compute_report
+from shelfsense.vision import live
+from shelfsense.vision.render import draw_bay_report
 
 ROOT = Path(__file__).resolve().parents[2]
 BAYS = ROOT / "data" / "demo_bays"
@@ -35,6 +40,19 @@ def load_bay(bay: str, plan: str):
         load_detection_output(d / f"detection_{kind}.json"), load_planogram(d / f"planogram_{kind}.json"),
         load_catalogue(d / "catalogue.csv"),
     )
+
+
+@st.cache_resource(show_spinner="Loading the detectors and the product index...")
+def load_chain() -> live.LiveChain:
+    return live.LiveChain()
+
+
+def source_photo(bay: str) -> tuple[Path, bool]:
+    """The photo to read live: the original full-size Grozi photo if it is here (the saved results were made from it),
+    else the 1600 px copy stored with the bay. Second value: whether it is the original."""
+    m = re.search(r"(data/grozi/\S+\.jpg)", (BAYS / bay / "README.txt").read_text())
+    original = ROOT / m.group(1) if m else None
+    return (original, True) if original and original.exists() else (BAYS / bay / "photo.jpg", False)
 
 
 st.set_page_config(page_title="shelfSense: what to do", layout="wide")
@@ -109,6 +127,31 @@ if plan == EDIT:
     edits = changes(original, rows)
     st.caption(f"{len(edits)} change{'s' if len(edits) != 1 else ''} to the plan" + (": " + "; ".join(edits) if edits else "."))
 
+photo, is_original = source_photo(bay)
+live_key = f"live-{bay}-{plan}-{hashlib.md5(planogram.model_dump_json().encode()).hexdigest()[:10]}"
+with st.container(border=True):
+    st.markdown("**Run the whole chain on the photo now**")
+    st.caption(
+        "Finds the product blocks, names each one, lines them up with " + ("your edited plan" if plan == EDIT else "this plan")
+        + ", counts packs and finds empty spaces, from the photo, on this machine. Nothing below is read from a saved result while the live run is shown."
+    )
+    if not live.available():
+        st.info("The live chain needs the Grozi product index (`python scripts/build_sku_index.py`) and the three detectors in `models/`; showing saved results.")
+    else:
+        if st.button("Run it live", type="primary", key=f"run-{live_key}"):
+            with st.spinner("Reading the photo..."):
+                st.session_state[live_key] = load_chain().run(photo, planogram, shown_path=str(photo.relative_to(ROOT)) if photo.is_relative_to(ROOT) else photo.name)
+        if not is_original:
+            st.caption("The full-size Grozi photo is not here, so this reads the stored 1600 px copy. On that copy we saw scores differ from the saved ones (up to 17 points on a 4-block shelf).")
+result = st.session_state.get(live_key)
+if result is not None:
+    det = result.det
+    st.success(
+        f"Live run on {result.device}: {result.total:.2f} s in total ("
+        + ", ".join(f"{k} {v:.2f} s" for k, v in result.timings.items()) + "). The numbers below come from this run."
+        + ("" if result.total > 1 else " The first run after loading is slower.")
+    )
+
 report = compute_report(det, planogram, catalogue, group_items=True)
 steps = plan_steps(report, catalogue, planogram)
 c1, c2, c3 = st.columns(3)
@@ -118,9 +161,14 @@ c3.metric("Steps for staff", len(steps))
 
 left, right = st.columns([3, 2])
 with left:
-    overlay = BAYS / bay / f"overlay_{'compliant' if plan == EDIT else plan}.jpg"
-    if overlay.exists():
-        st.image(str(overlay), caption=f"{bay}: detected blocks and the slot each sits in" + (" (the photo reading does not change when you edit the plan)" if plan == EDIT else ""))
+    if result is not None:
+        shown = draw_bay_report(Image.open(photo), det, report, "Live run", footer=False)
+        shown.thumbnail((1400, 2000))
+        st.image(shown, caption=f"{bay}: read live. Green = pack in its place, red = misplaced, orange = not recognised, red box = empty space")
+    else:
+        overlay = BAYS / bay / f"overlay_{'compliant' if plan == EDIT else plan}.jpg"
+        if overlay.exists():
+            st.image(str(overlay), caption=f"{bay}: saved reading, detected blocks and the slot each sits in" + (" (the photo reading does not change when you edit the plan, until you press Run it live)" if plan == EDIT else ""))
 with right:
     st.subheader("Steps, most severe first")
     if not steps:

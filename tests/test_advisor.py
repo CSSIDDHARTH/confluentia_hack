@@ -115,3 +115,19 @@ def test_edit_mode_starts_at_the_real_plan_and_a_swap_lowers_the_score():
     assert "vs the real plan" in [m.delta for m in at.metric][0]
     _by_label(at.button, "Reset to the shelf's plan").click().run()
     assert _metrics(at)["Compliance score"] == "98 / 100"
+
+
+def test_live_run_reproduces_the_saved_score_and_reports_its_timing():
+    from shelfsense.vision import live
+
+    if not live.available():
+        pytest.skip("needs the Grozi product index and the detectors")
+    at = _page()
+    _by_label(at.selectbox, "Demo shelf").select("store1_47").run()
+    at.radio[0].set_value("compliant").run()
+    assert _metrics(at)["Compliance score"] == "98 / 100"
+    _by_label_prefix = next(b for b in at.button if b.label == "Run it live")
+    _by_label_prefix.click().run()
+    assert not at.exception
+    assert _metrics(at)["Compliance score"] == "98 / 100"
+    assert any("Live run on" in s.value and "in total" in s.value for s in at.success)

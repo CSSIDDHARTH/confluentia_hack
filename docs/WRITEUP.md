@@ -20,6 +20,8 @@ photo -> product-block detector -> product naming -> align to planogram -> count
 5. **Find empty space** with a third YOLO11s detector trained directly on hand-labelled empty shelf spots. Rows still come from the vertical coverage of packs; each empty space goes to its nearest row, its width over that row's median pack width is the number of missing facings, and a row more than 40% covered by empty spaces is low stock. (Our first method inferred gaps from missing packs; it is kept as the fallback when the void weights are absent, and scored far lower, see below.)
 6. **Report**: a compliance score with each violation and a corrective action.
 
+The planogram demo does not depend on saved results: the "What to do" page has a **Run it live** button that reads the photo from scratch (all three detectors, naming and alignment) and reports the seconds each stage took. On the five demo shelves it reproduces all 10 saved scores exactly.
+
 A second mode, *shelf availability*, skips the planogram and gives empty spaces, per-row fill and a refill list for any shelf photo, uploaded live.
 
 ## From violation lines to steps
@@ -54,6 +56,9 @@ All on held-out data (different stores or different images from training).
 | Same photos, our first method (gaps inferred from missing packs) | precision 0.29, recall 0.25, F1 0.27 |
 
 ## Assumptions and limits (stated, not hidden)
+
+- **The 98 on the correct plan is partly circular.** That plan's facings are the pack counts of our own pack detector on the same photo, so a high score checks naming, plan alignment and slot assignment, not counting accuracy. Counting is judged only by the pack detector's mAP50 of 0.89 on SKU-110K.
+- **Scores are sensitive to input resolution on small shelves.** Reading the stored 1600 px copy of a demo photo instead of the 3264 px original changed 5 of the 10 scores, by up to 17 points (`store1_44`: 80 to 63). These shelves have 4 to 6 product blocks, so one different detection moves the score by 7 to 15 points. The live page therefore reads the original photo when it is present.
 
 - Front-facing photo of one shelf bay; each image is tagged with its planogram.
 - Planograms are ordinal (shelf, slot order, facings); public planograms carry no physical measurements.
@@ -132,6 +137,19 @@ The retrain shows that box accuracy alone is not a safe proxy for shelf-level qu
 
 ## Edge fit (measured)
 
+**The whole planogram chain** (`scripts/benchmark_chain.py`: product blocks, naming, alignment, packs, empty spaces; the five demo bays at their original 3264 px, median over 10 runs after a warm-up):
+
+| Stage | Laptop GPU | 4 CPU cores |
+|---|---|---|
+| Find product blocks | 59 ms | 357 ms |
+| Name each block | 73 ms | 508 ms |
+| Align to the plan | 0 ms | 0 ms |
+| Count packs | 77 ms | 440 ms |
+| Find empty spaces | 51 ms | 193 ms |
+| **Whole chain** | **334 ms** | **1,567 ms** |
+
+So one shelf bay is audited in a third of a second on a laptop GPU and in about 1.6 s on four CPU cores with no GPU. The first run after loading is slower (about 2 s on the GPU). Still untested: real Jetson or phone hardware and int8 quantisation.
+
 The three detectors are YOLO11s (19 MB each as PyTorch weights, 38 MB as ONNX); the timings below are for the pack detector, and the void detector is the same size at 640 px (not timed separately), and the matcher is a ViT-S/14 embedder. Median time to run the pack detector on one photo (8 test photos, `scripts/benchmark_edge.py`), CPU runs pinned to 4 cores of a laptop CPU as a stand-in for a small edge device (no Jetson or phone was available):
 
 | Input size | Laptop GPU (fp16) | CPU, 4 cores, PyTorch | CPU, 4 cores, ONNX Runtime | Empty-space F1 (200 images) |
@@ -150,6 +168,7 @@ PYTHONPATH=src python3 scripts/eval_voids.py data/empty_shelf --void-weights mod
 PYTHONPATH=src python3 scripts/eval_gaps.py      # first method vs pack-derived gaps
 PYTHONPATH=src python3 scripts/train_detector.py --model models/pack_detector.pt --data data/void_yolo/data.yaml --imgsz 640 --batch 8 --epochs 60 --name void_v1   # void detector, ~15 min
 PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
-PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 126 pass, 2 skipped (no tesseract)
+PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing, pack detector
+PYTHONPATH=src taskset -c 0-3 python3 scripts/benchmark_chain.py --device cpu --threads 4   # edge timing, whole chain
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 127 pass, 2 skipped (no tesseract)
 ```

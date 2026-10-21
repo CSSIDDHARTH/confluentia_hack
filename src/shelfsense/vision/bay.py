@@ -8,6 +8,8 @@ Every pack becomes its own item carrying its block's SKU and slot, so the report
 from the same photo. Empty spaces come from a void detector when given one, else from gaps between packs in a row.
 """
 
+import time
+from contextlib import contextmanager
 from pathlib import Path
 from statistics import median
 
@@ -124,18 +126,35 @@ def analyze_bay(
     shown_path: str | None = None,
     void_detector: ProductDetector | None = None,
     void_conf: float = VOID_CONF,
+    timings: dict[str, float] | None = None,
 ) -> DetectionOutput:
-    """One photo, one planogram: slot-aligned, pack-level DetectionOutput with gaps."""
+    """One photo, one planogram: slot-aligned, pack-level DetectionOutput with gaps.
+
+    If `timings` is a dict, it is filled with the seconds each stage took (blocks, naming, alignment, packs, voids)."""
+
+    @contextmanager
+    def timed(stage: str):
+        t = time.perf_counter()
+        yield
+        if timings is not None:
+            timings[stage] = timings.get(stage, 0.0) + time.perf_counter() - t
+
     image_path = Path(image_path)
-    det = block_detector.detect(image_path)
+    with timed("find product blocks"):
+        det = block_detector.detect(image_path)
     if shown_path is not None:
         det.image_path = shown_path
     image = Image.open(image_path).convert("RGB")
     cands = candidates if candidates is not None else {s.sku for sh in planogram.shelves for s in sh.slots}
-    identify_items(det, image, matcher, cands, min_confidence)
-    assign_slots(det, planogram)
-    packs, confs, _ = pack_detector.boxes(image_path)
-    packs, confs = drop_fragments(packs, confs)
-    det = facings_output(det, packs, confs, produced_by=f"yolo:{pack_detector.name}")
-    voids = [v for v in detect_voids(void_detector, image_path) if v[1] >= void_conf] if void_detector else None
-    return add_gaps(det, packs, voids)
+    with timed("name each block"):
+        identify_items(det, image, matcher, cands, min_confidence)
+    with timed("align to the plan"):
+        assign_slots(det, planogram)
+    with timed("count packs"):
+        packs, confs, _ = pack_detector.boxes(image_path)
+        packs, confs = drop_fragments(packs, confs)
+        det = facings_output(det, packs, confs, produced_by=f"yolo:{pack_detector.name}")
+    with timed("find empty spaces"):
+        voids = [v for v in detect_voids(void_detector, image_path) if v[1] >= void_conf] if void_detector else None
+        det = add_gaps(det, packs, voids)
+    return det
