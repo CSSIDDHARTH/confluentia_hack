@@ -1,0 +1,48 @@
+{
+  "image_id": "shelf_06_coffee_us",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 19,
+      "fill_ratio": 0.953,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 15,
+      "fill_ratio": 0.817,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 16,
+      "fill_ratio": 0.953,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S4",
+      "packs": 15,
+      "fill_ratio": 0.942,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S5",
+      "packs": 27,
+      "fill_ratio": 0.983,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S6",
+      "packs": 33,
+      "fill_ratio": 0.985,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 2,
+  "missing_facings": 3,
+  "overall_fill": 0.939,
+  "actions": [
+    "Shelf S2: empty space on the right, about 2 packs wide. Refill it.",
+    "Shelf S2: empty space on the middle, about 1 pack wide. Refill it."
+  ]
+}

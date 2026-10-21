@@ -16,7 +16,9 @@ src/shelfsense/
   vision/             Person A: detection, SKU recognition, shelf/slot assignment, gaps
   pricing/            Person B: label detection, OCR, price parsing
   report/             Person B: compliance scoring, recommendations, report export
-app/dashboard.py      Person B: Streamlit dashboard
+app/dashboard.py      Person B: Streamlit dashboard (planogram view)
+app/pages/            Extra dashboard pages, shown in the sidebar automatically (Streamlit multipage):
+                      1_Shelf_availability.py = wide-shelf mode: empty space, per-row fill, refill list, no planogram
 scripts/              Data download, mock generation, utilities
 tests/                pytest; test_contracts.py checks the contracts agree with each other
 data/                 Git-ignored except data/mock/; fetch with `python scripts/download_data.py all` (see data/README.md)
@@ -32,6 +34,14 @@ pip install -e ".[vision]"         # Person A only: ultralytics + opencv (skip i
 python scripts/make_mock_image.py     # renders data/mock/mock_shelf_001.png
 pytest                                 # must pass before every merge
 streamlit run app/dashboard.py
+```
+
+Dashboard with live photo upload (the Shelf availability page runs the detector on an uploaded photo when `ultralytics` and `models/pack_detector.pt` are present). If your system Python has torch and ultralytics but not Streamlit, add Streamlit in a venv that reuses them, so nothing in your system packages changes:
+
+```bash
+python3 -m venv --system-site-packages .venv
+PYTHONPATH= .venv/bin/pip install streamlit "pyarrow<18"   # pyarrow 18+ needs NumPy 2
+PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # then open the Shelf availability page
 ```
 
 If ROS is sourced in your shell, its pytest plugins crash on load. Run `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest` or `unset PYTHONPATH` first.
@@ -58,9 +68,12 @@ These must appear in the final submission. Add to the list as you go.
 6. Catalogue prices are the source of truth, and a label is a mismatch if its price differs from the catalogue price. Promotions are out of scope for now.
 7. No public dataset has planograms with violations, real prices, or price-tag text. Violations are created by editing compliant shelves, prices are synthetic, and OCR accuracy is measured on hand-transcribed or synthetic tags.
 8. Data: Grozi-3.2K (Swiss supermarket shelves with product boxes, reference images and planograms; academic use only) and Open Food Facts price tags (CC BY-SA 4.0). See `data/README.md`.
-9. Grozi boxes cover a whole product block (all facings of a product), not single packs, so facing counts need a separate per-pack detector or an estimate.
-10. The price-label detector (YOLOv8n) is trained only on Open Food Facts price tags (`data/price_tags/`), with no Grozi shelves in training. It was tested on 31 hand-boxed Grozi labels: all 31 found, 27 prices read correctly, 2 wrong, 2 unreadable. A price mismatch resting on OCR confidence below 0.5 is still reported but flagged "verify".
-11. A label is tied to a slot by position: it goes on the same shelf, to the slot whose first facing is closest in x, with at most one label per slot. A slot's left edge comes from the vision stage's items and gaps in it, so a slot with nothing detected cannot receive a label.
+9. Grozi boxes cover a whole product block (all facings of a product), so facings come from a second, pack-level detector (see 12): each visible pack inside a block is one facing, and stacked packs count separately. Every pack becomes its own item carrying its block's SKU and slot, so the report's "items in a slot = facings" rule gives stock-outs and low stock. Misplaced and unrecognised items are reported once per slot and product (`compute_report(..., group_items=True)`), not once per pack.
+10. The demo planograms (`data/demo_bays/<bay>/planogram_compliant.json`) are written from the human labels of held-out Grozi shelves, with facings taken from the pack counts on the photo. Each has a `planogram_scenario.json` with three planted planned changes: two products swapped, one slot expecting a product that is absent (taken from a different category), and one product's facings raised by two (a promotion reset the shelf has not caught up with). No public data has real planogram violations (assumption 7), and we do not edit photos: erasing packs by inpainting or flat fill looked fake.
+11. Product identification is restricted to the planogram's own SKUs. Closed-set matching tends to confirm a lookalike product the plan expects, so planted absent products come from a different category. Measured on held-out stores, the whole chain (detect, name, align, count) scores 98, 88 and 86 on the compliant plan for the three best shelves of at least four blocks, and 80 or lower for the rest, so the demo bays are chosen by that ranking, not at random. A stress test with 20 random extra candidate products per bay scored lower and its results depended on which products were drawn.
+12. Availability (phase 4) uses a second, pack-level detector (YOLO11s trained on an 800-image SKU-110K subset, mAP50 0.89 on 200 held-out images). An empty space is a stretch of a shelf row that no pack covers but that is at least 0.8 of that row's median pack width; missing facings = stretch width / median pack width. A row is low stock when packs cover less than 60% of the bay's width. These thresholds are untuned, and gap accuracy is not measured because no public data labels empty space; it is judged by eye on `data/test_images/`. Gaps are only as good as the pack detector, so missed packs show up as false gaps.
+13. The price-label detector (YOLOv8n) is trained only on Open Food Facts price tags (`data/price_tags/`), with no Grozi shelves in training. It was tested on 31 hand-boxed Grozi labels: all 31 found, 27 prices read correctly, 2 wrong, 2 unreadable. A price mismatch resting on OCR confidence below 0.5 is still reported but flagged "verify".
+14. A label is tied to a slot by position: it goes on the same shelf, to the slot whose first facing is closest in x, with at most one label per slot. A slot's left edge comes from the vision stage's items and gaps in it, so a slot with nothing detected cannot receive a label.
 
 ## Working agreements
 

@@ -1,0 +1,1891 @@
+{
+  "schema_version": "0.1",
+  "image_id": "shelf_05_footcare_de",
+  "image_path": "data/test_images/shelf_05_footcare_de.jpg",
+  "image_width": 2448,
+  "image_height": 3264,
+  "planogram_id": "unassigned",
+  "captured_at": "2026-10-20T10:23:10+00:00",
+  "produced_by": {
+    "vision": "yolo:pack_detector",
+    "availability": "gaps-v1"
+  },
+  "shelves": [
+    {
+      "bbox": [
+        33.71860122680664,
+        163.91525268554688,
+        2343.501220703125,
+        736.685546875
+      ],
+      "shelf_id": "S1"
+    },
+    {
+      "bbox": [
+        0.07308375835418701,
+        864.4404907226562,
+        2448.0,
+        1245.683837890625
+      ],
+      "shelf_id": "S2"
+    },
+    {
+      "bbox": [
+        0.0,
+        1282.9012451171875,
+        2448.0,
+        3034.1796875
+      ],
+      "shelf_id": "S3"
+    }
+  ],
+  "items": [
+    {
+      "bbox": [
+        33.7,
+        477.7,
+        186.0,
+        720.2
+      ],
+      "item_id": "i001",
+      "det_confidence": 0.7468,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        197.5,
+        506.3,
+        380.3,
+        736.7
+      ],
+      "item_id": "i002",
+      "det_confidence": 0.7035,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        469.9,
+        307.2,
+        584.0,
+        640.2
+      ],
+      "item_id": "i003",
+      "det_confidence": 0.8058,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        593.4,
+        259.5,
+        690.6,
+        645.0
+      ],
+      "item_id": "i004",
+      "det_confidence": 0.7965,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        698.7,
+        328.0,
+        809.1,
+        648.2
+      ],
+      "item_id": "i005",
+      "det_confidence": 0.8387,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        820.1,
+        362.5,
+        924.2,
+        656.8
+      ],
+      "item_id": "i006",
+      "det_confidence": 0.8728,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        931.2,
+        368.0,
+        1039.8,
+        652.6
+      ],
+      "item_id": "i007",
+      "det_confidence": 0.8498,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1048.1,
+        375.7,
+        1154.3,
+        667.1
+      ],
+      "item_id": "i008",
+      "det_confidence": 0.8409,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1161.0,
+        378.7,
+        1253.7,
+        665.9
+      ],
+      "item_id": "i009",
+      "det_confidence": 0.8226,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1261.7,
+        396.2,
+        1321.1,
+        669.3
+      ],
+      "item_id": "i010",
+      "det_confidence": 0.7464,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1324.0,
+        400.3,
+        1379.0,
+        666.7
+      ],
+      "item_id": "i011",
+      "det_confidence": 0.7428,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1383.5,
+        394.8,
+        1466.3,
+        671.3
+      ],
+      "item_id": "i012",
+      "det_confidence": 0.8543,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1473.5,
+        374.9,
+        1561.2,
+        668.7
+      ],
+      "item_id": "i013",
+      "det_confidence": 0.7881,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1569.4,
+        379.0,
+        1667.6,
+        674.9
+      ],
+      "item_id": "i014",
+      "det_confidence": 0.8054,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1669.1,
+        163.9,
+        1746.1,
+        677.3
+      ],
+      "item_id": "i015",
+      "det_confidence": 0.2965,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1777.8,
+        391.9,
+        1869.0,
+        680.1
+      ],
+      "item_id": "i016",
+      "det_confidence": 0.7261,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1877.1,
+        405.9,
+        1998.1,
+        683.9
+      ],
+      "item_id": "i017",
+      "det_confidence": 0.7987,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2005.9,
+        475.2,
+        2112.3,
+        683.7
+      ],
+      "item_id": "i018",
+      "det_confidence": 0.6907,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2124.0,
+        461.8,
+        2247.8,
+        685.3
+      ],
+      "item_id": "i019",
+      "det_confidence": 0.73,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2252.4,
+        539.8,
+        2343.5,
+        691.3
+      ],
+      "item_id": "i020",
+      "det_confidence": 0.3454,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S1",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        0.1,
+        1010.0,
+        95.7,
+        1245.7
+      ],
+      "item_id": "i021",
+      "det_confidence": 0.7889,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        112.8,
+        1010.7,
+        274.7,
+        1237.2
+      ],
+      "item_id": "i022",
+      "det_confidence": 0.8156,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        290.0,
+        1013.4,
+        441.3,
+        1241.5
+      ],
+      "item_id": "i023",
+      "det_confidence": 0.8172,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        537.5,
+        959.8,
+        662.2,
+        1203.8
+      ],
+      "item_id": "i024",
+      "det_confidence": 0.7916,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        666.8,
+        864.4,
+        762.6,
+        1201.7
+      ],
+      "item_id": "i025",
+      "det_confidence": 0.7881,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        772.4,
+        864.7,
+        877.4,
+        1197.5
+      ],
+      "item_id": "i026",
+      "det_confidence": 0.8245,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        883.8,
+        865.6,
+        977.3,
+        1194.2
+      ],
+      "item_id": "i027",
+      "det_confidence": 0.8214,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        986.7,
+        978.4,
+        1181.9,
+        1184.3
+      ],
+      "item_id": "i028",
+      "det_confidence": 0.8159,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1295.4,
+        991.8,
+        1412.4,
+        1173.1
+      ],
+      "item_id": "i029",
+      "det_confidence": 0.6408,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1421.9,
+        882.2,
+        1504.8,
+        1175.5
+      ],
+      "item_id": "i030",
+      "det_confidence": 0.8028,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1509.5,
+        886.6,
+        1581.1,
+        1167.3
+      ],
+      "item_id": "i031",
+      "det_confidence": 0.802,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1587.5,
+        889.3,
+        1657.0,
+        1169.4
+      ],
+      "item_id": "i032",
+      "det_confidence": 0.7604,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1660.9,
+        879.5,
+        1709.9,
+        1162.4
+      ],
+      "item_id": "i033",
+      "det_confidence": 0.6189,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1710.7,
+        890.2,
+        1752.1,
+        1159.6
+      ],
+      "item_id": "i034",
+      "det_confidence": 0.3744,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1755.6,
+        885.5,
+        1829.1,
+        1152.7
+      ],
+      "item_id": "i035",
+      "det_confidence": 0.7571,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1835.5,
+        886.0,
+        1904.9,
+        1150.3
+      ],
+      "item_id": "i036",
+      "det_confidence": 0.7623,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1926.7,
+        893.6,
+        1995.4,
+        1145.9
+      ],
+      "item_id": "i037",
+      "det_confidence": 0.7663,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2001.3,
+        892.2,
+        2068.0,
+        1142.3
+      ],
+      "item_id": "i038",
+      "det_confidence": 0.7932,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2073.7,
+        891.2,
+        2138.2,
+        1138.4
+      ],
+      "item_id": "i039",
+      "det_confidence": 0.7933,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2147.2,
+        904.4,
+        2217.9,
+        1130.7
+      ],
+      "item_id": "i040",
+      "det_confidence": 0.8007,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2221.2,
+        905.7,
+        2285.0,
+        1129.6
+      ],
+      "item_id": "i041",
+      "det_confidence": 0.7972,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2294.3,
+        906.3,
+        2359.6,
+        1124.1
+      ],
+      "item_id": "i042",
+      "det_confidence": 0.7943,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2365.1,
+        901.1,
+        2426.7,
+        1122.8
+      ],
+      "item_id": "i043",
+      "det_confidence": 0.758,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2429.7,
+        903.2,
+        2448.0,
+        1123.8
+      ],
+      "item_id": "i044",
+      "det_confidence": 0.3917,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S2",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        0.0,
+        2357.2,
+        78.1,
+        2615.2
+      ],
+      "item_id": "i045",
+      "det_confidence": 0.386,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        0.5,
+        1421.6,
+        221.6,
+        1699.4
+      ],
+      "item_id": "i046",
+      "det_confidence": 0.7923,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        165.5,
+        2698.8,
+        374.9,
+        2910.5
+      ],
+      "item_id": "i047",
+      "det_confidence": 0.3161,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        170.9,
+        2318.1,
+        269.1,
+        2457.2
+      ],
+      "item_id": "i048",
+      "det_confidence": 0.503,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        171.3,
+        2531.9,
+        376.9,
+        2920.2
+      ],
+      "item_id": "i049",
+      "det_confidence": 0.2578,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        240.6,
+        1403.2,
+        494.1,
+        1698.1
+      ],
+      "item_id": "i050",
+      "det_confidence": 0.8433,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        246.3,
+        1885.3,
+        382.3,
+        2030.4
+      ],
+      "item_id": "i051",
+      "det_confidence": 0.6793,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        283.5,
+        2296.1,
+        381.6,
+        2471.9
+      ],
+      "item_id": "i052",
+      "det_confidence": 0.6372,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        396.8,
+        1891.3,
+        541.4,
+        2047.3
+      ],
+      "item_id": "i053",
+      "det_confidence": 0.6903,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        418.2,
+        2272.8,
+        583.1,
+        2476.5
+      ],
+      "item_id": "i054",
+      "det_confidence": 0.7246,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        431.8,
+        2646.2,
+        664.6,
+        3034.2
+      ],
+      "item_id": "i055",
+      "det_confidence": 0.4944,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        548.4,
+        1411.3,
+        673.0,
+        1695.6
+      ],
+      "item_id": "i056",
+      "det_confidence": 0.7039,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        588.3,
+        1895.8,
+        716.8,
+        2134.4
+      ],
+      "item_id": "i057",
+      "det_confidence": 0.7848,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        590.3,
+        1407.3,
+        674.7,
+        1695.1
+      ],
+      "item_id": "i058",
+      "det_confidence": 0.2988,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        620.8,
+        2227.8,
+        711.6,
+        2552.2
+      ],
+      "item_id": "i059",
+      "det_confidence": 0.8013,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        693.2,
+        2627.1,
+        880.7,
+        2970.2
+      ],
+      "item_id": "i060",
+      "det_confidence": 0.5605,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        699.2,
+        1387.9,
+        797.1,
+        1671.5
+      ],
+      "item_id": "i061",
+      "det_confidence": 0.7703,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        714.3,
+        2219.5,
+        791.3,
+        2536.4
+      ],
+      "item_id": "i062",
+      "det_confidence": 0.8076,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        725.2,
+        1785.8,
+        814.7,
+        2120.0
+      ],
+      "item_id": "i063",
+      "det_confidence": 0.7489,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        795.7,
+        2202.2,
+        872.4,
+        2514.9
+      ],
+      "item_id": "i064",
+      "det_confidence": 0.8132,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        805.3,
+        1380.4,
+        901.1,
+        1653.7
+      ],
+      "item_id": "i065",
+      "det_confidence": 0.7245,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        818.5,
+        1763.2,
+        879.9,
+        2069.3
+      ],
+      "item_id": "i066",
+      "det_confidence": 0.714,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        878.0,
+        2195.1,
+        953.0,
+        2499.0
+      ],
+      "item_id": "i067",
+      "det_confidence": 0.8308,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        885.3,
+        1744.4,
+        958.8,
+        2051.4
+      ],
+      "item_id": "i068",
+      "det_confidence": 0.7533,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        886.6,
+        2569.3,
+        1054.2,
+        2829.3
+      ],
+      "item_id": "i069",
+      "det_confidence": 0.2511,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        892.7,
+        2594.7,
+        1062.6,
+        2881.1
+      ],
+      "item_id": "i070",
+      "det_confidence": 0.3717,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        931.1,
+        1386.9,
+        1021.6,
+        1658.5
+      ],
+      "item_id": "i071",
+      "det_confidence": 0.7806,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        959.1,
+        2181.0,
+        1032.9,
+        2476.9
+      ],
+      "item_id": "i072",
+      "det_confidence": 0.7978,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        964.6,
+        1733.3,
+        1046.0,
+        2042.5
+      ],
+      "item_id": "i073",
+      "det_confidence": 0.7959,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1037.6,
+        2160.3,
+        1104.6,
+        2449.8
+      ],
+      "item_id": "i074",
+      "det_confidence": 0.7387,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1040.3,
+        1375.0,
+        1126.3,
+        1640.7
+      ],
+      "item_id": "i075",
+      "det_confidence": 0.7663,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1076.7,
+        2546.6,
+        1210.4,
+        2869.0
+      ],
+      "item_id": "i076",
+      "det_confidence": 0.3372,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1077.1,
+        1738.7,
+        1160.2,
+        2058.6
+      ],
+      "item_id": "i077",
+      "det_confidence": 0.7856,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1108.8,
+        2144.5,
+        1158.4,
+        2426.0
+      ],
+      "item_id": "i078",
+      "det_confidence": 0.624,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1136.3,
+        1359.4,
+        1214.7,
+        1617.1
+      ],
+      "item_id": "i079",
+      "det_confidence": 0.749,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1166.3,
+        1742.6,
+        1235.6,
+        2051.9
+      ],
+      "item_id": "i080",
+      "det_confidence": 0.8082,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1201.6,
+        2137.9,
+        1275.9,
+        2377.0
+      ],
+      "item_id": "i081",
+      "det_confidence": 0.6672,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1231.8,
+        2510.2,
+        1395.2,
+        2790.2
+      ],
+      "item_id": "i082",
+      "det_confidence": 0.3047,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1242.6,
+        1752.2,
+        1314.1,
+        2037.6
+      ],
+      "item_id": "i083",
+      "det_confidence": 0.787,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1245.6,
+        1353.0,
+        1339.3,
+        1606.4
+      ],
+      "item_id": "i084",
+      "det_confidence": 0.7543,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1288.8,
+        2117.0,
+        1390.1,
+        2399.2
+      ],
+      "item_id": "i085",
+      "det_confidence": 0.8149,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1329.7,
+        1816.7,
+        1415.8,
+        2024.2
+      ],
+      "item_id": "i086",
+      "det_confidence": 0.8019,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1361.9,
+        1338.3,
+        1445.9,
+        1609.4
+      ],
+      "item_id": "i087",
+      "det_confidence": 0.6595,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1394.9,
+        2096.3,
+        1488.3,
+        2376.0
+      ],
+      "item_id": "i088",
+      "det_confidence": 0.8266,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1412.3,
+        2504.9,
+        1573.4,
+        2762.9
+      ],
+      "item_id": "i089",
+      "det_confidence": 0.2517,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1420.5,
+        1729.9,
+        1485.8,
+        2012.2
+      ],
+      "item_id": "i090",
+      "det_confidence": 0.7643,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1452.7,
+        1326.5,
+        1522.1,
+        1595.2
+      ],
+      "item_id": "i091",
+      "det_confidence": 0.768,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1491.8,
+        1724.1,
+        1555.0,
+        2001.0
+      ],
+      "item_id": "i092",
+      "det_confidence": 0.78,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1495.1,
+        2095.3,
+        1585.7,
+        2229.1
+      ],
+      "item_id": "i093",
+      "det_confidence": 0.737,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1497.5,
+        2238.3,
+        1586.3,
+        2350.6
+      ],
+      "item_id": "i094",
+      "det_confidence": 0.7421,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1526.7,
+        1308.7,
+        1571.0,
+        1591.9
+      ],
+      "item_id": "i095",
+      "det_confidence": 0.2613,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1560.5,
+        1689.8,
+        1620.7,
+        1985.2
+      ],
+      "item_id": "i096",
+      "det_confidence": 0.7615,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1561.4,
+        1309.3,
+        1622.0,
+        1594.9
+      ],
+      "item_id": "i097",
+      "det_confidence": 0.7095,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1594.1,
+        2050.1,
+        1679.8,
+        2320.3
+      ],
+      "item_id": "i098",
+      "det_confidence": 0.7584,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1599.7,
+        2429.5,
+        1753.7,
+        2691.3
+      ],
+      "item_id": "i099",
+      "det_confidence": 0.2684,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1625.7,
+        1682.7,
+        1672.1,
+        1973.4
+      ],
+      "item_id": "i100",
+      "det_confidence": 0.6839,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1627.0,
+        1307.5,
+        1682.6,
+        1593.7
+      ],
+      "item_id": "i101",
+      "det_confidence": 0.7419,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1676.5,
+        1651.2,
+        1754.9,
+        1958.7
+      ],
+      "item_id": "i102",
+      "det_confidence": 0.7598,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1685.9,
+        1300.8,
+        1737.2,
+        1583.7
+      ],
+      "item_id": "i103",
+      "det_confidence": 0.7264,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1688.8,
+        2049.7,
+        1769.5,
+        2267.1
+      ],
+      "item_id": "i104",
+      "det_confidence": 0.7553,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1740.0,
+        1297.4,
+        1792.0,
+        1576.7
+      ],
+      "item_id": "i105",
+      "det_confidence": 0.7511,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1790.0,
+        1682.6,
+        1907.1,
+        1922.2
+      ],
+      "item_id": "i106",
+      "det_confidence": 0.6511,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1798.5,
+        1332.5,
+        1846.4,
+        1570.9
+      ],
+      "item_id": "i107",
+      "det_confidence": 0.722,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1801.1,
+        2074.6,
+        1888.9,
+        2279.6
+      ],
+      "item_id": "i108",
+      "det_confidence": 0.7507,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1850.5,
+        1335.9,
+        1911.9,
+        1565.8
+      ],
+      "item_id": "i109",
+      "det_confidence": 0.7649,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1891.4,
+        2345.6,
+        2035.5,
+        2598.6
+      ],
+      "item_id": "i110",
+      "det_confidence": 0.3913,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1895.0,
+        2030.0,
+        1981.0,
+        2264.3
+      ],
+      "item_id": "i111",
+      "det_confidence": 0.8015,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1924.9,
+        1296.9,
+        2002.3,
+        1554.5
+      ],
+      "item_id": "i112",
+      "det_confidence": 0.7908,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1928.7,
+        1680.7,
+        2043.7,
+        1907.5
+      ],
+      "item_id": "i113",
+      "det_confidence": 0.7684,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        1986.0,
+        2082.1,
+        2089.2,
+        2238.9
+      ],
+      "item_id": "i114",
+      "det_confidence": 0.4056,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2007.7,
+        1299.7,
+        2076.9,
+        1547.3
+      ],
+      "item_id": "i115",
+      "det_confidence": 0.7918,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2051.1,
+        1649.5,
+        2137.6,
+        1894.0
+      ],
+      "item_id": "i116",
+      "det_confidence": 0.6821,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2082.7,
+        1296.1,
+        2147.1,
+        1539.3
+      ],
+      "item_id": "i117",
+      "det_confidence": 0.7948,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2115.2,
+        2086.5,
+        2216.3,
+        2207.6
+      ],
+      "item_id": "i118",
+      "det_confidence": 0.2556,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2138.1,
+        1631.6,
+        2205.5,
+        1876.1
+      ],
+      "item_id": "i119",
+      "det_confidence": 0.7215,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2152.5,
+        1296.8,
+        2217.5,
+        1527.7
+      ],
+      "item_id": "i120",
+      "det_confidence": 0.7646,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2175.3,
+        1975.5,
+        2281.6,
+        2184.0
+      ],
+      "item_id": "i121",
+      "det_confidence": 0.2647,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2197.8,
+        2347.1,
+        2306.1,
+        2384.0
+      ],
+      "item_id": "i122",
+      "det_confidence": 0.3173,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2233.3,
+        1290.2,
+        2316.3,
+        1511.7
+      ],
+      "item_id": "i123",
+      "det_confidence": 0.6895,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2296.4,
+        1922.8,
+        2398.5,
+        2145.1
+      ],
+      "item_id": "i124",
+      "det_confidence": 0.4239,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2322.3,
+        1283.6,
+        2398.1,
+        1510.8
+      ],
+      "item_id": "i125",
+      "det_confidence": 0.6851,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2406.4,
+        1924.0,
+        2447.8,
+        2135.4
+      ],
+      "item_id": "i126",
+      "det_confidence": 0.5531,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2413.5,
+        1282.9,
+        2447.9,
+        1505.6
+      ],
+      "item_id": "i127",
+      "det_confidence": 0.4988,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    },
+    {
+      "bbox": [
+        2423.1,
+        1283.8,
+        2448.0,
+        1501.7
+      ],
+      "item_id": "i128",
+      "det_confidence": 0.4233,
+      "sku": null,
+      "sku_confidence": 0.0,
+      "shelf_id": "S3",
+      "slot_id": null
+    }
+  ],
+  "gaps": [
+    {
+      "bbox": [
+        380.3,
+        385.4,
+        469.9,
+        670.3
+      ],
+      "gap_id": "g001",
+      "shelf_id": "S1",
+      "slot_id": null,
+      "confidence": 0.521,
+      "estimated_missing_facings": 1
+    },
+    {
+      "bbox": [
+        2343.5,
+        385.4,
+        2448.0,
+        670.3
+      ],
+      "gap_id": "g002",
+      "shelf_id": "S1",
+      "slot_id": null,
+      "confidence": 0.558,
+      "estimated_missing_facings": 1
+    },
+    {
+      "bbox": [
+        441.3,
+        892.9,
+        537.5,
+        1164.8
+      ],
+      "gap_id": "g003",
+      "shelf_id": "S2",
+      "slot_id": null,
+      "confidence": 0.638,
+      "estimated_missing_facings": 1
+    },
+    {
+      "bbox": [
+        1181.9,
+        892.9,
+        1295.4,
+        1164.8
+      ],
+      "gap_id": "g004",
+      "shelf_id": "S2",
+      "slot_id": null,
+      "confidence": 0.699,
+      "estimated_missing_facings": 2
+    }
+  ],
+  "labels": []
+}

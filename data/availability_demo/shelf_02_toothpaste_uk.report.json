@@ -1,0 +1,72 @@
+{
+  "image_id": "shelf_02_toothpaste_uk",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 16,
+      "fill_ratio": 0.738,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 16,
+      "fill_ratio": 0.489,
+      "low_stock": true
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 21,
+      "fill_ratio": 0.884,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S4",
+      "packs": 18,
+      "fill_ratio": 0.866,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S5",
+      "packs": 17,
+      "fill_ratio": 0.762,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S6",
+      "packs": 26,
+      "fill_ratio": 0.942,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S7",
+      "packs": 22,
+      "fill_ratio": 0.859,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S8",
+      "packs": 22,
+      "fill_ratio": 0.757,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S9",
+      "packs": 31,
+      "fill_ratio": 0.786,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 7,
+  "missing_facings": 18,
+  "overall_fill": 0.787,
+  "actions": [
+    "Shelf S2: empty space on the right, about 9 packs wide. Refill it.",
+    "Shelf S2: empty space on the middle, about 3 packs wide. Refill it.",
+    "Shelf S9: empty space on the left, about 2 packs wide. Refill it.",
+    "Shelf S1: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S1: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S5: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S8: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S2 is only 49% stocked (16 packs). Replenish the whole row."
+  ]
+}

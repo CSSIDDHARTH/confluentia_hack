@@ -1,0 +1,286 @@
+{
+  "schema_version": "0.1",
+  "image_id": "store1_47",
+  "image_path": "data/demo_bays/store1_47/photo.jpg",
+  "image_width": 1200,
+  "image_height": 1600,
+  "planogram_id": "PG-store1-47-scenario",
+  "captured_at": "2026-10-20T10:17:04+00:00",
+  "produced_by": {
+    "vision": "yolo:product_detector",
+    "matcher": "dinov2-vits14+adapter",
+    "alignment": "nw-v1",
+    "facings": "yolo:pack_detector"
+  },
+  "shelves": [
+    {
+      "bbox": [
+        14.6,
+        0.1,
+        1191.0,
+        263.6
+      ],
+      "shelf_id": "S1"
+    },
+    {
+      "bbox": [
+        31.5,
+        426.3,
+        1183.2,
+        990.0
+      ],
+      "shelf_id": "S2"
+    },
+    {
+      "bbox": [
+        37.6,
+        1057.3,
+        1200.0,
+        1585.7
+      ],
+      "shelf_id": "S3"
+    }
+  ],
+  "items": [
+    {
+      "bbox": [
+        71.9,
+        1.0,
+        409.7,
+        275.2
+      ],
+      "item_id": "i001",
+      "det_confidence": 0.5665,
+      "sku": "G13-88",
+      "sku_confidence": 0.7893,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        435.9,
+        0.0,
+        779.3,
+        254.7
+      ],
+      "item_id": "i002",
+      "det_confidence": 0.6848,
+      "sku": "G13-88",
+      "sku_confidence": 0.7893,
+      "shelf_id": "S1",
+      "slot_id": "S1-01"
+    },
+    {
+      "bbox": [
+        825.2,
+        0.3,
+        1147.3,
+        261.3
+      ],
+      "item_id": "i003",
+      "det_confidence": 0.5546,
+      "sku": "G13-138",
+      "sku_confidence": 0.8875,
+      "shelf_id": "S1",
+      "slot_id": "S1-02"
+    },
+    {
+      "bbox": [
+        40.3,
+        585.3,
+        314.5,
+        971.6
+      ],
+      "item_id": "i004",
+      "det_confidence": 0.5931,
+      "sku": "G13-92",
+      "sku_confidence": 0.9736,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        347.4,
+        567.9,
+        633.7,
+        975.5
+      ],
+      "item_id": "i005",
+      "det_confidence": 0.4947,
+      "sku": "G13-92",
+      "sku_confidence": 0.9736,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        652.4,
+        758.6,
+        829.2,
+        977.2
+      ],
+      "item_id": "i006",
+      "det_confidence": 0.4891,
+      "sku": "G13-92",
+      "sku_confidence": 0.9736,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        656.0,
+        571.8,
+        962.6,
+        979.2
+      ],
+      "item_id": "i007",
+      "det_confidence": 0.4465,
+      "sku": "G13-92",
+      "sku_confidence": 0.9736,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        974.5,
+        578.4,
+        1099.8,
+        995.3
+      ],
+      "item_id": "i008",
+      "det_confidence": 0.3981,
+      "sku": "G13-92",
+      "sku_confidence": 0.9736,
+      "shelf_id": "S2",
+      "slot_id": "S2-01"
+    },
+    {
+      "bbox": [
+        83.2,
+        1337.5,
+        392.9,
+        1528.1
+      ],
+      "item_id": "i009",
+      "det_confidence": 0.309,
+      "sku": "G13-138",
+      "sku_confidence": 0.5038,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        87.8,
+        1151.9,
+        402.0,
+        1527.2
+      ],
+      "item_id": "i010",
+      "det_confidence": 0.5956,
+      "sku": "G13-138",
+      "sku_confidence": 0.5038,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        88.4,
+        1261.6,
+        396.0,
+        1528.6
+      ],
+      "item_id": "i011",
+      "det_confidence": 0.5472,
+      "sku": "G13-138",
+      "sku_confidence": 0.5038,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        421.6,
+        1216.9,
+        698.1,
+        1420.6
+      ],
+      "item_id": "i012",
+      "det_confidence": 0.322,
+      "sku": "G13-138",
+      "sku_confidence": 0.5124,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        424.3,
+        1051.0,
+        692.5,
+        1427.5
+      ],
+      "item_id": "i013",
+      "det_confidence": 0.5399,
+      "sku": "G13-138",
+      "sku_confidence": 0.5124,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        709.7,
+        1324.9,
+        1037.0,
+        1539.9
+      ],
+      "item_id": "i014",
+      "det_confidence": 0.3274,
+      "sku": "G13-138",
+      "sku_confidence": 0.5124,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        712.1,
+        1114.7,
+        1039.5,
+        1378.2
+      ],
+      "item_id": "i015",
+      "det_confidence": 0.4249,
+      "sku": "G13-138",
+      "sku_confidence": 0.5124,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        714.1,
+        1143.0,
+        1043.1,
+        1535.9
+      ],
+      "item_id": "i016",
+      "det_confidence": 0.6376,
+      "sku": "G13-138",
+      "sku_confidence": 0.5124,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    },
+    {
+      "bbox": [
+        1092.1,
+        1307.0,
+        1200.0,
+        1572.1
+      ],
+      "item_id": "i017",
+      "det_confidence": 0.5659,
+      "sku": null,
+      "sku_confidence": 0.3982,
+      "shelf_id": "S3",
+      "slot_id": "S3-01"
+    }
+  ],
+  "gaps": [],
+  "labels": []
+}

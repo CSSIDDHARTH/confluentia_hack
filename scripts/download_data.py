@@ -2,6 +2,7 @@
 
     python scripts/download_data.py grozi        # Grocery Products / Grozi-3.2K, 1.7 GB (needs: pip install py7zr)
     python scripts/download_data.py price_tags   # Open Food Facts price-tag detection, 0.4 GB
+    python scripts/download_data.py sku110k      # SKU-110K subset (800 train + 200 val images), 1 GB
     python scripts/download_data.py all
 
 Archives are checked for absolute / '..' paths before extraction.
@@ -9,12 +10,15 @@ Archives are checked for absolute / '..' paths before extraction.
 
 import subprocess
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 
 HF_PRICE_TAGS = "https://huggingface.co/datasets/openfoodfacts/price-tag-detection/resolve/main"
+HF_SKU110K = "https://huggingface.co/datasets/adnankhan-11/smart-retail-shelf-auditing-v1/resolve/main/data"
 
 DATASETS = {
     "grozi": {
@@ -34,13 +38,33 @@ DATASETS = {
         },
         "licence": "CC BY-SA 4.0 (Open Food Facts / Open Prices)",
     },
+    "sku110k": {
+        "dir": "sku110k_subset",
+        "files": {
+            **{f"train-{i:05d}-of-00035.parquet": f"{HF_SKU110K}/train-{i:05d}-of-00035.parquet" for i in range(4)},
+            "valid-00000-of-00010.parquet": f"{HF_SKU110K}/valid-00000-of-00010.parquet",
+        },
+        "licence": "SKU-110K (Goldman et al., CVPR 2019): academic and non-commercial use only; "
+        "single class 'object' (one box per pack), mirrored on Hugging Face as adnankhan-11/smart-retail-shelf-auditing-v1",
+    },
 }
 
 
-def download(url: str, dest: Path) -> None:
-    # curl is much faster than urllib here and resumes interrupted downloads (-C -).
+def download(url: str, dest: Path, attempts: int = 60) -> None:
+    """curl with resume (-C -), retried until the transfer completes.
+
+    Big files from Hugging Face / Drive are often cut mid-transfer (curl exit 18), so a
+    single curl call is not enough; each retry carries on from the bytes already saved.
+    --http1.1: HF's HTTP/2 streams for big files drop more often.
+    """
     print(f"downloading {dest.name}")
-    subprocess.run(["curl", "-L", "--fail", "-C", "-", "-o", str(dest), url], check=True)
+    cmd = ["curl", "-sS", "-L", "--fail", "--http1.1", "-C", "-", "-o", str(dest), url]
+    for attempt in range(1, attempts + 1):
+        if subprocess.run(cmd).returncode == 0:
+            return
+        print(f"  {dest.name}: transfer cut off, resuming ({attempt}/{attempts})", flush=True)
+        time.sleep(2)
+    raise RuntimeError(f"could not finish downloading {url}")
 
 
 def extract_7z(archive: Path, out: Path) -> None:
@@ -61,9 +85,10 @@ def main(name: str) -> None:
     out = DATA / spec["dir"]
     out.mkdir(parents=True, exist_ok=True)
     print(f"[{name}] licence: {spec['licence']}")
-    for filename, url in spec["files"].items():
+    with ThreadPoolExecutor(max_workers=4) as pool:  # a few files at once: much faster than one stream
+        list(pool.map(lambda fu: download(fu[1], out / fu[0]), spec["files"].items()))
+    for filename in spec["files"]:
         dest = out / filename
-        download(url, dest)
         if dest.suffix == ".7z":
             print(f"extracting {dest.name}")
             extract_7z(dest, out)

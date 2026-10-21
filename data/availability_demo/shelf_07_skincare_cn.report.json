@@ -1,0 +1,66 @@
+{
+  "image_id": "shelf_07_skincare_cn",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 6,
+      "fill_ratio": 0.287,
+      "low_stock": true
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 14,
+      "fill_ratio": 0.831,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 15,
+      "fill_ratio": 0.773,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S4",
+      "packs": 25,
+      "fill_ratio": 0.874,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S5",
+      "packs": 20,
+      "fill_ratio": 0.9,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S6",
+      "packs": 22,
+      "fill_ratio": 0.846,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S7",
+      "packs": 23,
+      "fill_ratio": 0.876,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S8",
+      "packs": 15,
+      "fill_ratio": 0.78,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 7,
+  "missing_facings": 21,
+  "overall_fill": 0.771,
+  "actions": [
+    "Shelf S1: empty space on the right, about 7 packs wide. Refill it.",
+    "Shelf S1: empty space on the middle, about 5 packs wide. Refill it.",
+    "Shelf S1: empty space on the left, about 3 packs wide. Refill it.",
+    "Shelf S3: empty space on the left, about 2 packs wide. Refill it.",
+    "Shelf S8: empty space on the left, about 2 packs wide. Refill it.",
+    "Shelf S6: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S7: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S1 is only 29% stocked (6 packs). Replenish the whole row."
+  ]
+}

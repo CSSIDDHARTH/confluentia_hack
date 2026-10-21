@@ -1,0 +1,74 @@
+{
+  "image_id": "shelf_08_tampons_uk",
+  "rows": [
+    {
+      "shelf_id": "S1",
+      "packs": 4,
+      "fill_ratio": 0.291,
+      "low_stock": true
+    },
+    {
+      "shelf_id": "S2",
+      "packs": 24,
+      "fill_ratio": 0.936,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S3",
+      "packs": 14,
+      "fill_ratio": 0.776,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S4",
+      "packs": 13,
+      "fill_ratio": 0.864,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S5",
+      "packs": 13,
+      "fill_ratio": 0.783,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S6",
+      "packs": 11,
+      "fill_ratio": 0.893,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S7",
+      "packs": 24,
+      "fill_ratio": 0.812,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S8",
+      "packs": 24,
+      "fill_ratio": 0.848,
+      "low_stock": false
+    },
+    {
+      "shelf_id": "S9",
+      "packs": 15,
+      "fill_ratio": 0.74,
+      "low_stock": false
+    }
+  ],
+  "empty_spaces": 9,
+  "missing_facings": 15,
+  "overall_fill": 0.771,
+  "actions": [
+    "Shelf S1: empty space on the left, about 3 packs wide. Refill it.",
+    "Shelf S1: empty space on the right, about 3 packs wide. Refill it.",
+    "Shelf S3: empty space on the left, about 2 packs wide. Refill it.",
+    "Shelf S9: empty space on the middle, about 2 packs wide. Refill it.",
+    "Shelf S4: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S5: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S5: empty space on the left, about 1 pack wide. Refill it.",
+    "Shelf S7: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S8: empty space on the right, about 1 pack wide. Refill it.",
+    "Shelf S1 is only 29% stocked (4 packs). Replenish the whole row."
+  ]
+}
