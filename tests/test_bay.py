@@ -51,3 +51,17 @@ def test_gaps_between_packs_are_added_and_tied_to_a_shelf():
     g = det.gaps[0]
     assert g.bbox[0] == 200 and g.bbox[2] == 400 and g.estimated_missing_facings == 2
     assert g.shelf_id == "S1" and g.slot_id is None
+
+
+def test_add_gaps_uses_voids_when_given_and_packs_otherwise():
+    from shelfsense.contracts import DetectionOutput
+    from shelfsense.vision.bay import add_gaps
+
+    packs = [[100.0 * k, 100.0, 100.0 * k + 90, 200.0] for k in range(5)] + [[600.0, 100.0, 690.0, 200.0]]  # a hole at 500-600
+    base = DetectionOutput(image_id="i", image_path="i.jpg", image_width=800, image_height=300, planogram_id="p",
+                           captured_at="2026-01-01T00:00:00+00:00", produced_by={}, shelves=[], items=[], gaps=[])
+    inferred = add_gaps(base.model_copy(deep=True), packs).gaps
+    assert len(inferred) == 1 and 490 <= inferred[0].bbox[0] < 520
+    given = add_gaps(base.model_copy(deep=True), packs, voids=[([10.0, 110.0, 60.0, 190.0], 0.7)]).gaps
+    assert len(given) == 1 and given[0].confidence == 0.7 and given[0].bbox[0] == 10.0
+    assert add_gaps(base.model_copy(deep=True), packs, voids=[]).gaps == []

@@ -5,7 +5,7 @@
   "image_width": 1600,
   "image_height": 1200,
   "planogram_id": "PG-store1-36",
-  "captured_at": "2026-10-20T10:17:05+00:00",
+  "captured_at": "2026-10-21T16:04:51+00:00",
   "produced_by": {
     "vision": "yolo:product_detector",
     "matcher": "dinov2-vits14+adapter",

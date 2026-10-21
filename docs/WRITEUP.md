@@ -92,7 +92,7 @@ Until we had real labels, empty-space accuracy was measured against gaps derived
 
 A match needs IoU of at least 0.3. The confidence 0.3 was chosen on the valid split (also F1 0.64 there, 174 photos), not on the test split. The detector starts from our pack detector's weights (it already knows shelves) and trains in about 15 minutes on the laptop GPU. The dashboard's confidence slider moves along this table.
 
-Row fill now comes from the voids too (the share of the bay's width not covered by empty spaces). Pack coverage alone read a cropped top shelf as "45% stocked". This part is not measured against labels; it is checked by eye below.
+The planogram demo shelves use the same void detector for their empty spaces (regenerating them changed no compliance score, because scores do not use gaps). Row fill now comes from the voids too (the share of the bay's width not covered by empty spaces). Pack coverage alone read a cropped top shelf as "45% stocked". This part is not measured against labels; it is checked by eye below.
 
 ## Where the first method's errors came from (against pack-derived gaps)
 
@@ -149,5 +149,5 @@ PYTHONPATH=src python3 scripts/eval_gaps.py      # first method vs pack-derived 
 PYTHONPATH=src python3 scripts/train_detector.py --model models/pack_detector.pt --data data/void_yolo/data.yaml --imgsz 640 --batch 8 --epochs 60 --name void_v1   # void detector, ~15 min
 PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
 PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 118 pass, 2 skipped (no tesseract)
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 119 pass, 2 skipped (no tesseract)
 ```

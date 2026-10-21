@@ -34,7 +34,7 @@ from PIL import Image, ImageDraw, ImageFont
 from shelfsense.contracts import CatalogueItem, DetectionOutput, Planogram, Shelf, Slot, save_detection_output
 from shelfsense.report.compliance import ComplianceReport, ViolationKind, compute_report
 from shelfsense.vision.bay import analyze_bay
-from shelfsense.vision.detect import ProductDetector, group_into_rows
+from shelfsense.vision.detect import VOID_CONF_FLOOR, ProductDetector, group_into_rows
 from shelfsense.vision.grozi import VAL_STORES, labelled_boxes
 from shelfsense.vision.sku_match import SkuMatcher, class_index
 
@@ -181,6 +181,8 @@ def main() -> None:
 
     blocks = ProductDetector(ROOT / "models" / "product_detector.pt")
     packs = ProductDetector(ROOT / "models" / "pack_detector.pt", imgsz=1024, max_det=600)
+    void_weights = ROOT / "models" / "void_detector.pt"
+    voider = ProductDetector(void_weights, conf=VOID_CONF_FLOOR, imgsz=640, max_det=150) if void_weights.exists() else None
     matcher = SkuMatcher.load(GROZI / "sku_index.npz", ROOT / "models" / "sku_adapter.npy")
     names = class_index(GROZI)
     known = sorted(matcher.index.unique_skus)
@@ -228,7 +230,7 @@ def main() -> None:
         for tag, pl in (("compliant", plan), ("scenario", scenario)):
             (bay / f"planogram_{tag}.json").write_text(pl.model_dump_json(indent=2))
             cands = {s.sku for sh in pl.shelves for s in sh.slots} | distractors
-            det = downscale(analyze_bay(img, blocks, packs, matcher, pl, cands), factor, shown)
+            det = downscale(analyze_bay(img, blocks, packs, matcher, pl, cands, void_detector=voider), factor, shown)
             det.image_id = bay.name
             report = compute_report(det, pl, pool_cat, group_items=True)
             save_detection_output(det, bay / f"detection_{tag}.json")
