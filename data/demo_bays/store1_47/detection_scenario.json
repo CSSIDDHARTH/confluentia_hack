@@ -311,7 +311,7 @@
       "sku": "G13-138",
       "ocr_text": "",
       "price": 5.2,
-      "ocr_confidence": 0.2
+      "ocr_confidence": 0.125
     },
     {
       "bbox": [

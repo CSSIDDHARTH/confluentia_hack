@@ -637,7 +637,7 @@
       "sku": "G26-27",
       "ocr_text": "oe a a ———\nM-Classic Apfelmus 1111109 |\n@ ohne Zucker 23102012\n2.70 jmulijilll\n4x 100g (100g = 0.68) 7617027 \"845671",
       "price": 2.7,
-      "ocr_confidence": 0.8
+      "ocr_confidence": 0.875
     },
     {
       "bbox": [
@@ -652,7 +652,7 @@
       "sku": null,
       "ocr_text": "",
       "price": 2.75,
-      "ocr_confidence": 0.2
+      "ocr_confidence": 0.5
     },
     {
       "bbox": [
@@ -667,7 +667,7 @@
       "sku": null,
       "ocr_text": "0 se,",
       "price": 1.25,
-      "ocr_confidence": 0.2
+      "ocr_confidence": 0.5
     },
     {
       "bbox": [
@@ -682,7 +682,7 @@
       "sku": "G26-19",
       "ocr_text": "1.50 mpl |\nOg (200g = 0.43) 7 'ST TT NeTTBIC",
       "price": 1.5,
-      "ocr_confidence": 1.0
+      "ocr_confidence": 0.8125
     },
     {
       "bbox": [
@@ -697,7 +697,7 @@
       "sku": "G26-6",
       "ocr_text": "ELL",
       "price": 1.95,
-      "ocr_confidence": 0.4
+      "ocr_confidence": 0.625
     },
     {
       "bbox": [
@@ -711,8 +711,8 @@
       "slot_id": "S1-02",
       "sku": "G26-23",
       "ocr_text": "=",
-      "price": null,
-      "ocr_confidence": 0.0
+      "price": 1.7,
+      "ocr_confidence": 0.375
     },
     {
       "bbox": [

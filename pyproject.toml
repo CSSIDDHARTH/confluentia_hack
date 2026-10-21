@@ -23,6 +23,8 @@ vision = ["ultralytics>=8.3", "opencv-python-headless>=4.9"]
 # data/README.md. Without it, parse_price() and price_check still work
 # fully; only OCR-from-image-crop is unavailable.
 ocr = ["pytesseract>=0.3"]
+# Optional second OCR engine that votes with Tesseract (needs torch). Without it only Tesseract votes.
+ocr-easy = ["easyocr>=1.7"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

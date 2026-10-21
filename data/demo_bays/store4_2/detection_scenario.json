@@ -328,8 +328,8 @@
       "slot_id": "S1-02",
       "sku": "G30-28",
       "ocr_text": "—————————S—( eFC\njt? ,,., 2.2.2, MN |",
-      "price": null,
-      "ocr_confidence": 0.0
+      "price": 3.35,
+      "ocr_confidence": 0.375
     },
     {
       "bbox": [
@@ -343,8 +343,8 @@
       "slot_id": "S2-02",
       "sku": "G30-18",
       "ocr_text": "LT OT\ni 01.10.1128\nMonini Classico — ion |",
-      "price": null,
-      "ocr_confidence": 0.0
+      "price": 0.0,
+      "ocr_confidence": 0.1875
     },
     {
       "bbox": [
