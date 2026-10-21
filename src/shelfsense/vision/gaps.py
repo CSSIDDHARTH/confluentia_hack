@@ -21,6 +21,11 @@ LOW_FILL_RATIO = 0.6
 ROW_VALLEY = 0.3
 # Rows with fewer packs than this are too sparse to judge gaps from.
 MIN_PACKS_PER_ROW = 2
+# A "row" of at most this many boxes, each under STRIP_HEIGHT_RATIO of the bay's typical pack height, is a
+# strip of price labels or a pack cut off by the photo's edge, not a shelf row. Seen on two of 24 unseen
+# phone photos (a price-label strip under the products read as a row 38% and 47% stocked).
+STRIP_MAX_BOXES = 3
+STRIP_HEIGHT_RATIO = 0.5
 
 
 @dataclass
@@ -84,6 +89,23 @@ def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = ROW_
     return rows
 
 
+def drop_label_strips(rows: list[Row]) -> list[Row]:
+    """Remove rows that are a few flat boxes (price labels, cut-off packs) under much taller packs."""
+    heights = [b[3] - b[1] for r in rows for b in r.boxes]
+    if len(rows) < 2 or not heights:
+        return rows
+    typical = median(heights)
+    kept = [
+        r for r in rows
+        if not (len(r.boxes) <= STRIP_MAX_BOXES and median(b[3] - b[1] for b in r.boxes) < STRIP_HEIGHT_RATIO * typical)
+    ]
+    if not kept:
+        return rows
+    for k, r in enumerate(kept):
+        r.index = k
+    return kept
+
+
 def find_gaps(
     boxes: list[list[float]], min_gap_widths: float = MIN_GAP_WIDTHS, valley: float = ROW_VALLEY
 ) -> tuple[list[Row], list[GapCandidate]]:
@@ -92,7 +114,7 @@ def find_gaps(
     The bay's left and right edges are the outermost pack edges over all rows, so a row
     that stops short of them has a gap at its end.
     """
-    rows = cluster_rows(boxes, valley=valley)
+    rows = drop_label_strips(cluster_rows(boxes, valley=valley))
     if not rows:
         return [], []
     bay_left = min(r.boxes[0][0] for r in rows)

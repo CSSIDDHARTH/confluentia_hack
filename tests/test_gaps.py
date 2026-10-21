@@ -84,3 +84,12 @@ def test_a_row_of_a_single_pack_reports_no_gaps():
     boxes = row_of([0, 50, 100, 150], 0, 100) + row_of([0], 300, 400)  # one lonely pack below
     _, gaps = find_gaps(boxes)
     assert gaps == []
+
+
+def test_a_strip_of_flat_label_boxes_under_tall_packs_is_not_a_row():
+    from shelfsense.vision.gaps import find_gaps
+
+    packs = [[100.0 * k, 0.0, 100.0 * k + 90, 200.0] for k in range(8)]
+    labels = [[0.0, 260.0, 120.0, 290.0], [300.0, 260.0, 420.0, 290.0]]
+    rows, gaps = find_gaps(packs + labels)
+    assert len(rows) == 1 and len(rows[0].boxes) == 8

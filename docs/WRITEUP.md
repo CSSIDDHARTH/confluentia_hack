@@ -58,6 +58,8 @@ All on held-out data (different stores or different images from training).
 | Close-ups, price tags, too few packs (under 8) | 8 | Now flagged "looks like a close-up, retake from 1-2 m" and no refill list is given. Before the guard these produced false "low stock" alerts. |
 | Cluttered shelf with overlapping products | 1 | False empty spaces over products the detector missed. |
 
+A second guard drops a "row" of at most 3 flat boxes under much taller packs (a price-label strip). It removed the false low-stock row in one of the two photos where it occurred, left the other, and changed neither the empty-space F1 (0.67) nor any of the 8 test shelves.
+
 The 8-pack guard separated every close-up from every usable shelf in this sample and does not trigger on any of the 8 test shelves (125-189 packs each). Its threshold was set after looking at these 24 photos, so treat it as a sanity check, not a tuned result.
 
 ## What we tried and rejected, with numbers
