@@ -21,11 +21,21 @@ Why: vision now emits one item per **pack** (each carries its block's SKU and sl
 - `app/pages/1_Shelf_availability.py`: wide-shelf mode, no planogram. Saved shelves or live photo upload; sliders recompute instantly. If it shows a "retake" warning, the photo had fewer than 8 packs.
 - Demo shelves for the planogram view: in the dashboard, Advanced: custom paths, use `data/demo_bays/store1_47/detection_compliant.json`, `planogram_compliant.json`, `catalogue.csv` (score 98) and the `_scenario` versions (score 31). Full run order and likely judge questions: `docs/DEMO.md`.
 
+## Fewer lines for staff (optional, one call)
+
+`shelfsense.advisor.plan.plan(report, catalogue)` merges the report's violations into ordered steps (a swap's four lines become one). My page `app/pages/2_Shift_briefing.py` shows it. To use it in the dashboard, after `report = compute_report(...)`:
+
+```python
+from shelfsense.advisor.plan import plan
+for step in plan(report, catalogue):   # step.text, step.severity, step.violation_ids
+    st.markdown(f"- {step.text}")
+```
+
 ## Running it
 
 ```bash
 PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # live upload needs the .venv recipe in CLAUDE.md
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src python3 -m pytest    # 105 pass, 2 skipped without tesseract
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src python3 -m pytest    # 112 pass, 2 skipped without tesseract
 ```
 
 ## Please say the limits out loud

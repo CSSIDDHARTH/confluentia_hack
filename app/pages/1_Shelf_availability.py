@@ -55,8 +55,8 @@ st.title("Shelf availability")
 st.caption(
     "Empty spaces, low stock and what to refill, from one photo and no planogram. "
     "Packs come from a detector trained on SKU-110K; empty space is any stretch of a shelf row "
-    "that no pack covers but one could fit. Gap accuracy is judged by eye, not measured "
-    "(CLAUDE.md, assumption 12)."
+    "that no pack covers but one could fit. Measured against gaps derived from labelled packs on 200 "
+    "held-out photos: F1 about 0.63 (CLAUDE.md, assumption 12). Not measured against real empty shelf."
 )
 
 live = detector_available()

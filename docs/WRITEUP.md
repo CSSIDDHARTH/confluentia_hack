@@ -21,6 +21,19 @@ photo -> product-block detector -> product naming -> align to planogram -> count
 
 A second mode, *shelf availability*, skips the planogram and gives empty spaces, per-row fill and a refill list for any shelf photo, uploaded live.
 
+## From violation lines to steps
+
+The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 47 violation lines become 34 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
+
+### A small language model: tested, not used
+
+The brief invites a small language model (under 20B parameters) where it fits. We tested Qwen2.5-1.5B and 0.5B, run locally, in two roles:
+
+- **Deciding what to do** from the raw violation lines: every slot and number it wrote existed in the report (10 of 10 shelves), but it told staff to restock two products that were simply in each other's slots (the right instruction is a swap), named the wrong item to verify, and padded a one-violation shelf with generic advice. Its answers pass a "mentions only known slots and numbers" check, so that check does not catch wrong meaning.
+- **Rewording the rule-based steps**, with every line checked to name the same slots and products and add no numbers: the 1.5B model kept 22 of 34 lines, took a median 21 s per shelf on 16 CPU cores (5 tokens/s) and does not fit on the 4 GB GPU next to the desktop; the 0.5B model (2 s on GPU) kept 2 of 34. Kept lines were still worse than the rules: "Move Cereals #138 from S3-01 to S3-01", "9 facing slots".
+
+So the rules decide and phrase the steps, which is exact and instant. A larger model (3B or more) might word them well, but would need a semantic check we do not have, so we did not ship one.
+
 ## Measured results
 
 All on held-out data (different stores or different images from training).
@@ -113,5 +126,5 @@ So a four-core CPU with no GPU runs the detector in about a quarter of a second 
 PYTHONPATH=src python3 scripts/eval_gaps.py      # empty-space accuracy
 PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
 PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 105 pass, 2 skipped (no tesseract)
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 112 pass, 2 skipped (no tesseract)
 ```

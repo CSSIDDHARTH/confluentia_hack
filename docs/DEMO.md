@@ -45,6 +45,10 @@ Sidebar, **Shelf availability**.
 
 Say: "This is the wide-shelf mode: it works on any shop photo, because it needs no plan, only the packs it can see."
 
+### Optional: what to do (30 s)
+
+Sidebar, **What to do**. Pick `store1_47`, "Store changed the plan". The report's 8 violation lines become 4 steps; the swap is one step ("Swap Cereals #88 with Cereals #138"). Open the expander to show the 8 lines it replaced.
+
 ## 4. Price check (teammate, 60 s)
 
 Teammate shows label reading and the price mismatches. Say plainly that the prices in the demo catalogue are synthetic.
@@ -64,4 +68,5 @@ Teammate shows label reading and the price mismatches. Say plainly that the pric
 | What fails? | Missed packs show up as false gaps, and lookalike products can be confused. On 24 unseen phone photos, packaged shelves worked, with false flags on about 4 of 9; loose produce does not work; close-ups now get a "retake" warning instead of a wrong refill list. |
 | What did you try that did not work? | Larger input sizes, a texture check on gaps, flip and view-blending for naming, and a detector retrained on twice the data (better mAP, worse gap quality). All measured, none shipped. |
 | Can it run on the edge? | Measured: pack detector 224 ms per photo on 4 CPU cores with ONNX, 107 ms at lower resolution (5 points less F1). Real Jetson or phone timings are untested. |
+| Did you use a small language model? | We tested Qwen2.5 0.5B and 1.5B locally. The 1.5B model took 21 s on CPU and wrote steps like "move X from S3-01 to S3-01"; the 0.5B model failed our checks on 32 of 34 lines. A rule-based planner is exact and instant, so that is what ships. |
 | Why not a big vision-language model? | Small specialised models run on the shelf-edge device, cost nothing per image and are measurable. |

@@ -16,9 +16,11 @@ src/shelfsense/
   vision/             Person A: detection, SKU recognition, shelf/slot assignment, gaps
   pricing/            Person B: label detection, OCR, price parsing
   report/             Person B: compliance scoring, recommendations, report export
+  advisor/            Person A: merges a report's violation lines into ordered steps (plan.py)
 app/dashboard.py      Person B: Streamlit dashboard (planogram view)
 app/pages/            Extra dashboard pages, shown in the sidebar automatically (Streamlit multipage):
                       1_Shelf_availability.py = wide-shelf mode: empty space, per-row fill, refill list, no planogram
+                      2_Shift_briefing.py = the planogram report's violations merged into steps for staff
 scripts/              Data download, mock generation, utilities
 tests/                pytest; test_contracts.py checks the contracts agree with each other
 data/                 Git-ignored except data/mock/; fetch with `python scripts/download_data.py all` (see data/README.md)
