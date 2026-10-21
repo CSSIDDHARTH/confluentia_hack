@@ -51,7 +51,7 @@ Teammate shows label reading and the price mismatches. Say plainly that the pric
 
 ## 5. Close (30 s)
 
-"Detector, product matching, plan alignment, counting, empty-space detection and the report run on one 4 GB laptop GPU. The models are small, so an edge device is realistic."
+"Detector, product matching, plan alignment, counting, empty-space detection and the report run on one 4 GB laptop GPU. And with no GPU at all, four CPU cores run the pack detector in about a quarter of a second per photo (measured)."
 
 ## Questions you will be asked, and honest answers
 
@@ -63,4 +63,5 @@ Teammate shows label reading and the price mismatches. Say plainly that the pric
 | Are the prices real? | No, synthetic catalogue. |
 | What fails? | Missed packs show up as false gaps, and lookalike products can be confused. On 24 unseen phone photos, packaged shelves worked, with false flags on about 4 of 9; loose produce does not work; close-ups now get a "retake" warning instead of a wrong refill list. |
 | What did you try that did not work? | Larger input sizes, a texture check on gaps, flip and view-blending for naming, and a detector retrained on twice the data (better mAP, worse gap quality). All measured, none shipped. |
+| Can it run on the edge? | Measured: pack detector 224 ms per photo on 4 CPU cores with ONNX, 107 ms at lower resolution (5 points less F1). Real Jetson or phone timings are untested. |
 | Why not a big vision-language model? | Small specialised models run on the shelf-edge device, cost nothing per image and are measurable. |

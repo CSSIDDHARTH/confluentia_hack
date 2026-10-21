@@ -72,14 +72,22 @@ The 8-pack guard separated every close-up from every usable shelf in this sample
 
 The retrain shows that box accuracy alone is not a safe proxy for shelf-level quality, so we measure the end result.
 
-## Edge fit
+## Edge fit (measured)
 
-Both detectors are YOLO11s (about 9M parameters) and the matcher is a ViT-S/14 embedder. The whole pipeline runs on a 4 GB laptop GPU. Edge-device timing has not been measured yet.
+Each detector is YOLO11s (19 MB as PyTorch weights, 38 MB as ONNX), and the matcher is a ViT-S/14 embedder. Median time to run the pack detector on one photo (8 test photos, `scripts/benchmark_edge.py`), CPU runs pinned to 4 cores of a laptop CPU as a stand-in for a small edge device (no Jetson or phone was available):
+
+| Input size | Laptop GPU (fp16) | CPU, 4 cores, PyTorch | CPU, 4 cores, ONNX Runtime | Empty-space F1 |
+|---|---|---|---|---|
+| 1024 px (shipped) | 47 ms | 357 ms | 224 ms | 0.67 |
+| 640 px | 36 ms | 170 ms | 107 ms | 0.62 |
+
+So a four-core CPU with no GPU runs the detector in about a quarter of a second per photo, or a tenth of a second at 640 px for 5 points less F1. A shelf audit needs one photo per bay, so this is fast enough without a GPU. Not measured: the 4 GB GPU is the only accelerator we had, so real Jetson or phone timings, int8 quantisation, and the naming step on CPU are untested.
 
 ## Reproduce
 
 ```bash
 PYTHONPATH=src python3 scripts/eval_gaps.py      # empty-space accuracy
 PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 103 pass, 2 skipped (no tesseract)
+PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 105 pass, 2 skipped (no tesseract)
 ```
