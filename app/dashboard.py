@@ -2,11 +2,13 @@
 
 Reads the three contracts, shows them joined per slot, and runs the
 price-check and compliance-report modules on top: price mismatches, a
-compliance score, and a violations/recommended-actions table.
+compliance score, a violations/recommended-actions table, and a shift
+briefing (task list by shelf, summary by a small language model).
 
     streamlit run app/dashboard.py
 """
 
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -21,7 +23,9 @@ from shelfsense.contracts import (
 )
 from shelfsense.pricing.label_detector import DEFAULT_WEIGHTS, detect_labels
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
-from shelfsense.report.compliance import compute_report
+from shelfsense.report.briefing import DEFAULT_MODEL as SLM_MODEL
+from shelfsense.report.briefing import write_briefing
+from shelfsense.report.compliance import ComplianceReport, compute_report
 from shelfsense.report.export import report_to_json, violations_to_csv
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -186,6 +190,32 @@ if report.violations:
     st.dataframe(violation_rows, hide_index=True, width="stretch")
 else:
     st.success("No violations found; shelf is fully compliant.")
+
+
+@st.cache_data(show_spinner=False)
+def cached_briefing(report_json: str, catalogue_path: str, use_model: bool):
+    rep = ComplianceReport.model_validate_json(report_json)
+    return write_briefing(rep, load_catalogue(ROOT / catalogue_path), model=SLM_MODEL if use_model else None)
+
+
+st.subheader("Shift briefing")
+use_slm = st.checkbox(
+    "Write the summary with the small language model (Qwen2.5-1.5B, 4-bit, on CPU)",
+    value=SLM_MODEL.exists() and os.environ.get("SHELFSENSE_SLM") != "0",  # tests set 0 to skip the model
+    disabled=not SLM_MODEL.exists(),
+    help="The task list is always built in code. The model only writes the summary, and a summary that "
+    "names a wrong slot, problem or number is replaced by the template.",
+)
+with st.spinner("Writing the summary..."):
+    briefing = cached_briefing(report.model_dump_json(), cat_path, use_slm)
+st.info(briefing.summary)
+if briefing.summary_source == "slm":
+    st.caption(f"Summary written by the small language model in {briefing.seconds:.1f}s and checked against the report.")
+elif briefing.rejected_summary:
+    st.caption(f"The model's summary failed the check, so the template is shown. Rejected: \"{briefing.rejected_summary}\"")
+for tasks in briefing.tasks:
+    st.markdown(f"**Shelf {tasks.shelf_id or '(labels not on a slot)'}**")
+    st.markdown("\n".join(f"{i}. {a}" for i, a in enumerate(tasks.actions, 1)))
 
 dl1, dl2 = st.columns(2)
 dl1.download_button(

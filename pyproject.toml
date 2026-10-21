@@ -25,6 +25,8 @@ vision = ["ultralytics>=8.3", "opencv-python-headless>=4.9"]
 ocr = ["pytesseract>=0.3"]
 # Optional second OCR engine that votes with Tesseract (needs torch). Without it only Tesseract votes.
 ocr-easy = ["easyocr>=1.7"]
+# Small language model for the shift-briefing summary; model file: python scripts/download_data.py slm
+slm = ["llama-cpp-python>=0.3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

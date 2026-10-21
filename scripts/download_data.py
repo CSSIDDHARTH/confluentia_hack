@@ -3,6 +3,7 @@
     python scripts/download_data.py grozi        # Grocery Products / Grozi-3.2K, 1.7 GB (needs: pip install py7zr)
     python scripts/download_data.py price_tags   # Open Food Facts price-tag detection, 0.4 GB
     python scripts/download_data.py sku110k      # SKU-110K subset (800 train + 200 val images), 1 GB
+    python scripts/download_data.py slm          # Qwen2.5-1.5B-Instruct, 4-bit GGUF, 1.1 GB, into models/slm/
     python scripts/download_data.py all
 
 Archives are checked for absolute / '..' paths before extraction.
@@ -47,6 +48,15 @@ DATASETS = {
         "licence": "SKU-110K (Goldman et al., CVPR 2019): academic and non-commercial use only; "
         "single class 'object' (one box per pack), mirrored on Hugging Face as adnankhan-11/smart-retail-shelf-auditing-v1",
     },
+    "slm": {
+        "root": "models",
+        "dir": "slm",
+        "files": {
+            "qwen2.5-1.5b-instruct-q4_k_m.gguf": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+            "/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        },
+        "licence": "Apache 2.0 (Qwen2.5-1.5B-Instruct)",
+    },
 }
 
 
@@ -82,7 +92,7 @@ def extract_7z(archive: Path, out: Path) -> None:
 
 def main(name: str) -> None:
     spec = DATASETS[name]
-    out = DATA / spec["dir"]
+    out = ROOT / spec.get("root", "data") / spec["dir"]
     out.mkdir(parents=True, exist_ok=True)
     print(f"[{name}] licence: {spec['licence']}")
     with ThreadPoolExecutor(max_workers=4) as pool:  # a few files at once: much faster than one stream
