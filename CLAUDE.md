@@ -20,7 +20,7 @@ src/shelfsense/
 app/dashboard.py      Person B: Streamlit dashboard (planogram view)
 app/pages/            Extra dashboard pages, shown in the sidebar automatically (Streamlit multipage):
                       1_Shelf_availability.py = wide-shelf mode: empty space, per-row fill, refill list, no planogram
-                      2_Shift_briefing.py = the planogram report's violations merged into steps for staff
+                      2_Shift_briefing.py = the planogram report's violations merged into steps for staff; "Edit the plan yourself" lets a user change the plan and watch the score
 scripts/              Data download, mock generation, utilities
 tests/                pytest; test_contracts.py checks the contracts agree with each other
 data/                 Git-ignored except data/mock/; fetch with `python scripts/download_data.py all` (see data/README.md)

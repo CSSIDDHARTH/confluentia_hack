@@ -35,7 +35,7 @@ for step in plan(report, catalogue, planogram):   # step.text, step.severity, st
 
 ```bash
 PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # live upload needs the .venv recipe in CLAUDE.md
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src python3 -m pytest    # 119 pass, 2 skipped without tesseract
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src python3 -m pytest    # 126 pass, 2 skipped without tesseract
 ```
 
 ## Please say the limits out loud

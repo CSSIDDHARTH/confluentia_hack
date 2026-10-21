@@ -45,9 +45,11 @@ Sidebar, **Shelf availability**.
 
 Say: "This is the wide-shelf mode: it works on any shop photo, because it needs no plan, only the packs it can see."
 
-### Optional: what to do (30 s)
+### Let a judge plant the violation (60 s, the strongest part)
 
-Sidebar, **What to do**. Pick `store1_47`, "Store changed the plan". The report's 8 violation lines become 4 steps; the swap is one step ("Swap Cereals #88 with Cereals #138") and each misplaced product says where it belongs ("Cereals #138 belongs in S1-01"). Open the expander to show the 8 lines it replaced.
+Sidebar, **What to do**. First show `store1_47`, "Store changed the plan": the report's 8 violation lines become 4 steps; the swap is one step ("Swap Cereals #88 with Cereals #138") and each misplaced product says where it belongs ("Cereals #138 belongs in S1-01"). Open the expander to show the 8 lines it replaced.
+
+Then choose **Edit the plan yourself** and say: "Those changes were ours. Now you pick." Ask a judge to swap two slots (pick them, press *Swap their products*), change a slot's expected product in the table, or raise *facings planned* and *minimum* together on a slot (a promotion reset). The score and steps update at once, with the change versus the real plan shown under the score. Be clear about what is fixed: the photo is read once; only the plan changes, so the score moves because the shelf no longer matches what the plan expects.
 
 ## 4. Price check (teammate, 60 s)
 
@@ -63,7 +65,7 @@ Teammate shows label reading and the price mismatches. Say plainly that the pric
 |---|---|
 | How accurate is it? | Empty-space detection, against hand-labelled empty spots on 94 held-out photos: precision 0.66, recall 0.62, F1 0.64. Product naming: 81% when the plan limits the candidates, 49% with no hint. |
 | Where do the empty-space labels come from? | A public Roboflow set of 1,050 shelf photos with empty spots drawn by hand (CC BY 4.0). We trained on its train split and report on its test split. Our first method, inferring gaps from missing packs, scored 0.27 on the same labels, so we replaced it. |
-| Are the violations real? | Planted. No public dataset has real planogram violations, so we edited the plan of a real photo. We say so rather than fake the photo. |
+| Are the violations real? | No public dataset has real planogram violations, so a violation is a plan that disagrees with a real photo. We planted some, and on the "Edit the plan yourself" page you plant your own and watch the score move. We do not edit the photo, because erased packs looked fake. |
 | Why these shelves? | Best of the held-out set: 98, 88 and 86 on the compliant plan. Others score 80 or lower. |
 | Are the prices real? | No, synthetic catalogue. |
 | What fails? | Lookalike products can be confused, and a few small false empty spaces appear on gappy-looking products. On 24 unseen phone photos, packaged shelves worked (the 5 full shelves of 9 showed no false flags); loose produce does not work; close-ups get a "retake" warning instead of a wrong refill list. The empty-space labels are 416 px photos from one source, so other shops are untested. |

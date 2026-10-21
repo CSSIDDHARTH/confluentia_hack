@@ -83,3 +83,35 @@ def test_what_to_do_page_shows_fewer_steps_than_violation_lines():
     assert not at.exception
     m = {x.label: x.value for x in at.metric}
     assert m["Compliance score"] == "31 / 100" and int(m["Steps for staff"]) < int(m["Violation lines"])
+
+
+def _page():
+    pytest.importorskip("streamlit")
+    from streamlit.testing.v1 import AppTest
+
+    page = str(Path(__file__).resolve().parents[1] / "app" / "pages" / "2_Shift_briefing.py")
+    return AppTest.from_file(page, default_timeout=120).run()
+
+
+def _metrics(at):
+    return {x.label: x.value for x in at.metric}
+
+
+def _by_label(elements, label):
+    return next(e for e in elements if e.label == label)
+
+
+def test_edit_mode_starts_at_the_real_plan_and_a_swap_lowers_the_score():
+    at = _page()
+    _by_label(at.selectbox, "Demo shelf").select("store1_47").run()
+    at.radio[0].set_value("edit").run()
+    assert not at.exception and _metrics(at)["Compliance score"] == "98 / 100"
+    _by_label(at.selectbox, "Swap this slot").select("S1-01").run()
+    _by_label(at.selectbox, "with this slot").select("S1-02").run()
+    _by_label(at.button, "Swap their products").click().run()
+    assert not at.exception
+    assert int(_metrics(at)["Compliance score"].split()[0]) < 98
+    assert any("Swap" in m.value for m in at.markdown)
+    assert "vs the real plan" in [m.delta for m in at.metric][0]
+    _by_label(at.button, "Reset to the shelf's plan").click().run()
+    assert _metrics(at)["Compliance score"] == "98 / 100"

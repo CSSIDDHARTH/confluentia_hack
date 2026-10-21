@@ -26,6 +26,8 @@ A second mode, *shelf availability*, skips the planogram and gives empty spaces,
 
 The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, a misplaced product is told where it belongs ("Cereals #138 belongs in S1-01", from the planogram, or "the plan has no other slot for it"), and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 47 violation lines become 34 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
 
+The "What to do" page also has an **Edit the plan yourself** mode (`advisor/edit.py`): a person changes what a slot expects, its facings and minimum, or swaps two slots, and the score and steps recompute from the unchanged photo reading. This is how a violation gets created without us planting it. It tests the comparison, not the detector, since the photo is read once.
+
 ### A small language model: tested, not used
 
 The brief invites a small language model (under 20B parameters) where it fits. We tested Qwen2.5-1.5B and 0.5B, run locally, in two roles:
@@ -149,5 +151,5 @@ PYTHONPATH=src python3 scripts/eval_gaps.py      # first method vs pack-derived 
 PYTHONPATH=src python3 scripts/train_detector.py --model models/pack_detector.pt --data data/void_yolo/data.yaml --imgsz 640 --batch 8 --epochs 60 --name void_v1   # void detector, ~15 min
 PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
 PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 119 pass, 2 skipped (no tesseract)
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 126 pass, 2 skipped (no tesseract)
 ```
