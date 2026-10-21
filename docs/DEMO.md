@@ -57,7 +57,7 @@ Teammate shows label reading and the price mismatches. Say plainly that the pric
 
 | Question | Answer |
 |---|---|
-| How accurate is it? | Empty-space detection: precision 0.70, recall 0.64, F1 0.67 on 100 held-out images, measured against gaps derived from human-labelled pack boxes. Product naming: 81% when the plan limits the candidates, 49% with no hint. |
+| How accurate is it? | Empty-space detection: precision 0.63, recall 0.63, F1 0.63 on 200 held-out images (0.59 on one half, 0.67 on the other), measured against gaps derived from human-labelled pack boxes, not against real empty shelf. Product naming: 81% when the plan limits the candidates, 49% with no hint. |
 | Are the violations real? | Planted. No public dataset has real planogram violations, so we edited the plan of a real photo. We say so rather than fake the photo. |
 | Why these shelves? | Best of the held-out set: 98, 88 and 86 on the compliant plan. Others score 80 or lower. |
 | Are the prices real? | No, synthetic catalogue. |

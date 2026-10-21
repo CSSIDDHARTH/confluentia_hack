@@ -34,7 +34,7 @@ All on held-out data (different stores or different images from training).
 | Naming, open set (no planogram) | 0.49 |
 | Whole chain (detect, name, align, count) on the best 3 held-out shelves | compliance score 98, 88, 86 on the correct plan |
 | Planted-change shelves | scores fall to 31 to 48 with every planted change listed |
-| Empty space vs gaps derived from labelled packs | precision 0.70, recall 0.64, F1 0.67 (tuned on one half, reported on the other) |
+| Empty space vs gaps derived from labelled packs, 200 held-out images | precision 0.63, recall 0.63, F1 0.63 (0.59 on one half of the images, 0.67 on the other; defaults were not tuned to these images) |
 | A sold-out product column | found 64% of the time |
 
 ## Assumptions and limits (stated, not hidden)
@@ -58,19 +58,41 @@ All on held-out data (different stores or different images from training).
 | Close-ups, price tags, too few packs (under 8) | 8 | Now flagged "looks like a close-up, retake from 1-2 m" and no refill list is given. Before the guard these produced false "low stock" alerts. |
 | Cluttered shelf with overlapping products | 1 | False empty spaces over products the detector missed. |
 
-A second guard drops a "row" of at most 3 flat boxes under much taller packs (a price-label strip). It removed the false low-stock row in one of the two photos where it occurred, left the other, and changed neither the empty-space F1 (0.67) nor any of the 8 test shelves.
+A second guard drops a "row" of at most 3 flat boxes under much taller packs (a price-label strip). It removed the false low-stock row in one of the two photos where it occurred, left the other, and changed neither the empty-space F1 (0.63) nor any of the 8 test shelves.
 
 The 8-pack guard separated every close-up from every usable shelf in this sample and does not trigger on any of the 8 test shelves (125-189 packs each). Its threshold was set after looking at these 24 photos, so treat it as a sanity check, not a tuned result.
+
+## Where the empty-space errors come from
+
+On the 100 images of the second half (402 correct gaps, 169 false, 226 missed), each error sorted by looking at the labelled packs:
+
+| False gaps (169) | Count |
+|---|---|
+| Spot is empty in the annotation too, but the annotation-side gap finder does not call it a gap (bay-edge slivers, small position offsets) | 114 |
+| The detector missed a real pack, so the spot looks empty | 51 |
+| Edges differ from a real gap | 4 |
+
+| Missed gaps (226) | Count |
+|---|---|
+| A detected box sits in a spot the annotation leaves empty | 106 |
+| No predicted gap there | 78 |
+| Edges differ from a predicted gap | 42 |
+
+So a missed pack explains only about 30% of the false gaps. The larger share comes from comparing one gap finder against another, which also means the score understates how often a flagged spot is truly empty in the annotation. No real empty-shelf labels exist to measure that directly. Precision is 56% on one half of the images and 70% on the other, so differences of a few F1 points between variants are not reliable; we tested variants on all 200 images with a paired bootstrap where it mattered.
 
 ## What we tried and rejected, with numbers
 
 | Idea | Outcome |
 |---|---|
-| Detection at 1280 and 1536 px | gap F1 0.59-0.63, worse than 1024 |
+| Detection at 1280 and 1536 px | gap F1 0.59-0.63 vs 0.67 at 1024 on the same half of the images, so worse |
 | Texture check to drop false gaps | no F1 gain |
 | Flip copies, blended views, deeper adapter for naming | none beat 0.81 |
-| Pack detector retrained on 2x data | mAP50 0.897 vs 0.888 but gap F1 0.55 vs 0.67, so rejected |
-| Threshold tuning | F1 0.69, too small a gain to change defaults |
+| Pack detector retrained on 2x data | mAP50 0.897 vs 0.888 but gap F1 0.56 vs 0.63, so rejected |
+| Threshold tuning | F1 0.69 on one half, too small a gain to change defaults |
+| Flip and multi-scale test-time averaging | F1 0.63 vs 0.63 over 200 images; 95% interval for the difference [-0.03, +0.02]; 3x slower |
+| Merging the shipped and retrained detectors, or 1024 with 640 | F1 0.63-0.66 vs 0.66 on the held-out half, no gain |
+| Edge-of-bay or gap-size rules | precision is only 6-9 points lower at the bay edge and does not vary clearly with gap size |
+| Using the gap confidence score to separate sure from possible gaps | the score is a function of gap width and does not rank correct gaps (precision 57%, 66%, 64%, 59% by quartile) |
 
 The retrain shows that box accuracy alone is not a safe proxy for shelf-level quality, so we measure the end result.
 
@@ -78,12 +100,12 @@ The retrain shows that box accuracy alone is not a safe proxy for shelf-level qu
 
 Each detector is YOLO11s (19 MB as PyTorch weights, 38 MB as ONNX), and the matcher is a ViT-S/14 embedder. Median time to run the pack detector on one photo (8 test photos, `scripts/benchmark_edge.py`), CPU runs pinned to 4 cores of a laptop CPU as a stand-in for a small edge device (no Jetson or phone was available):
 
-| Input size | Laptop GPU (fp16) | CPU, 4 cores, PyTorch | CPU, 4 cores, ONNX Runtime | Empty-space F1 |
+| Input size | Laptop GPU (fp16) | CPU, 4 cores, PyTorch | CPU, 4 cores, ONNX Runtime | Empty-space F1 (200 images) |
 |---|---|---|---|---|
-| 1024 px (shipped) | 47 ms | 357 ms | 224 ms | 0.67 |
-| 640 px | 36 ms | 170 ms | 107 ms | 0.62 |
+| 1024 px (shipped) | 47 ms | 357 ms | 224 ms | 0.63 |
+| 640 px | 36 ms | 170 ms | 107 ms | 0.60 |
 
-So a four-core CPU with no GPU runs the detector in about a quarter of a second per photo, or a tenth of a second at 640 px for 5 points less F1. A shelf audit needs one photo per bay, so this is fast enough without a GPU. Not measured: the 4 GB GPU is the only accelerator we had, so real Jetson or phone timings, int8 quantisation, and the naming step on CPU are untested.
+So a four-core CPU with no GPU runs the detector in about a quarter of a second per photo, or a tenth of a second at 640 px for 3 points less F1. A shelf audit needs one photo per bay, so this is fast enough without a GPU. Not measured: the 4 GB GPU is the only accelerator we had, so real Jetson or phone timings, int8 quantisation, and the naming step on CPU are untested.
 
 ## Reproduce
 

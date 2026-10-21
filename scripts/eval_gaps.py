@@ -15,7 +15,7 @@ idea that a missed product is textured and a real empty space is smooth. It only
 precision, with no F1 gain at any threshold.
 
 Also rejected: a detector retrained on 1,600 images (sku110k_pack_v2): better mAP50 (0.897 vs 0.888)
-but worse gap F1 (0.55 vs 0.67), so box-level mAP is not a safe proxy for gap quality.
+but worse gap F1 (0.56 vs 0.63 over all 200 images), so box-level mAP is not a safe proxy for gap quality.
 
 The 200 images are split in two: thresholds are chosen on the first half and reported on the
 second, so the final numbers are not tuned on the images they are measured on.
