@@ -7,7 +7,7 @@ this merge right matters, so it is exact code, and the language model only rewor
 
 from dataclasses import dataclass, field
 
-from shelfsense.contracts import CatalogueItem
+from shelfsense.contracts import CatalogueItem, Planogram
 from shelfsense.report.compliance import WEIGHTS, ComplianceReport, Violation, ViolationKind
 
 K = ViolationKind
@@ -29,8 +29,23 @@ def _lower_first(s: str) -> str:
     return s[:1].lower() + s[1:]
 
 
-def plan(report: ComplianceReport, catalogue: dict[str, CatalogueItem]) -> list[Step]:
-    """Most severe step first. Every violation ends up in exactly one step."""
+def plan(report: ComplianceReport, catalogue: dict[str, CatalogueItem], planogram: Planogram | None = None) -> list[Step]:
+    """Most severe step first. Every violation ends up in exactly one step.
+
+    With the planogram, a misplaced product also gets where it belongs ("Cereals #88 belongs in S1-02")."""
+    home: dict[str, list[str]] = {}
+    for shelf in planogram.shelves if planogram else []:
+        for slot in shelf.slots:
+            home.setdefault(slot.sku, []).append(slot.slot_id)
+
+    def moved(m: Violation) -> str:
+        """The move instruction for a misplaced product, with its destination when the plan says."""
+        if planogram is None:
+            return m.recommended_action
+        name = _name(catalogue, m.sku)
+        where = [sl for sl in home.get(m.sku, []) if sl != m.slot_id]
+        return f"{m.recommended_action} " + (f"{name} belongs in {' or '.join(where)}." if where else f"The plan has no other slot for {name}.")
+
     by_slot: dict[tuple[K, str | None], list[Violation]] = {}
     for v in report.violations:
         by_slot.setdefault((v.kind, v.slot_id), []).append(v)
@@ -64,11 +79,12 @@ def plan(report: ComplianceReport, catalogue: dict[str, CatalogueItem]) -> list[
                 continue
             wrong = [m for m in by_slot.get((K.MISPLACED, slot), []) if m.violation_id not in used]
             if wrong:
-                text = " ".join(m.recommended_action for m in wrong) + " Then " + _lower_first(s.recommended_action)
+                text = " ".join(moved(m) for m in wrong) + " Then " + _lower_first(s.recommended_action)
                 steps.append(Step(text, WEIGHTS[K.STOCK_OUT] + WEIGHTS[K.MISPLACED], take(s, *wrong)))
 
     for v in report.violations:
         if v.violation_id not in used:
-            steps.append(Step(v.recommended_action, WEIGHTS.get(v.kind, 0), take(v)))
+            text = moved(v) if v.kind == K.MISPLACED else v.recommended_action
+            steps.append(Step(text, WEIGHTS.get(v.kind, 0), take(v)))
 
     return sorted(steps, key=lambda s: -s.severity)

@@ -37,6 +37,32 @@ def test_a_wrong_product_in_a_slot_missing_the_right_one_is_one_step():
     assert "Then restock" in step.text
 
 
+def test_a_misplaced_product_says_where_it_belongs():
+    r, cat = report("scenario")
+    pg = load_planogram(BAY / "planogram_scenario.json")
+    step = next(s for s in plan(r, cat, pg) if "S3-01" in s.text and "Move" in s.text)
+    assert "Cereals #138 belongs in S1-01." in step.text and step.text.index("belongs in") < step.text.index("Then restock")
+    # without the planogram the text is unchanged
+    assert "belongs in" not in next(s for s in plan(r, cat) if "S3-01" in s.text and "Move" in s.text).text
+
+
+def test_a_product_the_plan_has_no_other_slot_for_is_said_so():
+    r, cat = report("scenario")
+    pg = load_planogram(BAY / "planogram_scenario.json")
+    for shelf in pg.shelves:
+        for slot in shelf.slots:
+            if slot.sku == "G13-138":
+                slot.sku = "G99-0"
+    step = next(s for s in plan(r, cat, pg) if "S3-01" in s.text and "Move" in s.text)
+    assert "no other slot for Cereals #138" in step.text
+
+
+def test_swaps_are_unaffected_by_the_planogram():
+    r, cat = report("scenario")
+    pg = load_planogram(BAY / "planogram_scenario.json")
+    assert [s.text for s in plan(r, cat) if s.text.startswith("Swap")] == [s.text for s in plan(r, cat, pg) if s.text.startswith("Swap")]
+
+
 def test_steps_are_ordered_by_severity():
     r, cat = report("scenario")
     sev = [s.severity for s in plan(r, cat)]

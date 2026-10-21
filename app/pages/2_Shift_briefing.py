@@ -23,10 +23,9 @@ BAYS = ROOT / "data" / "demo_bays"
 def report_for(bay: str, plan: str):
     d = BAYS / bay
     cat = load_catalogue(d / "catalogue.csv")
-    report = compute_report(
-        load_detection_output(d / f"detection_{plan}.json"), load_planogram(d / f"planogram_{plan}.json"), cat, group_items=True,
-    )
-    return report, cat
+    planogram = load_planogram(d / f"planogram_{plan}.json")
+    report = compute_report(load_detection_output(d / f"detection_{plan}.json"), planogram, cat, group_items=True)
+    return report, cat, planogram
 
 
 st.set_page_config(page_title="shelfSense: what to do", layout="wide")
@@ -49,8 +48,8 @@ with st.sidebar:
         format_func=lambda k: "Matches the shelf" if k == "compliant" else "Store changed the plan (planted)",
     )
 
-report, catalogue = report_for(bay, plan)
-steps = plan_steps(report, catalogue)
+report, catalogue, planogram = report_for(bay, plan)
+steps = plan_steps(report, catalogue, planogram)
 c1, c2, c3 = st.columns(3)
 c1.metric("Compliance score", f"{report.score:.0f} / 100")
 c2.metric("Violation lines", len(report.violations))

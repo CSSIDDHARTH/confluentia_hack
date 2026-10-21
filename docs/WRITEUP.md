@@ -24,7 +24,7 @@ A second mode, *shelf availability*, skips the planogram and gives empty spaces,
 
 ## From violation lines to steps
 
-The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 47 violation lines become 34 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
+The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, a misplaced product is told where it belongs ("Cereals #138 belongs in S1-01", from the planogram, or "the plan has no other slot for it"), and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 47 violation lines become 34 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
 
 ### A small language model: tested, not used
 
@@ -149,5 +149,5 @@ PYTHONPATH=src python3 scripts/eval_gaps.py      # first method vs pack-derived 
 PYTHONPATH=src python3 scripts/train_detector.py --model models/pack_detector.pt --data data/void_yolo/data.yaml --imgsz 640 --batch 8 --epochs 60 --name void_v1   # void detector, ~15 min
 PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
 PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 115 pass, 2 skipped (no tesseract)
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 118 pass, 2 skipped (no tesseract)
 ```

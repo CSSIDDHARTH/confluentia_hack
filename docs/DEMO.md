@@ -47,7 +47,7 @@ Say: "This is the wide-shelf mode: it works on any shop photo, because it needs 
 
 ### Optional: what to do (30 s)
 
-Sidebar, **What to do**. Pick `store1_47`, "Store changed the plan". The report's 8 violation lines become 4 steps; the swap is one step ("Swap Cereals #88 with Cereals #138"). Open the expander to show the 8 lines it replaced.
+Sidebar, **What to do**. Pick `store1_47`, "Store changed the plan". The report's 8 violation lines become 4 steps; the swap is one step ("Swap Cereals #88 with Cereals #138") and each misplaced product says where it belongs ("Cereals #138 belongs in S1-01"). Open the expander to show the 8 lines it replaced.
 
 ## 4. Price check (teammate, 60 s)
 

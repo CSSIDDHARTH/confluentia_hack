@@ -23,11 +23,11 @@ Why: vision now emits one item per **pack** (each carries its block's SKU and sl
 
 ## Fewer lines for staff (optional, one call)
 
-`shelfsense.advisor.plan.plan(report, catalogue)` merges the report's violations into ordered steps (a swap's four lines become one). My page `app/pages/2_Shift_briefing.py` shows it. To use it in the dashboard, after `report = compute_report(...)`:
+`shelfsense.advisor.plan.plan(report, catalogue, planogram)` merges the report's violations into ordered steps (a swap's four lines become one) and says where a misplaced product belongs ("Cereals #88 belongs in S1-02"); the planogram argument is optional. My page `app/pages/2_Shift_briefing.py` shows it. To use it in the dashboard, after `report = compute_report(...)`:
 
 ```python
 from shelfsense.advisor.plan import plan
-for step in plan(report, catalogue):   # step.text, step.severity, step.violation_ids
+for step in plan(report, catalogue, planogram):   # step.text, step.severity, step.violation_ids
     st.markdown(f"- {step.text}")
 ```
 
@@ -35,7 +35,7 @@ for step in plan(report, catalogue):   # step.text, step.severity, step.violatio
 
 ```bash
 PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # live upload needs the .venv recipe in CLAUDE.md
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src python3 -m pytest    # 112 pass, 2 skipped without tesseract
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src python3 -m pytest    # 118 pass, 2 skipped without tesseract
 ```
 
 ## Please say the limits out loud
