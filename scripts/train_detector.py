@@ -21,6 +21,8 @@ def main() -> None:
     ap.add_argument("--imgsz", type=int, default=960)
     ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--name", default="grozi_v1")
+    ap.add_argument("--optimizer", default="auto", help="e.g. AdamW; auto lets Ultralytics choose (SGD for long runs)")
+    ap.add_argument("--lr0", type=float, default=0.01, help="initial learning rate (ignored when optimizer is auto)")
     a = ap.parse_args()
 
     YOLO(a.model).train(
@@ -29,6 +31,8 @@ def main() -> None:
         imgsz=a.imgsz,
         batch=a.batch,
         patience=15,
+        optimizer=a.optimizer,
+        lr0=a.lr0,
         workers=8,
         flipud=0.0,  # shelves have a fixed "up"
         project=str(ROOT / "outputs" / "runs"),
