@@ -106,6 +106,20 @@ def drop_label_strips(rows: list[Row]) -> list[Row]:
     return kept
 
 
+def voids_as_gaps(rows: list[Row], voids: list[tuple[list[float], float]]) -> list[GapCandidate]:
+    """Empty spaces from a detector trained on labelled voids: each is put in the row it is vertically
+    nearest to, and the packs missing there is its width over that row's median pack width (at least 1)."""
+    if not rows:
+        return []
+    out = []
+    for box, conf in voids:
+        cy = (box[1] + box[3]) / 2
+        row = min(rows, key=lambda r: abs((r.y1 + r.y2) / 2 - cy))
+        w_med = median(b[2] - b[0] for b in row.boxes)
+        out.append(GapCandidate(row.index, [float(v) for v in box], round(float(conf), 3), max(1, round((box[2] - box[0]) / max(w_med, 1e-6)))))
+    return sorted(out, key=lambda g: (g.row, g.bbox[0]))
+
+
 def find_gaps(
     boxes: list[list[float]], min_gap_widths: float = MIN_GAP_WIDTHS, valley: float = ROW_VALLEY
 ) -> tuple[list[Row], list[GapCandidate]]:

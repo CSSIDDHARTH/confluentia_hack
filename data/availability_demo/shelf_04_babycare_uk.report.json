@@ -4,61 +4,67 @@
     {
       "shelf_id": "S1",
       "packs": 16,
-      "fill_ratio": 0.921,
+      "fill_ratio": 0.93,
       "low_stock": false
     },
     {
       "shelf_id": "S2",
       "packs": 18,
-      "fill_ratio": 0.879,
+      "fill_ratio": 0.602,
       "low_stock": false
     },
     {
       "shelf_id": "S3",
       "packs": 15,
-      "fill_ratio": 0.788,
+      "fill_ratio": 1.0,
       "low_stock": false
     },
     {
       "shelf_id": "S4",
       "packs": 18,
-      "fill_ratio": 0.907,
+      "fill_ratio": 0.898,
       "low_stock": false
     },
     {
       "shelf_id": "S5",
       "packs": 17,
-      "fill_ratio": 0.873,
+      "fill_ratio": 1.0,
       "low_stock": false
     },
     {
       "shelf_id": "S6",
       "packs": 14,
-      "fill_ratio": 0.655,
+      "fill_ratio": 0.704,
       "low_stock": false
     },
     {
       "shelf_id": "S7",
       "packs": 17,
-      "fill_ratio": 0.797,
+      "fill_ratio": 0.911,
       "low_stock": false
     },
     {
       "shelf_id": "S8",
       "packs": 12,
-      "fill_ratio": 0.636,
+      "fill_ratio": 0.644,
       "low_stock": false
     }
   ],
-  "empty_spaces": 6,
-  "missing_facings": 9,
-  "overall_fill": 0.807,
+  "empty_spaces": 11,
+  "missing_facings": 25,
+  "overall_fill": 0.836,
   "actions": [
-    "Shelf S3: empty space on the left, about 2 packs wide. Refill it.",
+    "Shelf S2: empty space on the right, about 7 packs wide. Refill it.",
+    "Shelf S8: empty space on the left, about 3 packs wide. Refill it.",
+    "Shelf S8: empty space on the right, about 3 packs wide. Refill it.",
+    "Shelf S2: empty space on the middle, about 2 packs wide. Refill it.",
+    "Shelf S4: empty space on the middle, about 2 packs wide. Refill it.",
     "Shelf S6: empty space on the left, about 2 packs wide. Refill it.",
-    "Shelf S8: empty space on the right, about 2 packs wide. Refill it.",
+    "Shelf S6: empty space on the right, about 2 packs wide. Refill it.",
+    "Shelf S1: empty space on the middle, about 1 pack wide. Refill it.",
     "Shelf S6: empty space on the middle, about 1 pack wide. Refill it.",
     "Shelf S7: empty space on the left, about 1 pack wide. Refill it.",
-    "Shelf S8: empty space on the left, about 1 pack wide. Refill it."
-  ]
+    "Shelf S7: empty space on the right, about 1 pack wide. Refill it."
+  ],
+  "warnings": []
 }

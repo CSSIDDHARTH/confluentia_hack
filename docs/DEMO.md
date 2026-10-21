@@ -39,8 +39,8 @@ Other shelves (compliant score then scenario score): store4_9 88 then 48, store1
 
 Sidebar, **Shelf availability**.
 
-1. Pick `shelf_02_toothpaste_uk` from the saved shelves: 7 empty spaces, 18 packs to refill, fill 79%.
-2. Drag the "minimum gap" slider: results recompute instantly. "Stricter means fewer, surer gaps."
+1. Pick `shelf_02_toothpaste_uk` from the saved shelves: 9 empty spaces, 16 packs to refill, fill 89%.
+2. Drag the "Empty-space confidence" slider: results recompute instantly. "Higher means fewer, surer empty spaces."
 3. **Upload a fresh photo.** No planogram needed. It runs the detector live and gives the refill list and the annotated image. Download the CSV.
 
 Say: "This is the wide-shelf mode: it works on any shop photo, because it needs no plan, only the packs it can see."
@@ -61,12 +61,13 @@ Teammate shows label reading and the price mismatches. Say plainly that the pric
 
 | Question | Answer |
 |---|---|
-| How accurate is it? | Empty-space detection: precision 0.63, recall 0.63, F1 0.63 on 200 held-out images (0.59 on one half, 0.67 on the other), measured against gaps derived from human-labelled pack boxes, not against real empty shelf. Product naming: 81% when the plan limits the candidates, 49% with no hint. |
+| How accurate is it? | Empty-space detection, against hand-labelled empty spots on 94 held-out photos: precision 0.66, recall 0.62, F1 0.64. Product naming: 81% when the plan limits the candidates, 49% with no hint. |
+| Where do the empty-space labels come from? | A public Roboflow set of 1,050 shelf photos with empty spots drawn by hand (CC BY 4.0). We trained on its train split and report on its test split. Our first method, inferring gaps from missing packs, scored 0.27 on the same labels, so we replaced it. |
 | Are the violations real? | Planted. No public dataset has real planogram violations, so we edited the plan of a real photo. We say so rather than fake the photo. |
 | Why these shelves? | Best of the held-out set: 98, 88 and 86 on the compliant plan. Others score 80 or lower. |
 | Are the prices real? | No, synthetic catalogue. |
-| What fails? | Missed packs show up as false gaps, and lookalike products can be confused. On 24 unseen phone photos, packaged shelves worked, with false flags on about 4 of 9; loose produce does not work; close-ups now get a "retake" warning instead of a wrong refill list. |
-| What did you try that did not work? | Larger input sizes, a texture check on gaps, flip and view-blending for naming, and a detector retrained on twice the data (better mAP, worse gap quality). All measured, none shipped. |
+| What fails? | Lookalike products can be confused, and a few small false empty spaces appear on gappy-looking products. On 24 unseen phone photos, packaged shelves worked (the 5 full shelves of 9 showed no false flags); loose produce does not work; close-ups get a "retake" warning instead of a wrong refill list. The empty-space labels are 416 px photos from one source, so other shops are untested. |
+| What did you try that did not work? | Larger input sizes, a texture check on gaps, test-time averaging, merging detectors, flip and view-blending for naming, and a pack detector retrained on twice the data (better mAP, worse gap quality). All measured, none shipped. The biggest lesson: our proxy metric said 0.63 and real labels said 0.27, so we switched to real labels. |
 | Can it run on the edge? | Measured: pack detector 224 ms per photo on 4 CPU cores with ONNX, 107 ms at lower resolution (5 points less F1). Real Jetson or phone timings are untested. |
 | Did you use a small language model? | We tested Qwen2.5 0.5B and 1.5B locally. The 1.5B model took 21 s on CPU and wrote steps like "move X from S3-01 to S3-01"; the 0.5B model failed our checks on 32 of 34 lines. A rule-based planner is exact and instant, so that is what ships. |
 | Why not a big vision-language model? | Small specialised models run on the shelf-edge device, cost nothing per image and are measurable. |

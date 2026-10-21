@@ -13,12 +13,11 @@ data/*
 !data/demo_bays/
 !data/availability_demo/
 models/*
+*.pt
 !models/product_detector.pt
 !models/sku_adapter.npy
 !models/pack_detector.pt
-*.pt
-!models/product_detector.pt
-!models/pack_detector.pt
+!models/void_detector.pt
 *.onnx
 *.engine
 

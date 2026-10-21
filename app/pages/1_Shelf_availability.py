@@ -7,6 +7,7 @@ uploaded photo. The two sliders recompute from the saved packs instantly.
 Part of the same app as dashboard.py (Streamlit multipage): `streamlit run app/dashboard.py`.
 """
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -22,6 +23,8 @@ from shelfsense.vision.render import draw_availability
 ROOT = Path(__file__).resolve().parents[2]
 DEMO = ROOT / "data" / "availability_demo"
 WEIGHTS = ROOT / "models" / "pack_detector.pt"
+VOID_WEIGHTS = ROOT / "models" / "void_detector.pt"
+VOID_DEFAULT = 0.3  # chosen on held-out labelled data (scripts/eval_voids.py)
 
 
 def detector_available() -> bool:
@@ -41,26 +44,35 @@ def load_detector():
     return ProductDetector(WEIGHTS, conf=0.25, imgsz=1024, max_det=600)
 
 
-@st.cache_data(show_spinner="Finding packs...")
+@st.cache_resource(show_spinner="Loading the empty-space detector...")
+def load_voider():
+    from shelfsense.vision.detect import VOID_CONF_FLOOR, ProductDetector
+
+    return ProductDetector(VOID_WEIGHTS, conf=VOID_CONF_FLOOR, imgsz=640, max_det=150)
+
+
+@st.cache_data(show_spinner="Finding packs and empty spaces...")
 def detect_upload(data: bytes, suffix: str):
+    from shelfsense.vision.detect import detect_voids
+
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
         f.write(data)
         path = f.name
     boxes, confs, size = load_detector().boxes(path)
-    return boxes, confs, size
+    voids = detect_voids(load_voider(), path) if VOID_WEIGHTS.exists() else None
+    return boxes, confs, size, voids
 
 
 st.set_page_config(page_title="shelfSense: availability", layout="wide")
 st.title("Shelf availability")
 st.caption(
-    "Empty spaces, low stock and what to refill, from one photo and no planogram. "
-    "Packs come from a detector trained on SKU-110K; empty space is any stretch of a shelf row "
-    "that no pack covers but one could fit. Measured against gaps derived from labelled packs on 200 "
-    "held-out photos: F1 about 0.63 (CLAUDE.md, assumption 12). Not measured against real empty shelf."
+    "Empty spaces, low stock and what to refill, from one photo and no planogram. Packs come from a detector "
+    "trained on SKU-110K (rows and fill). Empty spaces come from a second detector trained on 727 hand-labelled "
+    "photos of empty shelf spots: F1 0.64 on 94 held-out labelled photos (scripts/eval_voids.py, CLAUDE.md assumption 12)."
 )
 
 live = detector_available()
-saved = sorted(p.stem for p in DEMO.glob("*.json") if not p.name.endswith(".report.json"))
+saved = sorted(p.stem for p in DEMO.glob("*.json") if not p.name.endswith((".report.json", ".voids.json")))
 
 with st.sidebar:
     st.header("Shelf photo")
@@ -69,16 +81,24 @@ with st.sidebar:
     if not live:
         st.caption("Live detection needs `ultralytics` and `models/pack_detector.pt`; showing saved shelves only.")
     st.header("Sensitivity")
-    gap_widths = st.slider(
-        "Smallest empty space, in pack widths", 0.4, 2.0, MIN_GAP_WIDTHS, 0.1,
-        help="A stretch of shelf this many median pack widths wide, with no pack in it, counts as empty.",
-    )
+    use_voids = VOID_WEIGHTS.exists()
+    if use_voids:
+        void_conf = st.slider(
+            "Empty-space confidence", 0.1, 0.8, VOID_DEFAULT, 0.05, format="%.2f",
+            help="Higher keeps fewer, surer empty spaces. On labelled photos: 0.2 finds more (recall 0.72, precision 0.54), 0.4 is surer (precision 0.78, recall 0.48).",
+        )
+        gap_widths = MIN_GAP_WIDTHS
+    else:
+        gap_widths = st.slider(
+            "Smallest empty space, in pack widths", 0.4, 2.0, MIN_GAP_WIDTHS, 0.1,
+            help="A stretch of shelf this many median pack widths wide, with no pack in it, counts as empty.",
+        )
     low_fill = st.slider(
         "Low stock below this fill", 0.2, 0.95, LOW_FILL_RATIO, 0.05, format="%.2f",
         help="Share of the bay's width covered by packs. A row below it needs replenishing.",
     )
 
-boxes = confs = size = image = None
+boxes = confs = size = image = voids = None
 image_id = shown = ""
 if source == "Saved test shelves":
     if not saved:
@@ -92,16 +112,20 @@ if source == "Saved test shelves":
     size = (saved_det.image_width, saved_det.image_height)
     shown = saved_det.image_path
     image = Image.open(ROOT / shown)
+    voids_file = DEMO / f"{image_id}.voids.json"
+    if use_voids and voids_file.exists():
+        voids = [(v["bbox"], v["conf"]) for v in json.loads(voids_file.read_text())]
 else:
     up = st.file_uploader("A shelf photo (JPG or PNG)", type=["jpg", "jpeg", "png"])
     if up is None:
         st.info("Upload a shelf photo to find its empty spaces.")
         st.stop()
-    boxes, confs, size = detect_upload(up.getvalue(), Path(up.name).suffix or ".jpg")
+    boxes, confs, size, voids = detect_upload(up.getvalue(), Path(up.name).suffix or ".jpg")
     image_id, shown = Path(up.name).stem, up.name
     image = Image.open(up)
 
-det, report = analyze_packs(image_id, shown, size, boxes, confs, low_fill=low_fill, min_gap_widths=gap_widths)
+kept = [v for v in voids if v[1] >= void_conf] if (use_voids and voids is not None) else None
+det, report = analyze_packs(image_id, shown, size, boxes, confs, low_fill=low_fill, min_gap_widths=gap_widths, voids=kept)
 
 low_rows = [r.shelf_id for r in report.rows if r.low_stock]
 c1, c2, c3, c4, c5 = st.columns(5)

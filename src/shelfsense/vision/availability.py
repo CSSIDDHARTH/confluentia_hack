@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel
 
 from shelfsense.contracts import DetectionOutput, Gap, Item, ShelfRegion
-from shelfsense.vision.gaps import LOW_FILL_RATIO, MIN_GAP_WIDTHS, find_gaps
+from shelfsense.vision.gaps import LOW_FILL_RATIO, MIN_GAP_WIDTHS, find_gaps, voids_as_gaps
 
 # Below this many packs the photo is a close-up, a price tag or not a shelf of packaged goods. Row fill
 # and gaps then rest on a handful of boxes, so no refill list is given. Checked by eye on 24 phone photos
@@ -51,11 +51,14 @@ def analyze_packs(
     low_fill: float = LOW_FILL_RATIO,
     min_gap_widths: float = MIN_GAP_WIDTHS,
     min_packs: int = MIN_PACKS_FOR_REPORT,
+    voids: list[tuple[list[float], float]] | None = None,
 ) -> tuple[DetectionOutput, AvailabilityReport]:
     width, height = image_size
     clipped = [[max(0.0, b[0]), max(0.0, b[1]), min(float(width), b[2]), min(float(height), b[3])] for b in boxes]
     conf_of = {tuple(c): conf for c, conf in zip(clipped, confidences)}
     rows, gap_cands = find_gaps(clipped, min_gap_widths)
+    if voids is not None:  # empty spaces from the void detector replace the ones inferred from missing packs
+        gap_cands = voids_as_gaps(rows, voids)
 
     shelves, items = [], []
     for row in rows:
@@ -83,9 +86,23 @@ def analyze_packs(
     det = DetectionOutput(
         image_id=image_id, image_path=image_path, image_width=width, image_height=height,
         planogram_id="unassigned", captured_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        produced_by={"vision": produced_by, "availability": "gaps-v1"}, shelves=shelves, items=items, gaps=gaps,
+        produced_by={"vision": produced_by, "availability": "gaps-v1" if voids is None else "voids-v1"}, shelves=shelves, items=items, gaps=gaps,
     )
 
+    if voids is not None and rows:
+        # with a void detector, a row's fill is the share of the bay's width NOT covered by detected empty spaces;
+        # pack coverage alone calls a cropped or label-covered row "half empty"
+        left = min(r.boxes[0][0] for r in rows)
+        width = max(max(b[2] for b in r.boxes) for r in rows) - left
+        for r in rows:
+            spans = sorted((max(g.bbox[0], left), min(g.bbox[2], left + width)) for g in gap_cands if g.row == r.index)
+            empty, end = 0.0, left
+            for a, b in spans:
+                a = max(a, end)
+                if b > a:
+                    empty += b - a
+                    end = b
+            r.fill_ratio = max(0.0, 1.0 - empty / max(width, 1e-6))
     statuses = [
         RowStatus(shelf_id=f"S{r.index + 1}", packs=len(r.boxes), fill_ratio=round(r.fill_ratio, 3), low_stock=r.fill_ratio < low_fill)
         for r in rows

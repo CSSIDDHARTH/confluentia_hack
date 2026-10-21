@@ -5,10 +5,10 @@
   "image_width": 1920,
   "image_height": 2560,
   "planogram_id": "unassigned",
-  "captured_at": "2026-10-20T10:23:10+00:00",
+  "captured_at": "2026-10-21T14:46:28+00:00",
   "produced_by": {
     "vision": "yolo:pack_detector",
-    "availability": "gaps-v1"
+    "availability": "voids-v1"
   },
   "shelves": [
     {
@@ -1821,29 +1821,68 @@
   "gaps": [
     {
       "bbox": [
-        979.9,
-        399.9,
+        978.2,
+        433.8,
         1070.2,
-        678.3
+        669.3
       ],
       "gap_id": "g001",
       "shelf_id": "S2",
       "slot_id": null,
-      "confidence": 0.506,
+      "confidence": 0.43,
       "estimated_missing_facings": 1
     },
     {
       "bbox": [
-        1291.5,
-        399.9,
-        1503.4,
-        678.3
+        1295.2,
+        396.7,
+        1496.9,
+        672.1
       ],
       "gap_id": "g002",
       "shelf_id": "S2",
       "slot_id": null,
-      "confidence": 0.783,
+      "confidence": 0.727,
       "estimated_missing_facings": 2
+    },
+    {
+      "bbox": [
+        0.1,
+        1355.8,
+        132.9,
+        1493.2
+      ],
+      "gap_id": "g003",
+      "shelf_id": "S5",
+      "slot_id": null,
+      "confidence": 0.389,
+      "estimated_missing_facings": 1
+    },
+    {
+      "bbox": [
+        271.0,
+        1336.4,
+        1000.0,
+        1516.5
+      ],
+      "gap_id": "g004",
+      "shelf_id": "S5",
+      "slot_id": null,
+      "confidence": 0.479,
+      "estimated_missing_facings": 6
+    },
+    {
+      "bbox": [
+        1503.3,
+        2157.5,
+        1697.4,
+        2287.3
+      ],
+      "gap_id": "g005",
+      "shelf_id": "S6",
+      "slot_id": null,
+      "confidence": 0.412,
+      "estimated_missing_facings": 1
     }
   ],
   "labels": []

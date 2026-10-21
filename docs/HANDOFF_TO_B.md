@@ -40,4 +40,4 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src python3 -m pytest    # 112 pass,
 
 ## Please say the limits out loud
 
-Prices are synthetic, violations are planted, demo shelves are the best held-out ones, and empty-space F1 is about 0.63 (0.6-0.7 depending on the images). They are all in `docs/WRITEUP.md`; the same list should appear in your part of the pitch.
+Prices are synthetic, violations are planted, demo shelves are the best held-out ones, and empty-space F1 is 0.64 against real hand-labelled empty spots (our first method scored 0.27 there; an earlier 0.63 figure was against pack-derived gaps and overstated it). They are all in `docs/WRITEUP.md`; the same list should appear in your part of the pitch.
