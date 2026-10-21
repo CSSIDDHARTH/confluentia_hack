@@ -83,23 +83,36 @@ def slot_table(det, planogram, catalogue) -> pd.DataFrame:
 
 
 st.set_page_config(page_title="shelfSense", layout="wide")
-st.title("shelfSense: shelf audit (mock)")
+st.title("shelfSense: shelf audit")
 
+MOCK_PLANOGRAM = "contracts/planogram.example.json"
+MOCK_CATALOGUE = "contracts/catalogue.example.csv"
+
+# name -> (detection output, planogram, catalogue)
 PRESETS = {
-    "Mock shelf (as shipped)": "contracts/detection_output.example.json",
-    "Low-stock demo (all 5 violation types)": "data/mock/mock_shelf_002_lowstock.json",
-    "Near-clean shelf (one unreadable label)": "data/mock/mock_shelf_003_clean.json",
+    "Mock shelf (as shipped)": ("contracts/detection_output.example.json", MOCK_PLANOGRAM, MOCK_CATALOGUE),
+    "Low-stock demo (all 5 violation types)": ("data/mock/mock_shelf_002_lowstock.json", MOCK_PLANOGRAM, MOCK_CATALOGUE),
+    "Near-clean shelf (one unreadable label)": ("data/mock/mock_shelf_003_clean.json", MOCK_PLANOGRAM, MOCK_CATALOGUE),
 }
+for bay_dir in sorted((ROOT / "data" / "demo_bays").glob("*/detection_compliant.json")):
+    bay = bay_dir.parent
+    rel = bay.relative_to(ROOT)
+    PRESETS[f"Real bay {bay.name}: compliant plan"] = (
+        f"{rel}/detection_compliant.json", f"{rel}/planogram_compliant.json", f"{rel}/catalogue.csv")
+    scenario_catalogue = "catalogue_scenario.csv" if (bay / "catalogue_scenario.csv").exists() else "catalogue.csv"
+    PRESETS[f"Real bay {bay.name}: planted changes"] = (
+        f"{rel}/detection_scenario.json", f"{rel}/planogram_scenario.json", f"{rel}/{scenario_catalogue}")
 
 with st.sidebar:
     preset = st.selectbox("Scenario", list(PRESETS))
+    default_det, default_pg, default_cat = PRESETS[preset]
     with st.expander("Advanced: custom paths"):
-        det_path = st.text_input("Detection output", "", placeholder=PRESETS[preset])
-        pg_path = st.text_input("Planogram", "", placeholder="contracts/planogram.example.json")
-        cat_path = st.text_input("Catalogue", "", placeholder="contracts/catalogue.example.csv")
-    det_path = det_path or PRESETS[preset]
-    pg_path = pg_path or "contracts/planogram.example.json"
-    cat_path = cat_path or "contracts/catalogue.example.csv"
+        det_path = st.text_input("Detection output", "", placeholder=default_det)
+        pg_path = st.text_input("Planogram", "", placeholder=default_pg)
+        cat_path = st.text_input("Catalogue", "", placeholder=default_cat)
+    det_path = det_path or default_det
+    pg_path = pg_path or default_pg
+    cat_path = cat_path or default_cat
 
 det = load_detection_output(ROOT / det_path)
 planogram = load_planogram(ROOT / pg_path)
@@ -109,7 +122,7 @@ if det.planogram_id != planogram.planogram_id:
     st.warning(f"Image is for planogram {det.planogram_id}, but {planogram.planogram_id} is loaded.")
 
 price_issues = check_prices(det, catalogue)
-report = compute_report(det, planogram, catalogue)
+report = compute_report(det, planogram, catalogue, group_items=preset.startswith("Real bay"))
 
 score_col, c1, c2, c3, c4, c5 = st.columns([1.3, 1, 1, 1, 1, 1])
 score_col.metric("Compliance score", f"{report.score:.0f} / 100")
