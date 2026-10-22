@@ -5,7 +5,7 @@
   "image_width": 1200,
   "image_height": 1600,
   "planogram_id": "PG-store4-9-scenario",
-  "captured_at": "2026-10-22T15:00:13+00:00",
+  "captured_at": "2026-10-22T16:08:07+00:00",
   "produced_by": {
     "vision": "yolo:product_detector",
     "matcher": "dinov2-vits14+adapter",
@@ -16,9 +16,9 @@
     {
       "bbox": [
         7.5,
-        8.1,
-        1199.4,
-        732.2
+        17.0,
+        1182.3,
+        712.3
       ],
       "shelf_id": "S1"
     },
@@ -73,7 +73,7 @@
       "sku": "G30-50",
       "sku_confidence": 0.9288,
       "shelf_id": "S1",
-      "slot_id": "S1-01"
+      "slot_id": "S1-02"
     },
     {
       "bbox": [
@@ -87,7 +87,7 @@
       "sku": "G30-50",
       "sku_confidence": 0.9288,
       "shelf_id": "S1",
-      "slot_id": "S1-01"
+      "slot_id": "S1-02"
     },
     {
       "bbox": [
@@ -101,7 +101,7 @@
       "sku": "G30-50",
       "sku_confidence": 0.9288,
       "shelf_id": "S1",
-      "slot_id": "S1-01"
+      "slot_id": "S1-02"
     },
     {
       "bbox": [
@@ -113,7 +113,7 @@
       "item_id": "i006",
       "det_confidence": 0.5802,
       "sku": "G30-50",
-      "sku_confidence": 0.9971,
+      "sku_confidence": 0.9288,
       "shelf_id": "S1",
       "slot_id": "S1-02"
     },
@@ -127,7 +127,7 @@
       "item_id": "i007",
       "det_confidence": 0.6143,
       "sku": "G30-50",
-      "sku_confidence": 0.9971,
+      "sku_confidence": 0.9288,
       "shelf_id": "S1",
       "slot_id": "S1-02"
     },
@@ -227,8 +227,8 @@
       ],
       "label_id": "label_000",
       "shelf_id": "S1",
-      "slot_id": "S1-01",
-      "sku": "G30-50",
+      "slot_id": "S1-02",
+      "sku": "G30-53",
       "ocr_text": "Bio Apfelessig aon P\n3 | 22.10.2012\nas |: 2.20 mimi |\n.\n‘ 500m! (100m! = 0.44) ‘616600 \"900201\" i",
       "price": 2.2,
       "ocr_confidence": 1.0

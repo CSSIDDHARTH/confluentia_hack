@@ -95,3 +95,97 @@ def draw_bay_report(im: Image.Image, det: DetectionOutput, report: ComplianceRep
     for k, ln in enumerate(wrapped):
         cd.text((10, top + im.height + 8 + k * line_h), ln, fill=(255, 255, 255), font=font)
     return canvas
+
+
+# One palette for the photo and the drawn plan, so a slot looks the same in both.
+STATUS_COLOURS = {
+    "ok": "#2e7d32",  # as planned
+    "low": "#b86e00",  # low stock
+    "bad": "#c62828",  # missing, or the wrong product
+    "check": "#8d7b00",  # product not recognised
+    "unread": "#5f6368",  # not read yet
+    "label": "#1565c0",  # price label read and fine
+}
+_PACK_OUTLINE = {"ok": (60, 220, 90), "bad": (240, 50, 50), "check": (250, 205, 0)}
+
+
+def slot_status(report: ComplianceReport) -> dict[str, tuple[str, str]]:
+    """slot_id -> (status key, words) from the report's violations, worst first."""
+    order = [  # a slot holding another product is "wrong product"; "missing" means nothing is there at all
+        (ViolationKind.MISPLACED, "bad", "wrong product"),
+        (ViolationKind.STOCK_OUT, "bad", "missing"),
+        (ViolationKind.LOW_STOCK, "low", "low stock"),
+        (ViolationKind.UNRECOGNISED_ITEM, "check", "check product"),
+    ]
+    kinds: dict[str, set] = {}
+    for v in report.violations:
+        kinds.setdefault(v.slot_id, set()).add(v.kind)
+    out = {}
+    for slot_id, here in kinds.items():
+        for kind, key, words in order:
+            if kind in here:
+                out[slot_id] = (key, words)
+                break
+    return out
+
+
+def _font(size: int) -> ImageFont.ImageFont:
+    for path in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans-Bold.ttf"):
+        try:
+            return ImageFont.truetype(path, size)
+        except OSError:
+            continue
+    return ImageFont.load_default(size=size)
+
+
+def _tag(d: ImageDraw.ImageDraw, xy: tuple[float, float], text: str, colour: str, font, pad: int) -> None:
+    x, y = xy
+    l, t, r, b = d.textbbox((x + pad, y + pad), text, font=font)
+    d.rectangle((x, y, r + pad, b + pad), fill=colour)
+    d.text((x + pad, y + pad), text, fill=(255, 255, 255), font=font)
+
+
+def draw_audit(
+    im: Image.Image,
+    det: DetectionOutput,
+    report: ComplianceReport,
+    expected: dict[str, str],
+    label_notes: dict[str, tuple[str, str]],
+) -> Image.Image:
+    """The audit on the photo, in the plan's colours: each pack outlined green (the slot's product), red (another
+    product) or yellow (not recognised); each slot tagged with its id and status; empty spaces filled red; each
+    price label tagged with what was read (label_notes: label_id -> (text, status key)).
+    expected: slot_id -> the sku the plan puts there."""
+    im = im.convert("RGB")
+    lw = max(3, im.width // 400)
+    font = _font(max(18, im.width // 55))
+    pad = max(4, font.size // 4)
+
+    shade = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shade)
+    for g in det.gaps:
+        sd.rectangle(g.bbox, fill=(220, 40, 40, 90), outline=(240, 50, 50, 255), width=lw + 1)
+    im = Image.alpha_composite(im.convert("RGBA"), shade).convert("RGB")
+    d = ImageDraw.Draw(im)
+
+    for it in det.items:
+        key = "check" if it.sku is None else ("ok" if expected.get(it.slot_id) == it.sku else "bad")
+        d.rectangle(it.bbox, outline=_PACK_OUTLINE[key], width=lw)
+    for g in det.gaps:
+        _tag(d, (g.bbox[0] + lw, g.bbox[1] + lw), f"EMPTY ~{g.estimated_missing_facings}", STATUS_COLOURS["bad"], font, pad)
+
+    status = slot_status(report)
+    first: dict[str, list[float]] = {}
+    for it in det.items:  # each slot's tag sits on its leftmost, highest pack
+        if it.slot_id and (it.slot_id not in first or (it.bbox[0], it.bbox[1]) < (first[it.slot_id][0], first[it.slot_id][1])):
+            first[it.slot_id] = it.bbox
+    for slot_id, box in first.items():
+        key, words = status.get(slot_id, ("ok", ""))
+        _tag(d, (box[0] + lw, box[1] + lw), f"{slot_id} {words}".strip(), STATUS_COLOURS[key], font, pad)
+
+    for lb in det.labels:
+        text, key = label_notes.get(lb.label_id, (f"{lb.price:.2f}" if lb.price is not None else "?", "label"))
+        d.rectangle(lb.bbox, outline=STATUS_COLOURS[key], width=lw)
+        th = font.size + 2 * pad
+        _tag(d, (lb.bbox[0], max(0, lb.bbox[1] - th - lw)), text, STATUS_COLOURS[key], font, pad)
+    return im

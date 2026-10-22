@@ -1,13 +1,14 @@
 """Build demo bays from held-out Grozi shelves and rank how well the pipeline handles them.
 
-    python scripts/make_demo_bays.py [--top 5]
+    python scripts/make_demo_bays.py [--top 3]
 
 One pass per photo covers everything (src/shelfsense/vision/bay.py): product blocks are named
 and aligned to a planogram, packs are counted inside each block (its facings), and empty
 space is found between packs. Each bay gets two planograms:
 
-  compliant  written from the human labels, with facings taken from the pack counts on the
-             photo, so a correct pipeline scores 100;
+  compliant  written from the human labels: one slot per human-drawn product box, its facings the
+             packs the pack detector finds inside that box (bottle pieces merged), so the plan
+             matches the photo and a correct pipeline scores 100;
   scenario   a planned change: two neighbouring products swapped (misplaced), one slot now
              expecting a product that is not on the shelf (stock-out), and one product's
              facings raised by two (a promotion reset the shelf has not caught up with: low stock).
@@ -32,7 +33,7 @@ from PIL import Image
 
 from shelfsense.contracts import CatalogueItem, DetectionOutput, Planogram, Shelf, Slot, save_detection_output
 from shelfsense.report.compliance import compute_report
-from shelfsense.vision.bay import analyze_bay
+from shelfsense.vision.bay import analyze_bay, drop_fragments, merge_split_packs
 from shelfsense.vision.detect import VOID_CONF_FLOOR, ProductDetector, group_into_rows
 from shelfsense.vision.render import draw_bay_report as draw_report
 from shelfsense.vision.grozi import VAL_STORES, labelled_boxes
@@ -52,22 +53,36 @@ def all_labelled(img: Path) -> bool:
         return all(r["label"] != "-1" for r in csv.DictReader(f))
 
 
-def plan_from_boxes(plan_id: str, name: str, skus: list[str], boxes: list[list[float]]) -> Planogram:
-    shelves = []
+def plan_from_boxes(
+    plan_id: str, name: str, skus: list[str], boxes: list[list[float]]
+) -> tuple[Planogram, dict[str, list[float]]]:
+    """The plan from the human-labelled product boxes, and each slot's box."""
+    shelves, slot_box = [], {}
     for r, row in enumerate(group_into_rows(boxes)):
-        slots = [
-            Slot(slot_id=f"S{r + 1}-{p + 1:02d}", position=p, sku=skus[i], facings=1, min_facings=1)
-            for p, i in enumerate(row)
-        ]
+        slots = []
+        for p, i in enumerate(row):
+            slot = Slot(slot_id=f"S{r + 1}-{p + 1:02d}", position=p, sku=skus[i], facings=1, min_facings=1)
+            slot_box[slot.slot_id] = boxes[i]
+            slots.append(slot)
         shelves.append(Shelf(shelf_id=f"S{r + 1}", index=r, slots=slots))
-    return Planogram(planogram_id=plan_id, fixture_name=name, effective_from="2026-10-01", shelves=shelves)
+    plan = Planogram(planogram_id=plan_id, fixture_name=name, effective_from="2026-10-01", shelves=shelves)
+    return plan, slot_box
 
 
-def with_facings(plan: Planogram, det: DetectionOutput) -> Planogram:
-    """Copy of the plan whose facings are the packs the photo actually shows in each slot."""
+def with_facings(plan: Planogram, slot_box: dict[str, list[float]], packs: list[list[float]]) -> Planogram:
+    """Copy of the plan whose facings are the packs inside each slot's human-drawn product box (a pack whose
+    centre lies in two boxes counts for the smaller one). The vision chain's own blocks are not used, so a
+    block the detector splits or merges shows up as a violation instead of being written into the plan."""
+    area = lambda b: (b[2] - b[0]) * (b[3] - b[1])  # noqa: E731
+    counts = dict.fromkeys(slot_box, 0)
+    for pk in packs:
+        cx, cy = (pk[0] + pk[2]) / 2, (pk[1] + pk[3]) / 2
+        inside = [sid for sid, b in slot_box.items() if b[0] <= cx <= b[2] and b[1] <= cy <= b[3]]
+        if inside:
+            counts[min(inside, key=lambda sid: area(slot_box[sid]))] += 1
     p = plan.model_copy(deep=True)
     for slot in (s for sh in p.shelves for s in sh.slots):
-        n = max(1, sum(1 for i in det.items if i.slot_id == slot.slot_id))
+        n = max(1, counts[slot.slot_id])
         slot.facings = n
         slot.min_facings = max(1, round(MIN_FACINGS_SHARE * n))
     return p
@@ -137,7 +152,8 @@ def downscale(det: DetectionOutput, factor: float, shown_path: str) -> Detection
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--top", type=int, default=5)
+    ap.add_argument("--top", type=int, default=3)  # the next shelves (81 and 80) misname products on the correct plan
+    ap.add_argument("--rank-only", action="store_true", help="print every shelf's compliant-plan score; write nothing")
     a = ap.parse_args()
 
     blocks = ProductDetector(ROOT / "models" / "product_detector.pt")
@@ -157,14 +173,15 @@ def main() -> None:
             continue
         w, h = Image.open(img).size
         boxes = [[l * w, t * h, r * w, b * h] for _, (l, t, r, b) in items]
-        base = plan_from_boxes(f"PG-{img.parent.parent.name}-{img.stem}", f"{img.parent.parent.name} photo {img.stem}", [s for s, _ in items], boxes)
+        base, slot_box = plan_from_boxes(f"PG-{img.parent.parent.name}-{img.stem}", f"{img.parent.parent.name} photo {img.stem}", [s for s, _ in items], boxes)
         present = {s for s, _ in items}
         # In deployment the candidates for a bay are the planogram's own products. DISTRACTORS adds that many random
         # extra products (seeded per photo) as a stress test: 0 = planogram only.
         distractors = set(random.Random(f"{img.parent.parent.name}-{img.stem}").sample(known, DISTRACTORS)) if DISTRACTORS else set()
         cands = {s.sku for sh in base.shelves for s in sh.slots} | distractors
         det0 = analyze_bay(img, blocks, packs, matcher, base, cands)
-        plan = with_facings(base, det0)
+        pack_boxes, pack_confs, _ = packs.boxes(img)
+        plan = with_facings(base, slot_box, drop_fragments(*merge_split_packs(pack_boxes, pack_confs))[0])
         cat = synthetic_catalogue(present, names)
         report = compute_report(det0, plan, cat, group_items=True)
         ranked.append((report.score, len(det0.items), img, plan, present, distractors, cat))
@@ -175,6 +192,10 @@ def main() -> None:
           f"{sum(r[0] == 100 for r in ranked)} perfect, {sum(r[0] >= 85 for r in ranked)} >= 85, "
           f"median {scores[len(scores) // 2] if scores else 0:.0f}; all: {scores[::-1]}")
 
+    if a.rank_only:
+        for score, _, img, *_ in ranked:
+            print(f"  {img.parent.parent.name}_{img.stem} {score:.0f}")
+        return
     if OUT.exists():
         shutil.rmtree(OUT)
     for score, n, img, plan, present, distractors, cat in ranked[: a.top]:

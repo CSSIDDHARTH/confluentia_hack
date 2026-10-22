@@ -5,7 +5,7 @@
   "image_width": 1200,
   "image_height": 1600,
   "planogram_id": "PG-store1-47",
-  "captured_at": "2026-10-22T15:00:11+00:00",
+  "captured_at": "2026-10-22T16:08:08+00:00",
   "produced_by": {
     "vision": "yolo:product_detector",
     "matcher": "dinov2-vits14+adapter",
@@ -164,7 +164,7 @@
       "item_id": "i009",
       "det_confidence": 0.5399,
       "sku": "G13-94",
-      "sku_confidence": 0.9913,
+      "sku_confidence": 0.9852,
       "shelf_id": "S3",
       "slot_id": "S3-01"
     },
@@ -178,7 +178,7 @@
       "item_id": "i010",
       "det_confidence": 0.6376,
       "sku": "G13-94",
-      "sku_confidence": 0.9913,
+      "sku_confidence": 0.9852,
       "shelf_id": "S3",
       "slot_id": "S3-01"
     },

@@ -16,7 +16,7 @@ from statistics import median
 from PIL import Image
 
 from shelfsense.contracts import DetectionOutput, Gap, Item, Planogram
-from shelfsense.vision.detect import VOID_CONF, VOID_CONF_FLOOR, ProductDetector, detect_voids
+from shelfsense.vision.detect import VOID_CONF, VOID_CONF_FLOOR, ProductDetector, build_detection_output, detect_voids
 from shelfsense.vision.gaps import find_gaps, voids_as_gaps
 from shelfsense.vision.pipeline import DEFAULT_MIN_CONFIDENCE, identify_items
 from shelfsense.vision.planogram_align import assign_slots
@@ -101,6 +101,35 @@ def merge_split_packs(
     ]
     merged.sort(key=lambda bc: (bc[0][1], bc[0][0]))
     return [b for b, _ in merged], [c for _, c in merged]
+
+
+# A product-block box lying at least this share inside a larger block box is a duplicate of part of that block
+# (YOLO's non-maximum suppression compares boxes by IoU, which stays low for a small box inside a big one).
+NESTED_BLOCK = 0.8
+
+
+def drop_nested_boxes(
+    boxes: list[list[float]], confs: list[float], share: float = NESTED_BLOCK
+) -> tuple[list[list[float]], list[float]]:
+    """Keep the larger of two boxes when the smaller lies mostly inside it."""
+    kept: list[int] = []
+    for i in sorted(range(len(boxes)), key=lambda i: -_area(boxes[i])):
+        b = boxes[i]
+        if not any(
+            max(0.0, min(b[2], boxes[k][2]) - max(b[0], boxes[k][0])) * max(0.0, min(b[3], boxes[k][3]) - max(b[1], boxes[k][1]))
+            >= share * _area(b)
+            for k in kept
+        ):
+            kept.append(i)
+    kept.sort()
+    return [boxes[i] for i in kept], [confs[i] for i in kept]
+
+
+def detect_blocks(block_detector: ProductDetector, image_path: Path) -> DetectionOutput:
+    """Product blocks for one photo, with boxes nested inside a larger block dropped."""
+    boxes, confs, size = block_detector.boxes(image_path)
+    boxes, confs = drop_nested_boxes(boxes, confs)
+    return build_detection_output(image_path.stem, str(image_path), size, boxes, confs, produced_by=f"yolo:{block_detector.name}")
 
 
 def assign_packs_to_blocks(blocks: list[list[float]], packs: list[list[float]]) -> list[int | None]:
@@ -203,7 +232,7 @@ def analyze_bay(
 
     image_path = Path(image_path)
     with timed("find product blocks"):
-        det = block_detector.detect(image_path)
+        det = detect_blocks(block_detector, image_path)
     if shown_path is not None:
         det.image_path = shown_path
     image = Image.open(image_path).convert("RGB")

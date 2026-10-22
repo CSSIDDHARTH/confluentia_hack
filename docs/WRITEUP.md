@@ -21,13 +21,13 @@ photo -> product-block detector -> product naming -> align to planogram -> count
 6. **Read the price labels** with a YOLOv8n label detector (trained on Open Food Facts price tags), then vote on each price with seven Tesseract variants and EasyOCR. Boxes the photo's edge cuts off are skipped. Each label goes to the slot whose first facing it sits under. A label whose price differs from the catalogue is a price mismatch only when the OCR vote is confident (at least 0.5); otherwise staff are told to check it by eye.
 7. **Report**: a compliance score with each violation and a corrective action, the money at stake (missing packs times price, price gap times facings: an estimate for ordering work), and the violations merged into a few steps for staff.
 
-The demo does not depend on saved results: the dashboard has a **Run it live** button that reads the photo from scratch (all three detectors, naming, alignment and the price labels) and reports the seconds each stage took. On the five demo shelves it reproduces all 10 saved scores exactly, and every label's price and slot.
+The demo does not depend on saved results: the dashboard has a **Run it live** button that reads the photo from scratch (all three detectors, naming, alignment and the price labels) and reports the seconds each stage took. On the three demo shelves it reproduces all 6 saved scores exactly, and every label's price and slot.
 
 A second mode, *shelf availability*, skips the planogram and gives empty spaces, per-row fill and a refill list for any shelf photo, uploaded live.
 
 ## From violation lines to steps
 
-The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, a misplaced product is told where it belongs ("Cereals #138 belongs in S1-01", from the planogram, or "the plan has no other slot for it"), and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 44 violation lines become 31 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
+The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, a misplaced product is told where it belongs ("Cereals #138 belongs in S1-01", from the planogram, or "the plan has no other slot for it"), and steps are ordered by severity. Across the 6 demo reports (3 shelves, correct plan and planted changes; placement only) 24 violation lines become 14 steps, and each violation lands in exactly one step. The planted swap becomes one "Swap" step on store4_9 and store1_47; on store1_36 it stays as two moves.
 
 The dashboard also has an **Edit the plan yourself** mode (`advisor/edit.py`): a person changes what a slot expects, its facings and minimum, or swaps two slots, and the score and steps recompute from the unchanged photo reading. This is how a violation gets created without us planting it. It tests the comparison, not the detector, since the photo is read once.
 
@@ -53,12 +53,12 @@ All on held-out data (different stores or different images from training).
 | Naming, planogram-restricted | 0.81 top-1 |
 | Naming with 20 extra distractors | 0.79 |
 | Naming, open set (no planogram) | 0.49 |
-| Whole chain (detect, name, align, count), correct plan, 35 held-out shelves | median 55; best three 98, 93, 88; three shelves score 0 |
-| Planted-change shelves (the 5 demo shelves) | scores fall to 31 to 49 with every planted change listed (placement only; 27 to 43 with prices and label checks) |
+| Whole chain (detect, name, align, count), correct plan, 35 held-out shelves | median 53; best three 100, 98, 98; three shelves score 0 |
+| Planted-change shelves (the 3 demo shelves) | scores fall to 31 to 46 with every planted change listed (placement only; 27 to 33 with prices and label checks) |
 | Pack counting, 200 held-out SKU-110K photos, 29,876 hand-boxed packs | F1 0.845, median count error 5.7% with bottle pieces merged (0.836 and 8.1% without) |
 | Price labels, 31 hand-boxed labels on Grozi shelves | 31 found, 30 prices read correctly, 0 wrong, 1 unreadable (Tesseract alone: 27 correct, 2 wrong) |
-| Price labels on the five demo shelves | 24 boxes: 9 cut off by the photo's edge (skipped); of 15 whole labels 8 read confidently and right, 0 wrong, 6 motion-blurred (unreadable) |
-| Live run vs saved results | all 10 shelf/plan pairs: same score, same price and slot for every label |
+| Price labels on the three demo shelves | 9 whole labels: 7 read confidently and right, 0 wrong, 1 unsure, 1 motion-blurred (on an earlier five-shelf set: 6 of 15 motion-blurred) |
+| Live run vs saved results | all 6 shelf/plan pairs: same score, same price and slot for every label |
 | **Empty space vs real hand-labelled empty spots**, 94 held-out photos, 639 labelled spots | precision 0.66, recall 0.62, **F1 0.64** (void detector, confidence 0.3 chosen on a separate split) |
 | Same photos, our first method (gaps inferred from missing packs) | precision 0.29, recall 0.25, F1 0.27 |
 
@@ -70,7 +70,7 @@ All on held-out data (different stores or different images from training).
 - Front-facing photo of one shelf bay; each image is tagged with its planogram.
 - Planograms are ordinal (shelf, slot order, facings); public planograms carry no physical measurements.
 - **No public dataset has real planogram violations, real prices or price-tag text.** The violations are planted by editing the planogram of a real photo. The demo price list takes each price from the label read confidently on the photo, and the planted plan raises one by 10%; so a demo price mismatch tests reading and matching, not a real store's pricing error. We did not edit photos, because erased packs looked fake.
-- **Some demo labels cannot be read.** Of 15 whole labels, 6 are motion-blurred: a person can read them, but no OCR setting we tried could (downscaling, sharpening, binarising); the fix is a steadier photo. The label detector never saw a Grozi shelf in training. An unreadable label costs 2 points and asks for a check by eye; it never claims a mismatch or money at stake.
+- **Some labels cannot be read.** On an earlier five-shelf demo set, 6 of 15 whole labels were motion-blurred: a person can read them, but no OCR setting we tried could (downscaling, sharpening, binarising); the fix is a steadier photo. The label detector never saw a Grozi shelf in training. An unreadable label costs 2 points and asks for a check by eye; it never claims a mismatch or money at stake.
 - Demo shelves are the best five of 35 held-out shelves. The median shelf scores 55 on its correct plan: look-alike products get confused and blocks get misaligned, and on three shelves the chain fails outright (score 0).
 - **Plain gaps between bottles can be missed.** The void detector was trained on 416 px photos of other shops; on store4_9 it rates a clear 1.5-bottle gap at 0.06. Our fix for it made things worse on the labelled photos (below), so it is not shipped.
 - Use packaged-goods shelves photographed with the whole bay in view. Loose produce and close-ups are outside what the pack detector handles.
@@ -148,7 +148,7 @@ The retrain shows that box accuracy alone is not a safe proxy for shelf-level qu
 
 ## Edge fit (measured)
 
-**The whole planogram chain** (`scripts/benchmark_chain.py`: product blocks, naming, alignment, packs, empty spaces; the five demo bays at their original 3264 px, median over 10 runs after a warm-up):
+**The whole planogram chain** (`scripts/benchmark_chain.py`: product blocks, naming, alignment, packs, empty spaces; the five demo bays of an earlier build, store4_9, store1_36 and store1_47 among them, at their original 3264 px, median over 10 runs after a warm-up):
 
 | Stage | Laptop GPU | 4 CPU cores |
 |---|---|---|

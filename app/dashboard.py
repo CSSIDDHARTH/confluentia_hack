@@ -38,15 +38,14 @@ from shelfsense.report.compliance import ComplianceReport, ViolationKind, comput
 from shelfsense.report.export import report_to_json, violations_to_csv
 from shelfsense.report.impact import at_stake, currency
 from shelfsense.vision import live
+from shelfsense.vision.render import STATUS_COLOURS, draw_audit, slot_status
 
 ROOT = Path(__file__).resolve().parents[1]
 BAYS = ROOT / "data" / "demo_bays"
 
-ITEM_COLOUR = "#2e9e44"
-UNKNOWN_COLOUR = "#f0a020"
-GAP_COLOUR = "#d62828"
 LABEL_COLOUR = "#1d6fd6"
 LABEL_ISSUE_COLOUR = "#d62828"
+SHOWN_SIZE = (1100, 760)  # the photo is shrunk to fit this box, so photo and plan fit on one screen
 
 ISSUE_LABELS = {
     PriceIssueType.PRICE_MISMATCH: "price mismatch",
@@ -55,46 +54,13 @@ ISSUE_LABELS = {
 }
 
 
-def overlay(det: DetectionOutput, price_issues: list) -> Image.Image:
-    path = ROOT / det.image_path
-    if path.exists():
-        img = Image.open(path).convert("RGB")
-    else:
-        img = Image.new("RGB", (det.image_width, det.image_height), "white")
-    draw = ImageDraw.Draw(img)
-    line = max(3, img.width // 500)
-    flagged_label_ids = {issue.label_id for issue in price_issues}
-    for it in det.items:
-        draw.rectangle(it.bbox, outline=ITEM_COLOUR if it.sku else UNKNOWN_COLOUR, width=line)
-    for gap in det.gaps:
-        draw.rectangle(gap.bbox, outline=GAP_COLOUR, width=line + 1)
-        draw.text((gap.bbox[0] + 8, gap.bbox[1] + 8), "EMPTY", fill=GAP_COLOUR)
-    for lb in det.labels:
-        flagged = lb.label_id in flagged_label_ids
-        colour = LABEL_ISSUE_COLOUR if flagged else LABEL_COLOUR
-        draw.rectangle(lb.bbox, outline=colour, width=line)
-        if flagged:
-            draw.text((lb.bbox[0], lb.bbox[1] - 14), "PRICE?", fill=LABEL_ISSUE_COLOUR)
-    return img
-
-
-# slot status -> (background, label), worst first; the text on every background is white
-SLOT_STATUS = {
-    ViolationKind.STOCK_OUT: ("#b3261e", "missing"),
-    ViolationKind.MISPLACED: ("#b3261e", "wrong product here"),
-    ViolationKind.LOW_STOCK: ("#b86e00", "low stock"),
-    ViolationKind.UNRECOGNISED_ITEM: ("#7a6a00", "check product"),
-}
-SLOT_OK = ("#2e7d32", "as planned")
-SLOT_UNREAD = ("#5f6368", "not read yet")
-
-
 def plan_html(planogram, catalogue, det: DetectionOutput | None, report: ComplianceReport | None) -> str:
     """The plan drawn shelf by shelf, top first: one box per slot, as wide as its planned facings, coloured by
     what the photo shows there (no report: grey). Price problems get a note on the slot."""
     kinds: dict[str, set] = {}
     for v in report.violations if report else []:
         kinds.setdefault(v.slot_id, set()).add(v.kind)
+    status = slot_status(report) if report else {}
     rows = []
     for shelf in planogram.shelves:
         cells = []
@@ -102,9 +68,8 @@ def plan_html(planogram, catalogue, det: DetectionOutput | None, report: Complia
             item = catalogue.get(slot.sku)
             name = html.escape(item.name if item else slot.sku)
             here = kinds.get(slot.slot_id, set())
-            colour, status = SLOT_UNREAD if report is None else next(
-                (SLOT_STATUS[k] for k in SLOT_STATUS if k in here), SLOT_OK
-            )
+            key, words = ("unread", "not read yet") if report is None else status.get(slot.slot_id, ("ok", "as planned"))
+            colour = STATUS_COLOURS[key]
             seen = "" if det is None or report is None else (
                 f" · seen {sum(i.slot_id == slot.slot_id and i.sku == slot.sku for i in det.items)}"
             )
@@ -116,13 +81,34 @@ def plan_html(planogram, catalogue, det: DetectionOutput | None, report: Complia
             cells.append(
                 f'<div style="flex:{slot.facings} 1 0;min-width:0;background:{colour};color:#fff;border-radius:6px;'
                 f'padding:6px 8px;margin:2px;font-size:0.8rem;line-height:1.25;overflow:hidden">'
-                f"<b>{slot.slot_id}</b> {name}<br>planned {slot.facings}{seen}<br><i>{status}</i>{price}</div>"
+                f"<b>{slot.slot_id}</b> {name}<br>planned {slot.facings}{seen}<br><i>{words}</i>{price}</div>"
             )
         rows.append(
             f'<div style="display:flex;align-items:stretch;margin-bottom:6px;padding-bottom:6px;'
             f'border-bottom:3px solid #9aa0a6">{"".join(cells)}</div>'
         )
     return "".join(rows)
+
+
+def label_notes(price_issues: list) -> dict[str, tuple[str, str]]:
+    """label_id -> (tag text, status key) for the labels with a price issue; the rest show their price."""
+    notes = {}
+    for i in price_issues:
+        if i.issue_type == PriceIssueType.PRICE_MISMATCH and not i.low_confidence:
+            notes[i.label_id] = (f"{i.label_price:.2f} \u2260 {i.catalogue_price:.2f}", "bad")
+        elif i.issue_type == PriceIssueType.PRICE_MISMATCH:
+            notes[i.label_id] = (f"{i.label_price:.2f}? check", "check")
+        elif i.issue_type == PriceIssueType.UNREADABLE_PRICE:
+            notes[i.label_id] = ("unreadable", "check")
+        else:
+            notes[i.label_id] = ((f"{i.label_price:.2f} " if i.label_price is not None else "") + "no slot", "check")
+    return notes
+
+
+def shown(im: Image.Image) -> Image.Image:
+    im = im.copy()
+    im.thumbnail(SHOWN_SIZE)
+    return im
 
 
 def slot_table(det, planogram, catalogue) -> pd.DataFrame:
@@ -305,7 +291,7 @@ if bay is not None:
     ):
         # Nothing is read yet: the plain photo, so the live run is what draws the findings.
         left, right = st.columns([3, 2])
-        left.image(str(BAYS / bay / "photo.jpg"), caption=f"{bay}: not read yet. Press Run it live.")
+        left.image(shown(Image.open(BAYS / bay / "photo.jpg")), caption=f"{bay}: not read yet. Press Run it live.")
         with right:
             st.subheader("The plan")
             st.markdown(plan_html(planogram, catalogue, None, None), unsafe_allow_html=True)
@@ -339,12 +325,13 @@ c4.metric("Price mismatches", firm, help=f"Firm mismatches only. {to_check} more
 
 left, right = st.columns([3, 2])
 with left:
+    photo_path = ROOT / det.image_path
+    base = Image.open(photo_path) if photo_path.exists() else Image.new("RGB", (det.image_width, det.image_height), "white")
+    expected = {s.slot_id: s.sku for sh in planogram.shelves for s in sh.slots}
     st.image(
-        overlay(det, price_issues),
-        caption=(
-            f"{det.image_id}: green = product, orange = unrecognised, "
-            "red = empty space or price issue, blue = price label"
-        ),
+        shown(draw_audit(base, det, report, expected, label_notes(price_issues))),
+        caption=f"{det.image_id}: packs outlined green = the slot's product, red = another product, yellow = not "
+        "recognised; tags = slot and its status, as in the plan; red fill = empty space; label tags = price read.",
     )
 with right:
     st.subheader("The plan")

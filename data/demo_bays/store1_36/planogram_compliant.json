@@ -26,8 +26,8 @@
           "slot_id": "S1-03",
           "position": 2,
           "sku": "G26-6",
-          "facings": 5,
-          "min_facings": 3
+          "facings": 4,
+          "min_facings": 2
         }
       ]
     },
@@ -46,15 +46,15 @@
           "slot_id": "S2-02",
           "position": 1,
           "sku": "G26-27",
-          "facings": 7,
-          "min_facings": 4
+          "facings": 4,
+          "min_facings": 2
         },
         {
           "slot_id": "S2-03",
           "position": 2,
           "sku": "G26-6",
-          "facings": 3,
-          "min_facings": 2
+          "facings": 6,
+          "min_facings": 4
         }
       ]
     }

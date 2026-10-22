@@ -45,7 +45,7 @@
           "slot_id": "S3-01",
           "position": 0,
           "sku": "G02-123121",
-          "facings": 4,
+          "facings": 3,
           "min_facings": 2
         }
       ]

@@ -5,7 +5,7 @@
   "image_width": 1600,
   "image_height": 1200,
   "planogram_id": "PG-store1-36-scenario",
-  "captured_at": "2026-10-22T15:00:13+00:00",
+  "captured_at": "2026-10-22T16:08:07+00:00",
   "produced_by": {
     "vision": "yolo:product_detector",
     "matcher": "dinov2-vits14+adapter",
@@ -24,9 +24,9 @@
     },
     {
       "bbox": [
-        0.0,
-        545.6,
-        1600.0,
+        12.3,
+        550.4,
+        1599.1,
         1113.0
       ],
       "shelf_id": "S2"
@@ -225,7 +225,7 @@
       "item_id": "i014",
       "det_confidence": 0.5095,
       "sku": "G26-19",
-      "sku_confidence": 0.6737,
+      "sku_confidence": 0.9967,
       "shelf_id": "S2",
       "slot_id": "S2-01"
     },
@@ -353,7 +353,7 @@
       "sku": "G26-6",
       "sku_confidence": 0.9991,
       "shelf_id": "S2",
-      "slot_id": "S2-02"
+      "slot_id": "S2-03"
     },
     {
       "bbox": [
@@ -367,7 +367,7 @@
       "sku": "G26-6",
       "sku_confidence": 0.9991,
       "shelf_id": "S2",
-      "slot_id": "S2-02"
+      "slot_id": "S2-03"
     },
     {
       "bbox": [
@@ -381,7 +381,7 @@
       "sku": "G26-6",
       "sku_confidence": 0.9991,
       "shelf_id": "S2",
-      "slot_id": "S2-02"
+      "slot_id": "S2-03"
     },
     {
       "bbox": [
@@ -393,7 +393,7 @@
       "item_id": "i026",
       "det_confidence": 0.5296,
       "sku": "G26-6",
-      "sku_confidence": 0.9943,
+      "sku_confidence": 0.9991,
       "shelf_id": "S2",
       "slot_id": "S2-03"
     },
@@ -407,7 +407,7 @@
       "item_id": "i027",
       "det_confidence": 0.7492,
       "sku": "G26-6",
-      "sku_confidence": 0.9943,
+      "sku_confidence": 0.9991,
       "shelf_id": "S2",
       "slot_id": "S2-03"
     },
@@ -421,7 +421,7 @@
       "item_id": "i028",
       "det_confidence": 0.4483,
       "sku": "G26-6",
-      "sku_confidence": 0.9943,
+      "sku_confidence": 0.9991,
       "shelf_id": "S2",
       "slot_id": "S2-03"
     }
@@ -452,8 +452,8 @@
       ],
       "label_id": "label_001",
       "shelf_id": "S2",
-      "slot_id": null,
-      "sku": null,
+      "slot_id": "S2-03",
+      "sku": "G02-123121",
       "ocr_text": "275M",
       "price": 2.75,
       "ocr_confidence": 0.6
