@@ -1,6 +1,6 @@
-# shelfSense AI: vision pipeline
+# shelfSense AI: how it works and what we measured
 
-Written for judges. Covers the vision half (photo to products, placement, counts, empty space); price verification and the dashboard report are described by Person B.
+Written for judges. Covers the whole chain: photo to products, placement, counts, empty space, price labels, and the report staff act on.
 
 ## What it does
 
@@ -18,9 +18,10 @@ photo -> product-block detector -> product naming -> align to planogram -> count
 3. **Align** the detected blocks to the planogram row by row with Needleman-Wunsch sequence alignment, so a swap, a missing product or an extra product shows up as a specific mismatch.
 4. **Count** facings with a second YOLO11s detector that finds individual packs (trained on SKU-110K). Each pack becomes an item that carries its block's product and slot, so the report's rule "items in slot = facings" yields low stock and stock-outs.
 5. **Find empty space** with a third YOLO11s detector trained directly on hand-labelled empty shelf spots. Rows still come from the vertical coverage of packs; each empty space goes to its nearest row, its width over that row's median pack width is the number of missing facings, and a row more than 40% covered by empty spaces is low stock. (Our first method inferred gaps from missing packs; it is kept as the fallback when the void weights are absent, and scored far lower, see below.)
-6. **Report**: a compliance score with each violation and a corrective action.
+6. **Read the price labels** with a YOLOv8n label detector (trained on Open Food Facts price tags), then vote on each price with five Tesseract variants and EasyOCR. Each label goes to the slot whose first facing it sits under. A label whose price differs from the catalogue is a price mismatch only when the OCR vote is confident (at least 0.5); otherwise staff are told to check it by eye.
+7. **Report**: a compliance score with each violation and a corrective action, the money at stake (missing packs times price, price gap times facings: an estimate for ordering work), and the violations merged into a few steps for staff.
 
-The planogram demo does not depend on saved results: the "What to do" page has a **Run it live** button that reads the photo from scratch (all three detectors, naming and alignment) and reports the seconds each stage took. On the five demo shelves it reproduces all 10 saved scores exactly.
+The demo does not depend on saved results: the shelf audit page and the "What to do" page have a **Run it live** button that reads the photo from scratch (all three detectors, naming, alignment and, on the audit page, the price labels) and reports the seconds each stage took. On the five demo shelves it reproduces all 10 saved scores exactly, and every label's price and slot.
 
 A second mode, *shelf availability*, skips the planogram and gives empty spaces, per-row fill and a refill list for any shelf photo, uploaded live.
 
@@ -30,14 +31,16 @@ The compliance report lists one line per violation, so one swap of two products 
 
 The "What to do" page also has an **Edit the plan yourself** mode (`advisor/edit.py`): a person changes what a slot expects, its facings and minimum, or swaps two slots, and the score and steps recompute from the unchanged photo reading. This is how a violation gets created without us planting it. It tests the comparison, not the detector, since the photo is read once.
 
-### A small language model: tested, not used
+### Where the small language model is used, and where it is not
 
-The brief invites a small language model (under 20B parameters) where it fits. We tested Qwen2.5-1.5B and 0.5B, run locally, in two roles:
+The brief invites a small language model (under 20B parameters) where it fits. The rule is: **code decides, the model writes, a checker verifies.** We tested Qwen2.5-1.5B and 0.5B, run locally, in three roles and kept one.
 
 - **Deciding what to do** from the raw violation lines: every slot and number it wrote existed in the report (10 of 10 shelves), but it told staff to restock two products that were simply in each other's slots (the right instruction is a swap), named the wrong item to verify, and padded a one-violation shelf with generic advice. Its answers pass a "mentions only known slots and numbers" check, so that check does not catch wrong meaning.
 - **Rewording the rule-based steps**, with every line checked to name the same slots and products and add no numbers: the 1.5B model kept 22 of 34 lines, took a median 21 s per shelf on 16 CPU cores (5 tokens/s) and does not fit on the 4 GB GPU next to the desktop; the 0.5B model (2 s on GPU) kept 2 of 34. Kept lines were still worse than the rules: "Move Cereals #138 from S3-01 to S3-01", "9 facing slots".
 
-So the rules decide and phrase the steps, which is exact and instant. A larger model (3B or more) might word them well, but would need a semantic check we do not have, so we did not ship one.
+So the rules decide and phrase the steps, which is exact and instant.
+
+- **Writing the shift summary** (shipped, `report/briefing.py`): Qwen2.5-1.5B-Instruct (4-bit GGUF, 1.1 GB, CPU through llama.cpp) writes two sentences about the three most urgent problems for the shift lead. It is not allowed to restate prices or counts, because when asked to it swapped them. A checker accepts the summary only if it names exactly those three slots, each with the problem it really has, adds no other numbers, never calls the shelf compliant and is not cut off; otherwise the template summary is shown, and the dashboard says which one you are reading. On the 13 dashboard scenarios (`scripts/eval_briefing.py`) 8 to 12 summaries pass depending on sampling, every rejection we read by hand was a real error, and a summary takes about 5 s on the laptop CPU.
 
 ## Measured results
 
@@ -51,7 +54,10 @@ All on held-out data (different stores or different images from training).
 | Naming with 20 extra distractors | 0.79 |
 | Naming, open set (no planogram) | 0.49 |
 | Whole chain (detect, name, align, count) on the best 3 held-out shelves | compliance score 98, 88, 86 on the correct plan |
-| Planted-change shelves | scores fall to 31 to 48 with every planted change listed |
+| Planted-change shelves | scores fall to 31 to 48 with every planted change listed (placement only; 16 to 39 with prices and label checks) |
+| Price labels, 31 hand-boxed labels on Grozi shelves | 31 found, 30 prices read correctly, 0 wrong, 1 unreadable (Tesseract alone: 27 correct, 2 wrong) |
+| Price labels on the five demo shelves | 24 found, 19 tied to a slot, 5 read confidently; the rest are reported as "check by eye", never as a mismatch |
+| Live run vs saved results | all 10 shelf/plan pairs: same score, same price and slot for every label |
 | **Empty space vs real hand-labelled empty spots**, 94 held-out photos, 639 labelled spots | precision 0.66, recall 0.62, **F1 0.64** (void detector, confidence 0.3 chosen on a separate split) |
 | Same photos, our first method (gaps inferred from missing packs) | precision 0.29, recall 0.25, F1 0.27 |
 
@@ -62,7 +68,8 @@ All on held-out data (different stores or different images from training).
 
 - Front-facing photo of one shelf bay; each image is tagged with its planogram.
 - Planograms are ordinal (shelf, slot order, facings); public planograms carry no physical measurements.
-- **No public dataset has real planogram violations, real prices or price-tag text.** The violations are planted by editing the planogram of a real photo, and prices are synthetic. We did not edit photos, because erased packs looked fake.
+- **No public dataset has real planogram violations, real prices or price-tag text.** The violations are planted by editing the planogram of a real photo. The demo price list takes each price from the label read confidently on the photo, and the planted plan raises one by 10%; so a demo price mismatch tests reading and matching, not a real store's pricing error. We did not edit photos, because erased packs looked fake.
+- **Most labels on the demo shelves are too small and blurry to read** (5 of 24 read confidently). The label detector never saw a Grozi shelf in training. An unreadable label costs 2 points and asks for a check by eye; it never claims a mismatch or money at stake.
 - Demo shelves are the best of the held-out set. Other held-out shelves score 80 or lower.
 - Use packaged-goods shelves photographed with the whole bay in view. Loose produce and close-ups are outside what the pack detector handles.
 - The empty-space labels are 416 px photos from one Roboflow Universe project (single annotator style, many photos from the same shop types as SKU-110K). Accuracy on very different shops is not measured. Spots the annotators left unlabelled count as false alarms, so the true precision may be higher than 0.66.
@@ -170,5 +177,6 @@ PYTHONPATH=src python3 scripts/train_detector.py --model models/pack_detector.pt
 PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
 PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing, pack detector
 PYTHONPATH=src taskset -c 0-3 python3 scripts/benchmark_chain.py --device cpu --threads 4   # edge timing, whole chain
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 127 pass, 2 skipped (no tesseract)
+PYTHONPATH=src python3 scripts/audit.py data/demo_bays/store4_9 --plan scenario   # the whole audit, headless
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 158 pass, 1 skipped with tesseract and EasyOCR; 153 pass, 6 skipped without
 ```

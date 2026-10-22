@@ -78,7 +78,7 @@ def test_what_to_do_page_shows_fewer_steps_than_violation_lines():
     pytest.importorskip("streamlit")
     from streamlit.testing.v1 import AppTest
 
-    page = str(Path(__file__).resolve().parents[1] / "app" / "pages" / "2_Shift_briefing.py")
+    page = str(Path(__file__).resolve().parents[1] / "app" / "pages" / "2_What_to_do.py")
     at = AppTest.from_file(page, default_timeout=120).run()
     assert not at.exception
     m = {x.label: x.value for x in at.metric}
@@ -89,7 +89,7 @@ def _page():
     pytest.importorskip("streamlit")
     from streamlit.testing.v1 import AppTest
 
-    page = str(Path(__file__).resolve().parents[1] / "app" / "pages" / "2_Shift_briefing.py")
+    page = str(Path(__file__).resolve().parents[1] / "app" / "pages" / "2_What_to_do.py")
     return AppTest.from_file(page, default_timeout=120).run()
 
 
