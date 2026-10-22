@@ -12,6 +12,7 @@ custom file paths are behind the "Developer inputs" switch.
 """
 
 import hashlib
+import html
 import os
 import runpy
 from pathlib import Path
@@ -75,6 +76,53 @@ def overlay(det: DetectionOutput, price_issues: list) -> Image.Image:
         if flagged:
             draw.text((lb.bbox[0], lb.bbox[1] - 14), "PRICE?", fill=LABEL_ISSUE_COLOUR)
     return img
+
+
+# slot status -> (background, label), worst first; the text on every background is white
+SLOT_STATUS = {
+    ViolationKind.STOCK_OUT: ("#b3261e", "missing"),
+    ViolationKind.MISPLACED: ("#b3261e", "wrong product here"),
+    ViolationKind.LOW_STOCK: ("#b86e00", "low stock"),
+    ViolationKind.UNRECOGNISED_ITEM: ("#7a6a00", "check product"),
+}
+SLOT_OK = ("#2e7d32", "as planned")
+SLOT_UNREAD = ("#5f6368", "not read yet")
+
+
+def plan_html(planogram, catalogue, det: DetectionOutput | None, report: ComplianceReport | None) -> str:
+    """The plan drawn shelf by shelf, top first: one box per slot, as wide as its planned facings, coloured by
+    what the photo shows there (no report: grey). Price problems get a note on the slot."""
+    kinds: dict[str, set] = {}
+    for v in report.violations if report else []:
+        kinds.setdefault(v.slot_id, set()).add(v.kind)
+    rows = []
+    for shelf in planogram.shelves:
+        cells = []
+        for slot in shelf.slots:
+            item = catalogue.get(slot.sku)
+            name = html.escape(item.name if item else slot.sku)
+            here = kinds.get(slot.slot_id, set())
+            colour, status = SLOT_UNREAD if report is None else next(
+                (SLOT_STATUS[k] for k in SLOT_STATUS if k in here), SLOT_OK
+            )
+            seen = "" if det is None or report is None else (
+                f" · seen {sum(i.slot_id == slot.slot_id and i.sku == slot.sku for i in det.items)}"
+            )
+            price = ""
+            if ViolationKind.PRICE_MISMATCH in here:
+                price = "<br>price label wrong"
+            elif ViolationKind.UNREADABLE_PRICE in here:
+                price = "<br>check price label"
+            cells.append(
+                f'<div style="flex:{slot.facings} 1 0;min-width:0;background:{colour};color:#fff;border-radius:6px;'
+                f'padding:6px 8px;margin:2px;font-size:0.8rem;line-height:1.25;overflow:hidden">'
+                f"<b>{slot.slot_id}</b> {name}<br>planned {slot.facings}{seen}<br><i>{status}</i>{price}</div>"
+            )
+        rows.append(
+            f'<div style="display:flex;align-items:stretch;margin-bottom:6px;padding-bottom:6px;'
+            f'border-bottom:3px solid #9aa0a6">{"".join(cells)}</div>'
+        )
+    return "".join(rows)
 
 
 def slot_table(det, planogram, catalogue) -> pd.DataFrame:
@@ -256,7 +304,12 @@ if bay is not None:
         help="The result saved from an earlier run on the same photo, which the live run reproduces exactly.",
     ):
         # Nothing is read yet: the plain photo, so the live run is what draws the findings.
-        st.image(str(BAYS / bay / "photo.jpg"), caption=f"{bay}: not read yet. Press Run it live.")
+        left, right = st.columns([3, 2])
+        left.image(str(BAYS / bay / "photo.jpg"), caption=f"{bay}: not read yet. Press Run it live.")
+        with right:
+            st.subheader("The plan")
+            st.markdown(plan_html(planogram, catalogue, None, None), unsafe_allow_html=True)
+            st.caption("What this shelf should hold, top shelf first; each box is as wide as its planned facings.")
         st.stop()
 
 if det.planogram_id != planogram.planogram_id:
@@ -294,12 +347,17 @@ with left:
         ),
     )
 with right:
-    st.subheader("What to do, most severe first")
-    if not steps:
-        st.success("Nothing to fix: the shelf matches the plan.")
-    for k, step in enumerate(steps, 1):
-        value = sum(stake.get(v, 0.0) for v in step.violation_ids)
-        st.markdown(f"**{k}.** {step.text}" + (f"  \n:red[{money} {value:.2f} at stake]" if value else ""))
+    st.subheader("The plan")
+    st.markdown(plan_html(planogram, catalogue, det, report), unsafe_allow_html=True)
+    st.caption("Top shelf first; each box is as wide as its planned facings. Green = as planned, orange = low stock, "
+               "red = missing or the wrong product, olive = product not recognised.")
+
+st.subheader("What to do, most severe first")
+if not steps:
+    st.success("Nothing to fix: the shelf matches the plan.")
+for k, step in enumerate(steps, 1):
+    value = sum(stake.get(v, 0.0) for v in step.violation_ids)
+    st.markdown(f"**{k}.** {step.text}" + (f"  \n:red[{money} {value:.2f} at stake]" if value else ""))
 
 st.subheader("Shift briefing")
 use_slm = st.checkbox(

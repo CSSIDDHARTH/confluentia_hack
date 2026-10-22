@@ -1,7 +1,9 @@
 """Shift briefing: task grouping, template summary and the check on the model's summary.
-None of these need the language model."""
+Only the last one uses the language model (skipped when it is not installed)."""
 
 from pathlib import Path
+
+import pytest
 
 from shelfsense.contracts import load_catalogue, load_detection_output, load_planogram
 from shelfsense.report.briefing import check_summary, group_tasks, most_urgent, template_summary, write_briefing
@@ -53,3 +55,24 @@ def test_check_rejects_wrong_kind_numbers_other_slots_and_cut_off_text():
     assert not check_summary("Fix S9-09 first.", report, catalogue)
     assert not check_summary(f"Fix the stock-out at {first.slot_id} and then", report, catalogue)
     assert not check_summary(f"{first.slot_id} is compliant.", report, catalogue)
+
+
+def test_two_sessions_asking_the_model_at_once_do_not_crash_the_server():
+    # llama.cpp aborts the whole process (GGML_ASSERT) when two threads call it at once; briefing.py locks it.
+    import threading
+
+    pytest.importorskip("llama_cpp")
+    from shelfsense.report.briefing import DEFAULT_MODEL
+
+    if not DEFAULT_MODEL.exists():
+        pytest.skip("no model file (python scripts/download_data.py slm)")
+    bay = Path(__file__).resolve().parents[1] / "data" / "demo_bays" / "store4_9"
+    cat = load_catalogue(bay / "catalogue_scenario.csv")
+    rep = compute_report(load_detection_output(bay / "detection_scenario.json"), load_planogram(bay / "planogram_scenario.json"), cat, group_items=True)
+    out: list[str] = []
+    threads = [threading.Thread(target=lambda: out.append(write_briefing(rep, cat, model=DEFAULT_MODEL).summary_source)) for _ in range(3)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(out) == 3 and set(out) <= {"slm", "template"}

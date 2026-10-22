@@ -21,6 +21,7 @@ The template summary is used when the model is rejected, missing, or the
 from __future__ import annotations
 
 import re
+import threading
 import time
 from pathlib import Path
 
@@ -175,6 +176,9 @@ def check_summary(text: str, report: ComplianceReport, catalogue: dict[str, Cata
 
 
 _llms: dict[Path, object] = {}
+# llama.cpp is not safe to call from two threads at once: two dashboard sessions asking for a summary at
+# the same moment aborted the whole server (a GGML_ASSERT). Every load and call holds this lock.
+_llm_lock = threading.Lock()
 
 
 def _load(model: Path):
@@ -198,7 +202,8 @@ def slm_summary(report: ComplianceReport, catalogue: dict[str, CatalogueItem], m
         },
         {"role": "user", "content": _facts(report, catalogue)},
     ]
-    out = _load(model).create_chat_completion(messages, temperature=0.2, max_tokens=90)
+    with _llm_lock:
+        out = _load(model).create_chat_completion(messages, temperature=0.2, max_tokens=90)
     return out["choices"][0]["message"]["content"].strip()
 
 
