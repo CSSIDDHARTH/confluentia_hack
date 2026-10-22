@@ -5,6 +5,7 @@
     python scripts/download_data.py sku110k      # SKU-110K subset (800 train + 200 val images), 1 GB
     python scripts/download_data.py sku110k_more # 800 more train images (optional, retrains a stronger pack detector), 0.8 GB
     python scripts/download_data.py slm          # Qwen2.5-1.5B-Instruct, 4-bit GGUF, 1.1 GB, into models/slm/
+    python scripts/download_data.py easyocr      # EasyOCR's English models, 0.1 GB, into ~/.EasyOCR/model/ (second price reader)
     python scripts/download_data.py all
 
 Archives are checked for absolute / '..' paths before extraction.
@@ -13,6 +14,7 @@ Archives are checked for absolute / '..' paths before extraction.
 import subprocess
 import sys
 import time
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -63,6 +65,15 @@ DATASETS = {
         },
         "licence": "Apache 2.0 (Qwen2.5-1.5B-Instruct)",
     },
+    "easyocr": {  # label_ocr.py never lets EasyOCR download at run time, so fetch its models here
+        "root": str(Path.home() / ".EasyOCR"),
+        "dir": "model",
+        "files": {
+            "craft_mlt_25k.zip": "https://github.com/JaidedAI/EasyOCR/releases/download/pre-v1.1.6/craft_mlt_25k.zip",
+            "english_g2.zip": "https://github.com/JaidedAI/EasyOCR/releases/download/v1.3/english_g2.zip",
+        },
+        "licence": "Apache 2.0 (EasyOCR)",
+    },
 }
 
 
@@ -96,6 +107,14 @@ def extract_7z(archive: Path, out: Path) -> None:
         junk.unlink()
 
 
+def extract_zip(archive: Path, out: Path) -> None:
+    with zipfile.ZipFile(archive) as z:
+        bad = [n for n in z.namelist() if n.startswith("/") or ".." in n.split("/")]
+        if bad:
+            sys.exit(f"refusing to extract {archive.name}: unsafe paths {bad[:3]}")
+        z.extractall(out)
+
+
 def main(name: str) -> None:
     spec = DATASETS[name]
     out = ROOT / spec.get("root", "data") / spec["dir"]
@@ -109,6 +128,10 @@ def main(name: str) -> None:
             print(f"extracting {dest.name}")
             extract_7z(dest, out)
             dest.unlink()  # keep disk usage down once extracted
+        elif dest.suffix == ".zip":
+            print(f"extracting {dest.name}")
+            extract_zip(dest, out)
+            dest.unlink()
     print(f"done: {out}")
 
 

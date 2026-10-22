@@ -650,9 +650,9 @@
       "shelf_id": "S2",
       "slot_id": null,
       "sku": null,
-      "ocr_text": "",
+      "ocr_text": "275M",
       "price": 2.75,
-      "ocr_confidence": 0.5
+      "ocr_confidence": 0.625
     },
     {
       "bbox": [
@@ -663,11 +663,11 @@
       ],
       "label_id": "label_002",
       "shelf_id": "S1",
-      "slot_id": null,
-      "sku": null,
-      "ocr_text": "0 se,",
+      "slot_id": "S1-02",
+      "sku": "G26-22",
+      "ocr_text": "0 se,\nJ 1.25 mum |",
       "price": 1.25,
-      "ocr_confidence": 0.5
+      "ocr_confidence": 0.75
     },
     {
       "bbox": [
@@ -680,7 +680,7 @@
       "shelf_id": "S2",
       "slot_id": "S2-01",
       "sku": "G26-19",
-      "ocr_text": "1.50 mpl |\nOg (200g = 0.43) 7 'ST TT NeTTBIC",
+      "ocr_text": "ae See IR ae oo] —\nandenscheiben iors\n\n1.50 mpl |\nOg (200g = 0.43) 7 'ST TT NeTTBIC",
       "price": 1.5,
       "ocr_confidence": 0.8125
     },
@@ -695,9 +695,9 @@
       "shelf_id": "S1",
       "slot_id": "S1-03",
       "sku": "G26-6",
-      "ocr_text": "ELL",
+      "ocr_text": "jo. 1:95, iy |\nELL",
       "price": 1.95,
-      "ocr_confidence": 0.625
+      "ocr_confidence": 0.75
     },
     {
       "bbox": [
@@ -708,9 +708,9 @@
       ],
       "label_id": "label_005",
       "shelf_id": "S1",
-      "slot_id": "S1-02",
-      "sku": "G26-23",
-      "ocr_text": "=",
+      "slot_id": null,
+      "sku": null,
+      "ocr_text": "\\& .. 179 mm|\n=",
       "price": 1.7,
       "ocr_confidence": 0.375
     },
@@ -724,8 +724,8 @@
       "label_id": "label_006",
       "shelf_id": "S2",
       "slot_id": "S2-03",
-      "sku": "G26-6",
-      "ocr_text": "n\n\nSU\n\nhey\n.",
+      "sku": "G02-123121",
+      "ocr_text": "n\n\nSU\n\nhey\n>t\n.",
       "price": null,
       "ocr_confidence": 0.0
     }

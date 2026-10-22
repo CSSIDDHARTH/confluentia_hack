@@ -336,7 +336,7 @@
       "shelf_id": "S1",
       "slot_id": "S1-02",
       "sku": "G13-89",
-      "ocr_text": "—",
+      "ocr_text": "—\n— mf",
       "price": null,
       "ocr_confidence": 0.0
     },
@@ -381,7 +381,7 @@
       "shelf_id": "S2",
       "slot_id": "S2-02",
       "sku": "G13-99",
-      "ocr_text": "",
+      "ocr_text": "- 38 ws |",
       "price": null,
       "ocr_confidence": 0.0
     },
@@ -396,7 +396,7 @@
       "shelf_id": "S3",
       "slot_id": "S3-02",
       "sku": "G13-117",
-      "ocr_text": "",
+      "ocr_text": "z= =",
       "price": null,
       "ocr_confidence": 0.0
     },

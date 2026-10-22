@@ -12,7 +12,6 @@ Part of the same app as dashboard.py (Streamlit multipage): `streamlit run app/d
 """
 
 import hashlib
-import re
 from pathlib import Path
 
 import pandas as pd
@@ -47,15 +46,7 @@ def load_bay(bay: str, plan: str):
 
 @st.cache_resource(show_spinner="Loading the detectors and the product index...")
 def load_chain() -> live.LiveChain:
-    return live.LiveChain()
-
-
-def source_photo(bay: str) -> tuple[Path, bool]:
-    """The photo to read live: the original full-size Grozi photo if it is here (the saved results were made from it),
-    else the 1600 px copy stored with the bay. Second value: whether it is the original."""
-    m = re.search(r"(data/grozi/\S+\.jpg)", (BAYS / bay / "README.txt").read_text())
-    original = ROOT / m.group(1) if m else None
-    return (original, True) if original and original.exists() else (BAYS / bay / "photo.jpg", False)
+    return live.shared()  # the same models as the shelf audit page
 
 
 st.set_page_config(page_title="shelfSense: what to do", layout="wide")
@@ -131,7 +122,7 @@ if plan == EDIT:
     edits = changes(original, rows)
     st.caption(f"{len(edits)} change{'s' if len(edits) != 1 else ''} to the plan" + (": " + "; ".join(edits) if edits else "."))
 
-photo, is_original = source_photo(bay)
+photo, is_original = live.bay_photo(BAYS / bay)
 live_key = f"live-{bay}-{plan}-{hashlib.md5(planogram.model_dump_json().encode()).hexdigest()[:10]}"
 with st.container(border=True):
     st.markdown("**Run the whole chain on the photo now**")

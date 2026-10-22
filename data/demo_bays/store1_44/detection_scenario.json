@@ -334,9 +334,9 @@
       ],
       "label_id": "label_000",
       "shelf_id": "S1",
-      "slot_id": "S1-02",
-      "sku": "G13-89",
-      "ocr_text": "—",
+      "slot_id": null,
+      "sku": null,
+      "ocr_text": "—\n— mf",
       "price": null,
       "ocr_confidence": 0.0
     },
@@ -364,8 +364,8 @@
       ],
       "label_id": "label_002",
       "shelf_id": "S1",
-      "slot_id": "S1-03",
-      "sku": "G13-88",
+      "slot_id": null,
+      "sku": null,
       "ocr_text": "7 ™ =",
       "price": null,
       "ocr_confidence": 0.0
@@ -381,7 +381,7 @@
       "shelf_id": "S2",
       "slot_id": "S2-02",
       "sku": "G13-99",
-      "ocr_text": "",
+      "ocr_text": "- 38 ws |",
       "price": null,
       "ocr_confidence": 0.0
     },
@@ -395,8 +395,8 @@
       "label_id": "label_004",
       "shelf_id": "S3",
       "slot_id": "S3-02",
-      "sku": "G13-117",
-      "ocr_text": "",
+      "sku": "G02-123121",
+      "ocr_text": "z= =",
       "price": null,
       "ocr_confidence": 0.0
     },

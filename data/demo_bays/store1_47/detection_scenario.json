@@ -307,8 +307,8 @@
       "label_id": "label_000",
       "shelf_id": "S3",
       "slot_id": "S3-01",
-      "sku": "G13-94",
-      "ocr_text": "",
+      "sku": "G02-123121",
+      "ocr_text": "_ ae",
       "price": null,
       "ocr_confidence": 0.0
     },
@@ -322,8 +322,8 @@
       "label_id": "label_001",
       "shelf_id": "S1",
       "slot_id": "S1-02",
-      "sku": "G13-138",
-      "ocr_text": "",
+      "sku": "G13-88",
+      "ocr_text": "_ 330 came |",
       "price": 5.2,
       "ocr_confidence": 0.125
     },
@@ -353,7 +353,7 @@
       "shelf_id": "S1",
       "slot_id": null,
       "sku": null,
-      "ocr_text": "r*\n_— 2",
+      "ocr_text": "r*\n5.\n_— 2",
       "price": null,
       "ocr_confidence": 0.0
     },

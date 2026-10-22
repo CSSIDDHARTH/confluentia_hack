@@ -396,8 +396,8 @@
       "label_id": "label_000",
       "shelf_id": "S1",
       "slot_id": "S1-01",
-      "sku": "G30-53",
-      "ocr_text": "Bio Apfelessig aon P\nas |: 2.20 mimi |\n.\n‘ 500m! (100m! = 0.44) ‘616600 \"900201\" i",
+      "sku": "G30-50",
+      "ocr_text": "Bio Apfelessig aon P\n3 | 22.10.2012\nas |: 2.20 mimi |\n.\n‘ 500m! (100m! = 0.44) ‘616600 \"900201\" i",
       "price": 2.2,
       "ocr_confidence": 1.0
     },
@@ -426,7 +426,7 @@
       "label_id": "label_002",
       "shelf_id": "S2",
       "slot_id": "S2-02",
-      "sku": "G30-51",
+      "sku": "G02-123121",
       "ocr_text": "semen eee TTI TON I Oe RE ERE\nBlo Himbeer 01.10.1128\n: , | Rotweinessig R935 ANP. 900.00\n‘eI i ea i a ial a a EE",
       "price": 900.0,
       "ocr_confidence": 0.25

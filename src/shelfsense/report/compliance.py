@@ -11,7 +11,8 @@ Violation categories, per CLAUDE.md's assumptions:
 - unrecognised_item: a detected item the vision stage could not identify
   (sku is None) occupying a slot.
 - price_mismatch / unreadable_price / unknown_product: from
-  `shelfsense.pricing.price_check` (assumption 6).
+  `shelfsense.pricing.price_check` (assumption 6). A mismatch read with OCR
+  confidence below 0.5 counts as unreadable_price (check by eye), not as a mismatch.
 
 Scoring assumption (new -- not yet in CLAUDE.md; raise with teammate
 before adding it there): start at 100 and subtract a fixed weight per
@@ -195,18 +196,21 @@ def _price_violations(
     violations: list[Violation] = []
 
     for issue in check_prices(det, catalogue):
-        if issue.issue_type == PriceIssueType.PRICE_MISMATCH:
+        if issue.issue_type == PriceIssueType.PRICE_MISMATCH and issue.low_confidence:
+            # A shaky read is not evidence of a wrong price, so it counts as a label that
+            # was not read reliably (an unreadable price), not as a mismatch.
+            kind = ViolationKind.UNREADABLE_PRICE
+            action = (
+                f"Check label {issue.label_id} by eye (low OCR confidence); "
+                f"if it shows {issue.label_price:.2f}, reprint it at "
+                f"{issue.catalogue_price:.2f}."
+            )
+        elif issue.issue_type == PriceIssueType.PRICE_MISMATCH:
             kind = ViolationKind.PRICE_MISMATCH
             action = (
                 f"Reprint label {issue.label_id}: shows {issue.label_price:.2f}, "
                 f"catalogue price is {issue.catalogue_price:.2f}."
             )
-            if issue.low_confidence:
-                action = (
-                    f"Check label {issue.label_id} by eye (low OCR confidence); "
-                    f"if it shows {issue.label_price:.2f}, reprint it at "
-                    f"{issue.catalogue_price:.2f}."
-                )
         elif issue.issue_type == PriceIssueType.UNREADABLE_PRICE:
             kind = ViolationKind.UNREADABLE_PRICE
             action = f"Inspect label {issue.label_id} in person; OCR could not read a price."

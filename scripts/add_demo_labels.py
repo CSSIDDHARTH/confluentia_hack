@@ -2,11 +2,11 @@
 
     python scripts/add_demo_labels.py [data/demo_bays/store1_36 ...]
 
-Per bay: detect and read the labels on photo.jpg, tie them to slots using the
-compliant detection, and write them into detection_compliant.json and
-detection_scenario.json. Real Grozi shelves carry no catalogue prices we can
+Per bay: detect and read the labels on photo.jpg, tie them to slots (in each of
+detection_compliant.json and detection_scenario.json, against that file's own
+reading and plan, as the live run does) and write them into both files. Real Grozi shelves carry no catalogue prices we can
 check against (assumption 7), so catalogue.csv takes each slot's price from the
-label read confidently (OCR confidence >= 0.5), which makes the compliant shelf
+label (tied on the compliant plan) read confidently (OCR confidence >= 0.5), which makes the compliant shelf
 price-clean, and catalogue_scenario.csv raises one such SKU's price by 10%, so
 that label becomes a planted price mismatch.
 
@@ -52,13 +52,14 @@ def _read_labels(bay: Path):
 
 
 def process(bay: Path) -> None:
-    compliant = load_detection_output(bay / "detection_compliant.json")
-    planogram = load_planogram(bay / "planogram_compliant.json")
-    labels = assign_labels_to_slots(_read_labels(bay), compliant, planogram)
+    read = _read_labels(bay)
     for name in ("compliant", "scenario"):
+        # each reading ties the labels to its own plan's slots, as the live run does
         det = load_detection_output(bay / f"detection_{name}.json")
-        det.labels = labels
+        det.labels = assign_labels_to_slots(read, det, load_planogram(bay / f"planogram_{name}.json"))
         save_detection_output(det, bay / f"detection_{name}.json")
+        if name == "compliant":
+            labels = det.labels
 
     with (bay / "catalogue.csv").open() as f:
         reader = csv.DictReader(f)

@@ -37,6 +37,7 @@ from __future__ import annotations
 import re
 import shutil
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 
 from PIL import Image, ImageFilter, ImageOps
 
@@ -82,7 +83,16 @@ def _easyocr():
         except ImportError:
             _easyocr_reader = False
         else:
-            _easyocr_reader = easyocr.Reader(["en"], gpu=False, verbose=False)
+            # Never download at run time: without internet (a demo venue) the first read would hang.
+            # Fetch the models once with `python scripts/download_data.py easyocr`.
+            import torch
+
+            try:
+                _easyocr_reader = easyocr.Reader(
+                    ["en"], gpu=torch.cuda.is_available(), verbose=False, download_enabled=False
+                )
+            except (FileNotFoundError, OSError, RuntimeError):
+                _easyocr_reader = False
     return _easyocr_reader or None
 
 
@@ -184,16 +194,20 @@ def read_label_price(image: Image.Image) -> tuple[float | None, float]:
     _require_tesseract()
     votes: Counter[float] = Counter()
     total = float(len(_PRICE_VARIANTS))
-    for kwargs, psm in _PRICE_VARIANTS:
-        price = _tallest_price(_preprocess(image, **kwargs), psm)
-        if price is not None:
-            votes[price] += 1
-    if _easyocr() is not None:
-        total += _EASYOCR_WEIGHT * len(_EASYOCR_SCALES)
-        for scale in _EASYOCR_SCALES:
-            price = _easyocr_price(image, scale)
-            if price is not None:
-                votes[price] += _EASYOCR_WEIGHT
+    use_easyocr = _easyocr() is not None
+    # Each Tesseract variant is its own process, so they run side by side, and EasyOCR (one call at a
+    # time: its reader is shared) runs alongside them. Same reads as one after another, about 3x faster.
+    with ThreadPoolExecutor(max_workers=len(_PRICE_VARIANTS) + 1) as pool:
+        tesseract = [pool.submit(_tallest_price, _preprocess(image, **kw), psm) for kw, psm in _PRICE_VARIANTS]
+        easy = pool.submit(lambda: [_easyocr_price(image, s) for s in _EASYOCR_SCALES]) if use_easyocr else None
+        for job in tesseract:
+            if (price := job.result()) is not None:
+                votes[price] += 1
+        if easy is not None:
+            total += _EASYOCR_WEIGHT * len(_EASYOCR_SCALES)
+            for price in easy.result():
+                if price is not None:
+                    votes[price] += _EASYOCR_WEIGHT
     if not votes:
         return None, 0.0
     price, weight = votes.most_common(1)[0]
