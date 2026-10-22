@@ -5,16 +5,21 @@ Person B.
 This module is the producer of the text/price a `contracts.Label`
 carries -- `price_check.py` consumes already-filled labels; this one
 fills them, given a crop. Label *detection* (finding where on the shelf
-image the tag is) isn't implemented here: that needs a trained detector,
-out of scope for this pass. `label_from_crop()` takes a bbox someone
-else already found (ground truth in tests, eventually the vision
-stage's) and turns the crop into a `Label`.
+image the tag is) isn't implemented here: that needs a trained detector
+(data/price_tags/ is for that). `label_from_crop()` takes a bbox someone
+else already found (ground truth in tests, eventually a detector's) and
+turns the crop into a `Label`.
 
-Two independent pieces:
+Three pieces:
 - `read_label_text()`: OCR via Tesseract (through pytesseract). Needs
   the `tesseract` binary on PATH (`sudo apt install tesseract-ocr`,
   `brew install tesseract`, ...) -- raises a clear error if it's
   missing, rather than failing confusingly inside pytesseract.
+- `read_label_price()`: the price itself. Runs several OCR variants,
+  takes the tallest price-like word from each (the price is the biggest
+  print on a shelf label; dates, article codes and unit prices are
+  small), and returns the price most variants agree on, with the share
+  of agreeing variants as its confidence.
 - `parse_price()`: pure text -> float, no OCR engine needed. Handles
   the price-tag formats actually seen in tests/fixtures/price_tags/
   (see its manifest.json): plain "$10.99", comma-decimal "0,70",
@@ -31,31 +36,118 @@ from __future__ import annotations
 
 import re
 import shutil
+from collections import Counter
 
-from PIL import Image
+from PIL import Image, ImageFilter, ImageOps
 
 from shelfsense.contracts import Label
 
+# Label crops tend to be small (the dataset in tests/fixtures/price_tags/
+# averages ~200px wide) and often tilted; Tesseract's default settings
+# read these as empty far more often than not. Upscaling + contrast
+# stretch + a page-segmentation mode for "one block of text" (rather
+# than the default "assume a page layout") recovers real signal on most
+# of them -- see tests/test_label_ocr.py's accuracy tests and
+# data/README.md.
+_TARGET_WIDTH = 500
+_TESSERACT_CONFIG = "--psm 6"
+
+# (preprocessing kwargs, page-segmentation mode) for read_label_price().
+# No single setting reads every label: blur, glare and print size each
+# break a different one. Measured on tests/fixtures/grozi_labels/: one
+# variant alone 68%, these five voting 94% (data/README.md).
+_PRICE_VARIANTS = [
+    ({}, 6),
+    ({}, 11),
+    ({"sharpen": True}, 6),
+    ({"width": 900}, 6),
+    ({"width": 900}, 11),
+]
+
+
+def _preprocess(image: Image.Image, width: int = _TARGET_WIDTH, sharpen: bool = False) -> Image.Image:
+    grey = image.convert("L")
+    scale = max(1, width // grey.width)
+    if scale > 1:
+        grey = grey.resize((grey.width * scale, grey.height * scale), Image.LANCZOS)
+    grey = ImageOps.autocontrast(grey)
+    if sharpen:
+        grey = grey.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
+    return grey
+
 _NUMBER_RE = re.compile(r"\d[\d.,]*\d|\d")
+# How a price can be grouped: "1.234,56" / "1,234" (thousands groups,
+# optional cents) or "12.99" / "2.140" / "70". Rejects dates
+# ("25.09.2012") and article codes ("1070.644.000.00") outright.
+_PRICE_SHAPE_RE = re.compile(r"\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d+(?:[.,]\d{2,3})?")
+# OCR often reads a price's decimal point as a colon ("2:90").
+_COLON_DECIMAL_RE = re.compile(r"(\d):(\d{2})(?!\d)")
 _CURRENCY_SYMBOLS = "$€£¥₹"
 # Currencies/denominations commonly printed with no decimal places, so a
 # bare multi-digit number next to one of these is a whole-unit price,
 # not an ambiguous OCR read.
 _WHOLE_UNIT_MARKERS = ("円", "¥", "JPY", "YEN", "WON", "KRW")
+# A word read_label_price() will consider: a decimal/thousands separator
+# between digits, a currency symbol right before digits, or a whole-unit
+# marker right after them.
+_MARKED_RE = re.compile(
+    r"\d[.,:]\d|[" + _CURRENCY_SYMBOLS + r"]\d|\d\s?(?:" + "|".join(_WHOLE_UNIT_MARKERS) + ")"
+)
 
 
-def read_label_text(image: Image.Image) -> str:
-    """OCR a label crop to text via Tesseract."""
+def _require_tesseract() -> None:
     if shutil.which("tesseract") is None:
         raise RuntimeError(
-            "read_label_text() needs the `tesseract` binary on PATH "
+            "label OCR needs the `tesseract` binary on PATH "
             "(e.g. `sudo apt install tesseract-ocr`, `brew install "
             "tesseract`); `pip install pytesseract` alone only installs "
             "the Python wrapper."
         )
+
+
+def read_label_text(image: Image.Image) -> str:
+    """OCR a label crop to text via Tesseract."""
+    _require_tesseract()
     import pytesseract  # deferred: only needed when OCR actually runs
 
-    return pytesseract.image_to_string(image).strip()
+    return pytesseract.image_to_string(_preprocess(image), config=_TESSERACT_CONFIG).strip()
+
+
+def _tallest_price(image: Image.Image, psm: int) -> float | None:
+    """The price read from the tallest price-like word Tesseract finds."""
+    import pytesseract
+
+    data = pytesseract.image_to_data(
+        image, config=f"--psm {psm}", output_type=pytesseract.Output.DICT
+    )
+    best: tuple[int, float] | None = None
+    for word, height in zip(data["text"], data["height"]):
+        # A lone "4" or "30" is usually a stray read of part of a word,
+        # so a word only counts with a separator or currency marker.
+        if not _MARKED_RE.search(word):
+            continue
+        price = parse_price(word.strip())
+        if price is not None and (best is None or height > best[0]):
+            best = (height, price)
+    return best[1] if best else None
+
+
+def read_label_price(image: Image.Image) -> tuple[float | None, float]:
+    """Read the price off a label crop: (price, confidence).
+
+    confidence is the share of OCR variants that agree on the returned
+    price (0.0 with price None when no variant reads one).
+    """
+    _require_tesseract()
+    votes: Counter[float] = Counter()
+    for kwargs, psm in _PRICE_VARIANTS:
+        price = _tallest_price(_preprocess(image, **kwargs), psm)
+        if price is not None:
+            votes[price] += 1
+    if not votes:
+        return None, 0.0
+    price, count = votes.most_common(1)[0]
+    return price, count / len(_PRICE_VARIANTS)
 
 
 def _score(text: str, match: re.Match) -> tuple[int, int]:
@@ -65,10 +157,13 @@ def _score(text: str, match: re.Match) -> tuple[int, int]:
         marker in after for marker in _WHOLE_UNIT_MARKERS
     )
     has_separator = "." in match.group() or "," in match.group()
+    has_cents = re.search(r"[.,]\d{2}$", match.group()) is not None
     # (does this look like a price, how long/specific is the match):
     # currency/whole-unit adjacency and a decimal separator both strongly
-    # outrank raw digit count, so a 13-digit barcode never beats "$10.99".
-    return (int(has_currency) * 100 + int(has_separator) * 50, len(match.group()))
+    # outrank raw digit count, so a 13-digit barcode never beats "$10.99",
+    # and cents outrank thousands groups, so "3.95" beats "510.431.000".
+    score = int(has_currency) * 100 + int(has_separator) * 50 + int(has_cents) * 25
+    return (score, len(match.group()))
 
 
 def parse_price(text: str) -> float | None:
@@ -78,7 +173,8 @@ def parse_price(text: str) -> float | None:
     if not text:
         return None
 
-    candidates = list(_NUMBER_RE.finditer(text))
+    text = _COLON_DECIMAL_RE.sub(r"\1.\2", text)
+    candidates = [m for m in _NUMBER_RE.finditer(text) if _PRICE_SHAPE_RE.fullmatch(m.group())]
     if not candidates:
         return None
 
@@ -100,10 +196,9 @@ def parse_price(text: str) -> float | None:
         integer_part = re.sub(r"[.,]", "", raw[:last_sep])
         decimal_part = raw[last_sep + 1 :]
         return float(f"{integer_part}.{decimal_part}")
-    if digits_after == 3:
-        # period/comma used as a thousands separator, not a decimal point
-        return float(re.sub(r"[.,]", "", raw))
-    return None
+    # 3 digits after the last separator: period/comma used as a thousands
+    # separator, not a decimal point (_PRICE_SHAPE_RE allows nothing else)
+    return float(re.sub(r"[.,]", "", raw))
 
 
 def label_from_crop(
@@ -115,20 +210,19 @@ def label_from_crop(
     sku: str | None,
     image: Image.Image,
 ) -> Label:
-    """OCR + parse a label crop into a contracts.Label, ready for
-    price_check.check_prices(). ocr_confidence is left at a fixed
-    placeholder; Tesseract doesn't expose a simple scalar confidence
-    from image_to_string (image_to_data does, per-word, if ever needed).
+    """OCR a label crop into a contracts.Label, ready for
+    price_check.check_prices(). The price and ocr_confidence come from
+    read_label_price(); ocr_text is the plain single-pass read, kept for
+    display and debugging.
     """
-    text = read_label_text(image)
-    price = parse_price(text)
+    price, confidence = read_label_price(image)
     return Label(
         label_id=label_id,
         bbox=bbox,
         shelf_id=shelf_id,
         slot_id=slot_id,
         sku=sku,
-        ocr_text=text,
+        ocr_text=read_label_text(image),
         price=price,
-        ocr_confidence=0.9 if price is not None else 0.3,
+        ocr_confidence=confidence,
     )

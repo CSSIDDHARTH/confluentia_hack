@@ -47,3 +47,28 @@ extra). It isn't installed in every dev environment, so
 `tests/test_label_ocr.py`'s OCR-against-real-images tests skip
 gracefully without it; `parse_price()`'s text-parsing tests don't need
 it and always run.
+
+**Measured accuracy** (price read correctly, against hand-transcribed crops):
+
+| Fixture set | Single pass (`read_label_text` + `parse_price`) | `read_label_price` (5-variant vote) | Wrong price returned |
+|---|---|---|---|
+| `tests/fixtures/grozi_labels/`: 31 real Swiss labels, 5 Grozi stores | 18/31 (58%) | **28/31 (90%)** | 0 |
+| `tests/fixtures/price_tags/`: 13 legible mixed-country tags | 2/13 (15%) | 3/13 (23%) | 0 |
+
+`read_label_price()` runs five Tesseract variants (psm 6/11, sharpened,
+larger upscale), takes the tallest price-shaped word from each (the
+price is the largest print on a label, so dates, article codes and the
+unit price lose), and returns the majority price with the share of
+agreeing variants as `ocr_confidence`. About 0.9 s per label on a laptop
+CPU. When it can't read a label it returns no price rather than a wrong
+one, so a bad read shows up as `unreadable_price` (re-check) and not as a
+false `price_mismatch`.
+
+The Grozi labels are printed, front-facing and large, and Tesseract
+handles them. The `price_tags` crops (small, tilted, digital displays,
+yen) are still mostly unreadable and would need a scene-text model.
+Regenerate the Grozi crops with `python scripts/prep_grozi_label_fixtures.py`.
+Grozi has no label boxes, so these 31 were boxed by hand. A label
+*detector* (to find labels without ground-truth boxes) is the next step,
+trained on `price_tags/`. A colour-threshold locator was tried and
+dropped: it confused white packaging and shelf glare with labels.
