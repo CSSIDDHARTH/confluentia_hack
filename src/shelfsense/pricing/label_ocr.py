@@ -65,6 +65,46 @@ _PRICE_VARIANTS = [
 ]
 
 
+# EasyOCR is a second engine that votes alongside Tesseract: on small, soft
+# shelf labels it reads the big price print far more reliably, though it
+# returns nothing on the blurriest ones. Optional: without the package only
+# Tesseract votes. Each variant's weight is how many Tesseract variants it counts as.
+_EASYOCR_SCALES = (1, 2)
+_EASYOCR_WEIGHT = 1.5
+_easyocr_reader = None
+
+
+def _easyocr():
+    global _easyocr_reader
+    if _easyocr_reader is None:
+        try:
+            import easyocr
+        except ImportError:
+            _easyocr_reader = False
+        else:
+            _easyocr_reader = easyocr.Reader(["en"], gpu=False, verbose=False)
+    return _easyocr_reader or None
+
+
+def _easyocr_price(image: Image.Image, scale: int) -> float | None:
+    """The price read from the tallest price-like word EasyOCR finds."""
+    import numpy as np
+
+    reader = _easyocr()
+    grey = ImageOps.autocontrast(image.convert("L"), cutoff=1)
+    if scale > 1:
+        grey = grey.resize((grey.width * scale, grey.height * scale), Image.BICUBIC)
+    best: tuple[float, float] | None = None
+    for box, word, conf in reader.readtext(np.array(grey), allowlist="0123456789.,", text_threshold=0.5):
+        if conf < 0.5 or not _MARKED_RE.search(word):
+            continue
+        price = parse_price(word.strip())
+        height = box[2][1] - box[0][1]
+        if price is not None and (best is None or height > best[0]):
+            best = (height, price)
+    return best[1] if best else None
+
+
 def _preprocess(image: Image.Image, width: int = _TARGET_WIDTH, sharpen: bool = False) -> Image.Image:
     grey = image.convert("L")
     scale = max(1, width // grey.width)
@@ -126,6 +166,9 @@ def _tallest_price(image: Image.Image, psm: int) -> float | None:
         # so a word only counts with a separator or currency marker.
         if not _MARKED_RE.search(word):
             continue
+        # "(100ml = 1.62)": a unit price, never the label's price
+        if word.startswith("(") or word.endswith(")"):
+            continue
         price = parse_price(word.strip())
         if price is not None and (best is None or height > best[0]):
             best = (height, price)
@@ -135,19 +178,26 @@ def _tallest_price(image: Image.Image, psm: int) -> float | None:
 def read_label_price(image: Image.Image) -> tuple[float | None, float]:
     """Read the price off a label crop: (price, confidence).
 
-    confidence is the share of OCR variants that agree on the returned
-    price (0.0 with price None when no variant reads one).
+    confidence is the (weighted) share of OCR variants that agree on the
+    returned price (0.0 with price None when no variant reads one).
     """
     _require_tesseract()
     votes: Counter[float] = Counter()
+    total = float(len(_PRICE_VARIANTS))
     for kwargs, psm in _PRICE_VARIANTS:
         price = _tallest_price(_preprocess(image, **kwargs), psm)
         if price is not None:
             votes[price] += 1
+    if _easyocr() is not None:
+        total += _EASYOCR_WEIGHT * len(_EASYOCR_SCALES)
+        for scale in _EASYOCR_SCALES:
+            price = _easyocr_price(image, scale)
+            if price is not None:
+                votes[price] += _EASYOCR_WEIGHT
     if not votes:
         return None, 0.0
-    price, count = votes.most_common(1)[0]
-    return price, count / len(_PRICE_VARIANTS)
+    price, weight = votes.most_common(1)[0]
+    return price, weight / total
 
 
 def _score(text: str, match: re.Match) -> tuple[int, int]:

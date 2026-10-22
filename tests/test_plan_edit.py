@@ -12,8 +12,10 @@ pytestmark = pytest.mark.skipif(not BAY.exists(), reason="no demo bays")
 
 
 def setup():
+    """Placement only, as on the What to do page: the bay's price labels are dropped."""
+    det = load_detection_output(BAY / "detection_compliant.json")
     return (
-        load_detection_output(BAY / "detection_compliant.json"), load_planogram(BAY / "planogram_compliant.json"),
+        det.model_copy(update={"labels": []}), load_planogram(BAY / "planogram_compliant.json"),
         load_catalogue(BAY / "catalogue.csv"),
     )
 

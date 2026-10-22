@@ -33,11 +33,14 @@ EDIT = "edit"
 
 @st.cache_data
 def load_bay(bay: str, plan: str):
-    """(detection, planogram, catalogue) for a saved plan; `edit` starts from the compliant plan on the same reading."""
+    """(detection, planogram, catalogue) for a saved plan; `edit` starts from the compliant plan on the same reading.
+    Price labels are dropped: this page checks placement and facings, which is what the live run reads, and the
+    main dashboard checks prices."""
     d = BAYS / bay
     kind = "compliant" if plan == EDIT else plan
+    det = load_detection_output(d / f"detection_{kind}.json")
     return (
-        load_detection_output(d / f"detection_{kind}.json"), load_planogram(d / f"planogram_{kind}.json"),
+        det.model_copy(update={"labels": []}), load_planogram(d / f"planogram_{kind}.json"),
         load_catalogue(d / "catalogue.csv"),
     )
 
@@ -59,7 +62,8 @@ st.set_page_config(page_title="shelfSense: what to do", layout="wide")
 st.title("What to do")
 st.caption(
     "The planogram check lists every violation, so one product swap shows up as four lines. Rules merge related "
-    "violations into steps, say where a misplaced product belongs, and put the most severe first."
+    "violations into steps, say where a misplaced product belongs, and put the most severe first. This page scores "
+    "placement and facings only; price labels are checked on the main shelf audit page."
 )
 
 bays = sorted(p.name for p in BAYS.iterdir() if (p / "detection_scenario.json").exists())

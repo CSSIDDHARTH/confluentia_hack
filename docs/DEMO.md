@@ -19,19 +19,13 @@ PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # http://localhost:8
 
 ## 2. Planogram compliance (90 s)
 
-Dashboard, sidebar, Advanced: custom paths. Enter, for the best shelf:
-
-| Field | Path |
-|---|---|
-| Detection output | `data/demo_bays/store1_47/detection_compliant.json` |
-| Planogram | `data/demo_bays/store1_47/planogram_compliant.json` |
-| Catalogue | `data/demo_bays/store1_47/catalogue.csv` |
+Sidebar, **What to do**, shelf `store1_47`, plan "Matches the shelf". This page scores placement and facings only. (The main dashboard's "Real bay" presets add the price labels, and on these small Grozi photos most labels are unreadable, so the same shelf scores 85 there and 18 with the planted changes; use it for the price step.)
 
 Say: "Real supermarket shelf. The system found the product blocks, named each one, lined them up against the plan and counted the facings. Score 98."
 
 Then prove it is not a recording: on the **What to do** page press **Run it live**. It reads the photo from scratch and shows the seconds per stage (about a third of a second in total on the laptop GPU; the first press after loading takes about 2 s). The score is the same 98, and it matches the saved result on all five shelves.
 
-Then swap the two paths to the `_scenario` files:
+Then switch the plan to "Store changed the plan (planted)":
 
 "Now the same photo, but the store has changed the plan: two products swapped, one product the shelf does not have, and a promotion that needs two more facings. Score drops to **31** and it lists each violation with an action."
 

@@ -385,5 +385,51 @@
     }
   ],
   "gaps": [],
-  "labels": []
+  "labels": [
+    {
+      "bbox": [
+        393.0,
+        714.0,
+        718.0,
+        815.0
+      ],
+      "label_id": "label_000",
+      "shelf_id": "S1",
+      "slot_id": "S1-01",
+      "sku": "G30-53",
+      "ocr_text": "Bio Apfelessig aon P\nas |: 2.20 mimi |\n.\n‘ 500m! (100m! = 0.44) ‘616600 \"900201\" i",
+      "price": 2.2,
+      "ocr_confidence": 1.0
+    },
+    {
+      "bbox": [
+        229.0,
+        1548.0,
+        491.0,
+        1600.0
+      ],
+      "label_id": "label_001",
+      "shelf_id": "S2",
+      "slot_id": "S2-01",
+      "sku": "G30-52",
+      "ocr_text": "Ice enetantcraetls ethene ere\nBio Weissweinessig 01.10.1128\n1035,290.000.00\nif mit Estragon 240-2012",
+      "price": null,
+      "ocr_confidence": 0.0
+    },
+    {
+      "bbox": [
+        695.0,
+        1550.0,
+        1016.0,
+        1600.0
+      ],
+      "label_id": "label_002",
+      "shelf_id": "S2",
+      "slot_id": "S2-02",
+      "sku": "G30-51",
+      "ocr_text": "semen eee TTI TON I Oe RE ERE\nBlo Himbeer 01.10.1128\n: , | Rotweinessig R935 ANP. 900.00\n‘eI i ea i a ial a a EE",
+      "price": 900.0,
+      "ocr_confidence": 0.25
+    }
+  ]
 }

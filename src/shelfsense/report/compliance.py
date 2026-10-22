@@ -201,6 +201,12 @@ def _price_violations(
                 f"Reprint label {issue.label_id}: shows {issue.label_price:.2f}, "
                 f"catalogue price is {issue.catalogue_price:.2f}."
             )
+            if issue.low_confidence:
+                action = (
+                    f"Check label {issue.label_id} by eye (low OCR confidence); "
+                    f"if it shows {issue.label_price:.2f}, reprint it at "
+                    f"{issue.catalogue_price:.2f}."
+                )
         elif issue.issue_type == PriceIssueType.UNREADABLE_PRICE:
             kind = ViolationKind.UNREADABLE_PRICE
             action = f"Inspect label {issue.label_id} in person; OCR could not read a price."

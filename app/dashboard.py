@@ -2,11 +2,13 @@
 
 Reads the three contracts, shows them joined per slot, and runs the
 price-check and compliance-report modules on top: price mismatches, a
-compliance score, and a violations/recommended-actions table.
+compliance score, a violations/recommended-actions table, and a shift
+briefing (task list by shelf, summary by a small language model).
 
     streamlit run app/dashboard.py
 """
 
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -19,8 +21,11 @@ from shelfsense.contracts import (
     load_detection_output,
     load_planogram,
 )
+from shelfsense.pricing.label_detector import DEFAULT_WEIGHTS, detect_labels
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
-from shelfsense.report.compliance import compute_report
+from shelfsense.report.briefing import DEFAULT_MODEL as SLM_MODEL
+from shelfsense.report.briefing import write_briefing
+from shelfsense.report.compliance import ComplianceReport, compute_report
 from shelfsense.report.export import report_to_json, violations_to_csv
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -82,23 +87,36 @@ def slot_table(det, planogram, catalogue) -> pd.DataFrame:
 
 
 st.set_page_config(page_title="shelfSense", layout="wide")
-st.title("shelfSense: shelf audit (mock)")
+st.title("shelfSense: shelf audit")
 
+MOCK_PLANOGRAM = "contracts/planogram.example.json"
+MOCK_CATALOGUE = "contracts/catalogue.example.csv"
+
+# name -> (detection output, planogram, catalogue)
 PRESETS = {
-    "Mock shelf (as shipped)": "contracts/detection_output.example.json",
-    "Low-stock demo (all 5 violation types)": "data/mock/mock_shelf_002_lowstock.json",
-    "Near-clean shelf (one unreadable label)": "data/mock/mock_shelf_003_clean.json",
+    "Mock shelf (as shipped)": ("contracts/detection_output.example.json", MOCK_PLANOGRAM, MOCK_CATALOGUE),
+    "Low-stock demo (all 5 violation types)": ("data/mock/mock_shelf_002_lowstock.json", MOCK_PLANOGRAM, MOCK_CATALOGUE),
+    "Near-clean shelf (one unreadable label)": ("data/mock/mock_shelf_003_clean.json", MOCK_PLANOGRAM, MOCK_CATALOGUE),
 }
+for bay_dir in sorted((ROOT / "data" / "demo_bays").glob("*/detection_compliant.json")):
+    bay = bay_dir.parent
+    rel = bay.relative_to(ROOT)
+    PRESETS[f"Real bay {bay.name}: compliant plan"] = (
+        f"{rel}/detection_compliant.json", f"{rel}/planogram_compliant.json", f"{rel}/catalogue.csv")
+    scenario_catalogue = "catalogue_scenario.csv" if (bay / "catalogue_scenario.csv").exists() else "catalogue.csv"
+    PRESETS[f"Real bay {bay.name}: planted changes"] = (
+        f"{rel}/detection_scenario.json", f"{rel}/planogram_scenario.json", f"{rel}/{scenario_catalogue}")
 
 with st.sidebar:
     preset = st.selectbox("Scenario", list(PRESETS))
+    default_det, default_pg, default_cat = PRESETS[preset]
     with st.expander("Advanced: custom paths"):
-        det_path = st.text_input("Detection output", "", placeholder=PRESETS[preset])
-        pg_path = st.text_input("Planogram", "", placeholder="contracts/planogram.example.json")
-        cat_path = st.text_input("Catalogue", "", placeholder="contracts/catalogue.example.csv")
-    det_path = det_path or PRESETS[preset]
-    pg_path = pg_path or "contracts/planogram.example.json"
-    cat_path = cat_path or "contracts/catalogue.example.csv"
+        det_path = st.text_input("Detection output", "", placeholder=default_det)
+        pg_path = st.text_input("Planogram", "", placeholder=default_pg)
+        cat_path = st.text_input("Catalogue", "", placeholder=default_cat)
+    det_path = det_path or default_det
+    pg_path = pg_path or default_pg
+    cat_path = cat_path or default_cat
 
 det = load_detection_output(ROOT / det_path)
 planogram = load_planogram(ROOT / pg_path)
@@ -140,6 +158,7 @@ if price_issues:
                 "slot": issue.slot_id,
                 "sku": issue.sku,
                 "issue": ISSUE_LABELS[issue.issue_type],
+                "verify": issue.low_confidence,
                 "ocr_text": issue.ocr_text,
                 "label_price": issue.label_price,
                 "catalogue_price": issue.catalogue_price,
@@ -172,6 +191,32 @@ if report.violations:
 else:
     st.success("No violations found; shelf is fully compliant.")
 
+
+@st.cache_data(show_spinner=False)
+def cached_briefing(report_json: str, catalogue_path: str, use_model: bool):
+    rep = ComplianceReport.model_validate_json(report_json)
+    return write_briefing(rep, load_catalogue(ROOT / catalogue_path), model=SLM_MODEL if use_model else None)
+
+
+st.subheader("Shift briefing")
+use_slm = st.checkbox(
+    "Write the summary with the small language model (Qwen2.5-1.5B, 4-bit, on CPU)",
+    value=SLM_MODEL.exists() and os.environ.get("SHELFSENSE_SLM") != "0",  # tests set 0 to skip the model
+    disabled=not SLM_MODEL.exists(),
+    help="The task list is always built in code. The model only writes the summary, and a summary that "
+    "names a wrong slot, problem or number is replaced by the template.",
+)
+with st.spinner("Writing the summary..."):
+    briefing = cached_briefing(report.model_dump_json(), cat_path, use_slm)
+st.info(briefing.summary)
+if briefing.summary_source == "slm":
+    st.caption(f"Summary written by the small language model in {briefing.seconds:.1f}s and checked against the report.")
+elif briefing.rejected_summary:
+    st.caption(f"The model's summary failed the check, so the template is shown. Rejected: \"{briefing.rejected_summary}\"")
+for tasks in briefing.tasks:
+    st.markdown(f"**Shelf {tasks.shelf_id or '(labels not on a slot)'}**")
+    st.markdown("\n".join(f"{i}. {a}" for i, a in enumerate(tasks.actions, 1)))
+
 dl1, dl2 = st.columns(2)
 dl1.download_button(
     "Download report (JSON)",
@@ -185,6 +230,37 @@ dl2.download_button(
     file_name=f"{det.image_id}_violations.csv",
     mime="text/csv",
 )
+
+st.subheader("Find price labels in a shelf photo")
+st.caption(
+    "Runs the trained label detector and OCR on a real photo. Labels are not yet "
+    "tied to slots or SKUs (that needs the vision stage), so there is no catalogue check here."
+)
+if not DEFAULT_WEIGHTS.exists():
+    st.info(f"Label detector weights not found at {DEFAULT_WEIGHTS.relative_to(ROOT)}; train it first.")
+else:
+    photo = st.file_uploader("Shelf photo", type=["jpg", "jpeg", "png"])
+    if photo is not None:
+        with st.spinner("Detecting labels and reading prices..."):
+            shelf_img = Image.open(photo).convert("RGB")
+            found = detect_labels(shelf_img)
+        shown = shelf_img.copy()
+        draw = ImageDraw.Draw(shown)
+        line = max(3, shown.width // 300)
+        for lb in found:
+            draw.rectangle(lb.bbox, outline=LABEL_COLOUR if lb.price is not None else LABEL_ISSUE_COLOUR, width=line)
+        pl, pr = st.columns([3, 2])
+        pl.image(shown, caption=f"{len(found)} labels detected (blue = price read, red = unreadable)")
+        pr.dataframe(
+            pd.DataFrame(
+                [
+                    {"label": lb.label_id, "price": lb.price, "confidence": lb.ocr_confidence, "ocr_text": lb.ocr_text}
+                    for lb in found
+                ]
+            ),
+            hide_index=True,
+            width="stretch",
+        )
 
 with st.expander("Raw detection output"):
     st.json(det.model_dump())

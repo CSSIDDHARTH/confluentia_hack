@@ -17,6 +17,11 @@ from shelfsense.contracts import CatalogueItem, DetectionOutput
 # floating-point noise rather than a real mismatch.
 PRICE_TOLERANCE = 0.005
 
+# OCR reads agreeing on fewer than this share of variants are often right but
+# sometimes wrong (see label_ocr.read_label_price), so a mismatch built on one
+# is still reported, flagged for a human to verify.
+LOW_CONFIDENCE = 0.5
+
 
 class PriceIssueType(str, Enum):
     PRICE_MISMATCH = "price_mismatch"       # label price != catalogue price
@@ -35,6 +40,7 @@ class PriceIssue(BaseModel):
     catalogue_price: float | None
     difference: float | None  # label_price - catalogue_price, when both are known
     detail: str
+    low_confidence: bool = False  # price_mismatch resting on a shaky OCR read
 
 
 def check_prices(
@@ -97,6 +103,7 @@ def check_prices(
 
         difference = round(label.price - cat_item.price, 2)
         if abs(difference) >= PRICE_TOLERANCE:
+            shaky = label.ocr_confidence < LOW_CONFIDENCE
             issues.append(
                 PriceIssue(
                     label_id=label.label_id,
@@ -111,7 +118,9 @@ def check_prices(
                     detail=(
                         f"Label {label.label_id!r} shows {label.price:.2f} but the "
                         f"catalogue price for {label.sku} is {cat_item.price:.2f}."
+                        + (" Low OCR confidence: verify the label by eye." if shaky else "")
                     ),
+                    low_confidence=shaky,
                 )
             )
 

@@ -324,5 +324,96 @@
       "estimated_missing_facings": 1
     }
   ],
-  "labels": []
+  "labels": [
+    {
+      "bbox": [
+        308.0,
+        482.0,
+        440.0,
+        539.0
+      ],
+      "label_id": "label_000",
+      "shelf_id": "S1",
+      "slot_id": "S1-02",
+      "sku": "G13-89",
+      "ocr_text": "—",
+      "price": null,
+      "ocr_confidence": 0.0
+    },
+    {
+      "bbox": [
+        30.0,
+        1553.0,
+        164.0,
+        1600.0
+      ],
+      "label_id": "label_001",
+      "shelf_id": "S3",
+      "slot_id": "S3-01",
+      "sku": "G13-98",
+      "ocr_text": "",
+      "price": null,
+      "ocr_confidence": 0.0
+    },
+    {
+      "bbox": [
+        968.0,
+        490.0,
+        1098.0,
+        540.0
+      ],
+      "label_id": "label_002",
+      "shelf_id": "S1",
+      "slot_id": "S1-03",
+      "sku": "G13-88",
+      "ocr_text": "7 ™ =",
+      "price": null,
+      "ocr_confidence": 0.0
+    },
+    {
+      "bbox": [
+        313.0,
+        1056.0,
+        440.0,
+        1109.0
+      ],
+      "label_id": "label_003",
+      "shelf_id": "S2",
+      "slot_id": "S2-02",
+      "sku": "G13-99",
+      "ocr_text": "",
+      "price": null,
+      "ocr_confidence": 0.0
+    },
+    {
+      "bbox": [
+        941.0,
+        1533.0,
+        1071.0,
+        1598.0
+      ],
+      "label_id": "label_004",
+      "shelf_id": "S3",
+      "slot_id": "S3-02",
+      "sku": "G13-117",
+      "ocr_text": "",
+      "price": null,
+      "ocr_confidence": 0.0
+    },
+    {
+      "bbox": [
+        1139.0,
+        1061.0,
+        1200.0,
+        1106.0
+      ],
+      "label_id": "label_005",
+      "shelf_id": "S2",
+      "slot_id": null,
+      "sku": null,
+      "ocr_text": "9\n==\n- -\n~~\n> a.\ncae} = -",
+      "price": null,
+      "ocr_confidence": 0.0
+    }
+  ]
 }
