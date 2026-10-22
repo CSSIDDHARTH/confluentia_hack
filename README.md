@@ -61,7 +61,7 @@ pip install -e ".[dev,vision,ocr,ocr-easy,slm]" py7zr
 sudo apt install tesseract-ocr                     # price reading
 python scripts/download_data.py grozi easyocr slm  # shelf photos + product images, OCR models, language model
 python scripts/build_sku_index.py                  # product index for naming
-streamlit run app/dashboard.py                     # one page: "A shelf and its plan" or "Just a photo"
+streamlit run app/dashboard.py                     # http://localhost:8501: home, a shelf, or "Check a photo"
 ```
 
 Headless, as a shelf device would run it:

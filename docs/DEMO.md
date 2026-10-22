@@ -1,6 +1,6 @@
 # Demo script (about 6 minutes)
 
-Presenter notes. One presenter, three pages, in this order.
+Presenter notes. One presenter, one web page: Home, then a shelf, then "Check any shelf photo".
 
 ## Before you go on stage
 
@@ -9,46 +9,45 @@ cd ~/confluentia_ml
 PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # http://localhost:8501
 ```
 
-- Tesseract must be on PATH for live price reading (`sudo apt install tesseract-ocr`); without it the audit page says so and reads placement only. EasyOCR's models must already be in `~/.EasyOCR/model` (`python scripts/download_data.py easyocr`); it never downloads during the demo.
-- Open the app and press **Run it live** once, so the models are loaded (the first press takes a few seconds; later ones about 2 s with prices, a third of a second without).
-- Have 2-3 fresh shop photos on the desktop for the "Just a photo" mode, **already tried once**. Good photos: shelves of packaged goods, whole bay in view, 1-2 m, straight on. Avoid fruit and vegetables, close-ups, and price tags alone (the page then shows a "retake" warning).
-- Fallback if the live run fails: every page shows the saved reading of the same photo, which the live run reproduces exactly. Nothing needs the internet.
+- Tesseract must be on PATH for live price reading (`sudo apt install tesseract-ocr`); EasyOCR's models must already be in `~/.EasyOCR/model` (`python scripts/download_data.py easyocr`); nothing downloads during the demo.
+- Open the app, open a shelf and press **Check the shelf now** once, so the models are loaded (the first check takes a few seconds; later ones about 2 s). Then press F5 to start clean on Home.
+- Browser: full screen (F11), zoom 90 to 100%. Close other tabs (a second tab is fine, but it shares the models).
+- Have 2-3 fresh shop photos on the desktop for "Check any shelf photo", **already tried once**. Good photos: shelves of packaged goods, whole bay in view, 1-2 m, straight on.
+- Fallback if a live check fails: the **Show the saved check** switch shows the saved result of the same photo, which the live check reproduces exactly. Nothing needs the internet.
 
 ## 1. The problem, in one breath (30 s)
 
 "A store has a planned layout, a planogram, and a price list. Staff walk the aisle checking by eye: right product, right place, right count, right price, nothing empty. We do that from one photo, on a small computer at the shelf, and tell staff what to fix first."
 
-## 2. The shelf audit (2 min)
+## 2. Home: the whole store at a glance (30 s)
 
-Main page, shelf `store4_9`.
+**Today's shelf check**, plan **Current plan**: three shelves, scores 100, 94 and 93, CHF 4.80 at stake. "These are real supermarket photos from a store our models never saw, checked against the plan they were stocked to."
 
-Say: "Real supermarket photo from a store the models never trained on. On the left the photo, on the right the store's plan for this shelf."
+Click **New plan from head office**: the rings turn red (28, 33, 27), **CHF 239.82** at stake, 18 to-dos. "Overnight head office changed the plan: two products swapped, one product the shelves do not carry, a promotion that needs more space, and a price rise. Nobody has touched the shelves yet."
 
-1. Plan **"Matches the shelf"**, press **Run it live**. It reads the photo from scratch: product blocks, naming, alignment with the plan, packs, empty spaces and the price label, with the seconds per stage. Score **100**: every bottle outlined green, every slot on the plan green, the label tagged 2.20.
-2. Plan **"Store changed the plan (planted)"**, press **Run it live** again. "The store changed its plan: two products swapped, one product the shelf does not have, a promotion that needs two more facings." Score **28**, **CHF 93.98 at stake** (missing packs times price, plus price gaps; an estimate, no sales data), 4 steps for staff. The photo and the plan now show the same slots in red ("wrong product") and orange ("low stock").
-3. Read the steps: the swap is one step, "Swap Oil-Vinegar #53 with Oil-Vinegar #50: each belongs in the other's slot", although the report has four violation lines for it. Each step says how much money it puts back on the shelf.
-4. Price: the label is tagged red "2.20 ≠ 5.57" and the step says "Reprint label label_000". The swap moved a product under another product's label. On `store1_47` show "Check label label_001 by eye": OCR read 5.50 but was not sure, so it **does not** claim a mismatch. Say: "We only call a price wrong when the OCR is confident; otherwise we ask a human."
-5. Shift briefing: the summary for the shift lead is written by a 1.5B-parameter language model on the CPU and checked against the report; if it names a wrong slot or number, the template is shown instead, and the page says which one you are reading.
+## 3. One shelf, checked live (2 min)
 
-For the planted 10% price rise itself, switch to `store1_36`: "Reprint label label_000: shows 2.70, catalogue price is 2.97."
+**Open shelf** on **Oil & vinegar** (store 4, photo 9).
 
-## 3. Let a judge plant the violation (90 s, the strongest part)
+1. Photo on the left, the plan on the right, still grey. Press **Check the shelf now**: each step ticks off with its time (found the products, recognised each one, matched them to the plan, counted the packs, looked for empty space, read the price labels), about 2 s in total.
+2. Score **28**, **CHF 93.98 at stake**, **4 to-dos**. The photo and the plan show the same slots in the same colours: red "wrong product", orange "low stock". The price label is tagged red **2.20 ≠ 5.57**.
+3. **To-do list**: the swap is one to-do, "Swap Oil-Vinegar #53 with Oil-Vinegar #50: each belongs in the other's slot", although the report has four findings for it (Details tab). Press **Show on photo** on it: everything else fades, and the two slots stay bright on the photo and on the plan.
+4. Switch to **Current plan** and **Check the shelf now** again: **100**, every bottle green, "Nothing to do".
+5. **Prices** tab on **Canned food** (New plan): the planted rise, "label reads 2.70, price list 2.97", tagged *wrong price*. On **Breakfast cereals**, a label read as 5.50 but unsure is tagged *check by eye*. "We only call a price wrong when the text readers are confident; otherwise we ask a person."
+6. **Shift summary** tab: two lines for the shift lead, written by Qwen 2.5 (1.5B) on this laptop; the chip under it says whether the checker accepted it. If it was rejected, say so: that is the checker doing its job.
 
-Same page, shelf `store1_47`.
+## 4. Let a judge plant the violation (90 s, the strongest part)
 
-1. Plan "Store changed the plan (planted)": **27**; the report's 10 violation lines become 6 steps, and the swap is one step ("Swap Cereals #88 with Cereals #138"). Open "All 10 violation lines" to show what the steps replaced.
-2. Plan **Edit the plan yourself**: it starts at **94**, the real plan. "Those changes were ours. Now you pick." A judge swaps two slots (for example S1-01 with S1-02: the score drops to 54 and the step "Swap Cereals #88 with Cereals #138" appears), changes a slot's expected product in the table, or raises *facings planned* and *minimum* together (a promotion reset). Score and steps update at once, with the change versus the real plan under the score. Be clear: the photo is read once; only the plan changes.
+**Breakfast cereals**, plan **Try your own plan**: it starts at **94**, the real plan. "Those changes were ours. Now you pick." A judge swaps two slots (for example S1-01 with S1-02: the score drops to 54, "−40 vs current plan" under the ring, and the to-do "Swap Cereals #88 with Cereals #138" appears), changes what a slot should hold in the table, or raises *facings planned* and *low stock below* together (a promotion reset). Be clear: the photo is read once; only the plan changes.
 
-The edit works on all three shelves (correct plan with prices, then planted): store4_9 100 then 28, store1_36 93 then 33, store1_47 94 then 27.
+## 5. Any photo, no plan (60 s)
 
-## 4. Empty space on any photo (60 s)
+**← All shelves**, then **Check a photo**.
 
-Sidebar, **What do you have?** → **Just a photo**. No planogram needed.
+1. Sample **Coffee (US)** (selected first): fill 88%, 5 empty spaces, about 11 packs to refill, row S5 flagged **low stock** ("Shelf S5: empty space on the left, about 6 packs wide. Refill it."). Open **Sensitivity** and drag the empty-space slider: results recompute instantly.
+2. **Upload a photo** (your own, or `data/test_images/shelf_02_toothpaste_uk.jpg`: 9 empty spaces): refill list and annotated photo, live.
 
-1. Saved shelf `shelf_06_coffee_us` (the default): fill 88%, 5 empty spaces, about 11 packs to refill, and shelf S5 flagged **low stock** ("Shelf S5: empty space on the left, about 6 packs wide. Refill it."). Drag the "Empty-space confidence" slider: results recompute instantly.
-2. **Upload a fresh photo** (your own, or `data/test_images/shelf_02_toothpaste_uk.jpg`: 9 empty spaces): refill list and annotated image, live. Download the CSV.
-
-## 5. Close: edge (30 s)
+## 6. Close: edge (30 s)
 
 "The same audit runs headless on four CPU cores with no GPU: `scripts/audit.py` reads the photo and writes one JSON report, which is what a shelf camera would send to the store server." Quote the measured numbers in `docs/WRITEUP.md`, section "Edge fit".
 
@@ -58,7 +57,7 @@ Sidebar, **What do you have?** → **Just a photo**. No planogram needed.
 |---|---|
 | How accurate is it? | Empty space against hand-labelled spots on 94 held-out photos: precision 0.66, recall 0.62, F1 0.64. Product naming: 81% when the plan limits the candidates, 49% with no hint. Price labels: on 31 hand-boxed Grozi labels, all found, 30 read correctly, none wrong. |
 | Why does a label say "check"? | Of 9 whole labels on the demo shelves, 7 read confidently and right, none wrong. One is read right but unsure, one is motion-blurred; on blurred photos the fix is a steadier photo. Labels cut off by the photo's edge are skipped. The label detector never saw a Grozi shelf in training. We report an unsure read as "check by eye", never as a wrong price. |
-| Why does store1_36 show a wrong price even on "Matches the shelf"? | The dataset gives the 340 g and 490 g tins of the same pineapple slices one product ID, so the price list can only hold one price (1.95) and the 490 g label (2.75) mismatches. In a real catalogue they are two products. |
+| Why does Canned food show a wrong price even on "Current plan"? | The dataset gives the 340 g and 490 g tins of the same pineapple slices one product ID, so the price list can only hold one price (1.95) and the 490 g label (2.75) mismatches. In a real catalogue they are two products. |
 | Are the prices real? | No public data has shelf photos with a price list. The demo price list takes each price from the label read confidently, and the planted plan raises one by 10%. So it tests reading and matching, not a real store's pricing errors. |
 | Are the violations real? | No public dataset has real planogram violations, so a violation is a plan that disagrees with a real photo. We planted some, and on "Edit the plan yourself" you plant your own. We do not edit photos, because erased packs looked fake. |
 | What is "value at stake"? | Missing packs times their price, plus each confident price gap times the slot's facings. An estimate for putting work in order; there are no sales rates in the data. |

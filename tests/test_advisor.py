@@ -74,21 +74,24 @@ def test_a_clean_shelf_has_no_steps():
     assert len(plan(r.model_copy(update={"violations": []}), cat)) == 0
 
 
-def _page():
-    """The dashboard on demo shelf store1_47, showing the saved reading."""
+def _page(plan: str):
+    """The dashboard on demo shelf store1_47 with the given plan, showing the saved check."""
     pytest.importorskip("streamlit")
     from streamlit.testing.v1 import AppTest
 
     page = str(Path(__file__).resolve().parents[1] / "app" / "dashboard.py")
     at = AppTest.from_file(page, default_timeout=600).run()
-    _by_label(at.selectbox, "Real shelf (held-out Grozi photo)").select("store1_47").run()
+    at.button(key="open-store1_47").click().run()
+    at.segmented_control(key="plan-shelf").set_value(plan).run()
     if any(t.key == "show-saved" for t in at.toggle):
         at.toggle(key="show-saved").set_value(True).run()
     return at
 
 
-def _plan(at, value):
-    _by_label(at.radio, "Planogram").set_value(value).run()
+def _score(at) -> int:
+    import re
+
+    return next(int(m) for h in at.html for m in re.findall(r'data-score="(\d+)"', h.value))
 
 
 def _metrics(at):
@@ -99,41 +102,38 @@ def _by_label(elements, label):
     return next(e for e in elements if e.label == label)
 
 
-def test_the_page_shows_fewer_steps_than_violation_lines(monkeypatch):
+def test_the_page_shows_fewer_to_dos_than_findings(monkeypatch):
     monkeypatch.setenv("SHELFSENSE_SLM", "0")
-    at = _page()
-    _plan(at, "scenario")
+    at = _page("scenario")
     assert not at.exception
-    lines = next(int(e.label.split()[1]) for e in at.expander if e.label.startswith("All ") and "violation lines" in e.label)
-    assert _metrics(at)["Compliance score"] == "27 / 100" and int(_metrics(at)["Steps for staff"]) < lines
+    findings = next(int(m.value.split()[1]) for m in at.markdown if m.value.startswith("**All ") and "findings" in m.value)
+    assert _score(at) == 27 and int(_metrics(at)["To-dos"]) < findings
 
 
 def test_edit_mode_starts_at_the_real_plan_and_a_swap_lowers_the_score(monkeypatch):
     monkeypatch.setenv("SHELFSENSE_SLM", "0")
-    at = _page()
-    _plan(at, "edit")
-    assert not at.exception and _metrics(at)["Compliance score"] == "94 / 100"
+    at = _page("edit")
+    assert not at.exception and _score(at) == 94
     _by_label(at.selectbox, "Swap this slot").select("S1-01").run()
     _by_label(at.selectbox, "with this slot").select("S1-02").run()
     _by_label(at.button, "Swap their products").click().run()
     assert not at.exception
-    assert int(_metrics(at)["Compliance score"].split()[0]) < 94
-    assert any("Swap" in m.value for m in at.markdown)
-    assert "vs the real plan" in [m.delta for m in at.metric][0]
+    assert _score(at) < 94
+    assert any("Swap" in h.value for h in at.html)
+    assert any("vs current plan" in h.value for h in at.html)
     _by_label(at.button, "Reset to the shelf's plan").click().run()
-    assert _metrics(at)["Compliance score"] == "94 / 100"
+    assert _score(at) == 94
 
 
-def test_live_run_reproduces_the_saved_score_and_reports_its_timing(monkeypatch):
+def test_live_check_reproduces_the_saved_score_and_reports_its_timing(monkeypatch):
     from shelfsense.vision import live
 
     if not live.available():
         pytest.skip("needs the Grozi product index and the detectors")
     monkeypatch.setenv("SHELFSENSE_SLM", "0")
-    at = _page()
-    _plan(at, "compliant")
-    saved = _metrics(at)["Compliance score"]
-    _by_label(at.button, "Run it live").click().run()
+    at = _page("compliant")
+    saved = _score(at)
+    _by_label(at.button, "Check the shelf now").click().run()
     assert not at.exception
-    assert _metrics(at)["Compliance score"] == saved
-    assert any("Live run on" in s.value and "in total" in s.value for s in at.success)
+    assert _score(at) == saved
+    assert any("Checked live in" in h.value for h in at.html)

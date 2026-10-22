@@ -17,11 +17,11 @@ src/shelfsense/
   pricing/            Person B: label detection, OCR, price parsing
   report/             Person B: compliance scoring, recommendations, report export, value at stake (impact.py), shift briefing
   advisor/            Person A: merges a report's violation lines into ordered steps (plan.py)
-app/dashboard.py      The whole app on one page. Sidebar "What do you have?":
-                      "A shelf and its plan" = pick a real shelf and plan, "Run it live" (vision + price labels), score, value at
-                      stake, steps for staff, SLM summary; plan "Edit the plan yourself" lets a user change the plan and watch the
-                      score. Mock shelves and custom paths are behind the "Developer inputs" switch.
-                      "Just a photo" = runs app/views/availability.py: empty space, per-row fill, refill list, no planogram
+app/dashboard.py      The web app (Material style; theme in .streamlit/config.toml, Roboto and logo in app/static/).
+                      Home: one card per demo shelf and a store-wide plan switch. A shelf: "Check the shelf now" (live,
+                      with per-stage progress), photo and plan side by side, tabs To-do list / Prices / Shift summary /
+                      Details; "Try your own plan" edits the plan. "Check a photo" runs app/views/availability.py
+                      (empty space, row fill, refill list, no plan). Mock shelves are behind the sidebar's "Developer inputs".
 scripts/              Data download, mock generation, utilities
 tests/                pytest; test_contracts.py checks the contracts agree with each other
 data/                 Git-ignored except data/mock/; fetch with `python scripts/download_data.py all` (see data/README.md)
@@ -39,12 +39,12 @@ pytest                                 # must pass before every merge
 streamlit run app/dashboard.py
 ```
 
-Dashboard with live photo upload (the "Just a photo" mode runs the detector on an uploaded photo when `ultralytics` and `models/pack_detector.pt` are present). If your system Python has torch and ultralytics but not Streamlit, add Streamlit in a venv that reuses them, so nothing in your system packages changes:
+Dashboard with live photo upload (the "Check a photo" page runs the detector on an uploaded photo when `ultralytics` and `models/pack_detector.pt` are present). If your system Python has torch and ultralytics but not Streamlit, add Streamlit in a venv that reuses them, so nothing in your system packages changes:
 
 ```bash
 python3 -m venv --system-site-packages .venv
 PYTHONPATH= .venv/bin/pip install streamlit "pyarrow<18"   # pyarrow 18+ needs NumPy 2
-PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # then choose "Just a photo" in the sidebar
+PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # then "Check a photo" on the home page
 ```
 
 If ROS is sourced in your shell, its pytest plugins crash on load. Run `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest` or `unset PYTHONPATH` first.

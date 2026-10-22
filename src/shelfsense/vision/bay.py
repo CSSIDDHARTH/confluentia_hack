@@ -9,6 +9,7 @@ from the same photo. Empty spaces come from a void detector when given one, else
 """
 
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
 from statistics import median
@@ -218,17 +219,22 @@ def analyze_bay(
     void_detector: ProductDetector | None = None,
     void_conf: float = VOID_CONF,
     timings: dict[str, float] | None = None,
+    on_stage: Callable[[str, float], None] | None = None,
 ) -> DetectionOutput:
     """One photo, one planogram: slot-aligned, pack-level DetectionOutput with gaps.
 
-    If `timings` is a dict, it is filled with the seconds each stage took (blocks, naming, alignment, packs, voids)."""
+    If `timings` is a dict, it is filled with the seconds each stage took (blocks, naming, alignment, packs, voids);
+    `on_stage(stage, seconds)` is called as each stage finishes (the dashboard shows progress with it)."""
 
     @contextmanager
     def timed(stage: str):
         t = time.perf_counter()
         yield
+        took = time.perf_counter() - t
         if timings is not None:
-            timings[stage] = timings.get(stage, 0.0) + time.perf_counter() - t
+            timings[stage] = timings.get(stage, 0.0) + took
+        if on_stage is not None:
+            on_stage(stage, took)
 
     image_path = Path(image_path)
     with timed("find product blocks"):

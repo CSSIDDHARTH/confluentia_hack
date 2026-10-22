@@ -21,7 +21,7 @@ photo -> product-block detector -> product naming -> align to planogram -> count
 6. **Read the price labels** with a YOLOv8n label detector (trained on Open Food Facts price tags), then vote on each price with seven Tesseract variants and EasyOCR. Boxes the photo's edge cuts off are skipped. Each label goes to the slot whose first facing it sits under. A label whose price differs from the catalogue is a price mismatch only when the OCR vote is confident (at least 0.5); otherwise staff are told to check it by eye.
 7. **Report**: a compliance score with each violation and a corrective action, the money at stake (missing packs times price, price gap times facings: an estimate for ordering work), and the violations merged into a few steps for staff.
 
-The demo does not depend on saved results: the dashboard has a **Run it live** button that reads the photo from scratch (all three detectors, naming, alignment and the price labels) and reports the seconds each stage took. On the three demo shelves it reproduces all 6 saved scores exactly, and every label's price and slot.
+The demo does not depend on saved results: the dashboard has a **Check the shelf now** button that reads the photo from scratch (all three detectors, naming, alignment and the price labels) and reports the seconds each stage took. On the three demo shelves it reproduces all 6 saved scores exactly, and every label's price and slot.
 
 A second mode, *shelf availability*, skips the planogram and gives empty spaces, per-row fill and a refill list for any shelf photo, uploaded live.
 

@@ -17,9 +17,9 @@ def metrics(at):
 
 
 def photo_mode(timeout: int = 120):
-    """The dashboard in its "Just a photo" mode (the availability view)."""
+    """The dashboard's "Check any shelf photo" page (the availability view)."""
     at = AppTest.from_file(APP, default_timeout=timeout).run()
-    at.radio(key="mode").set_value("Just a photo").run()
+    at.button(key="open-scan").click().run()
     return at
 
 
@@ -45,8 +45,8 @@ def test_sliders_recompute_from_saved_packs():
 
 def test_every_saved_shelf_loads():
     at = photo_mode()
-    for name in at.selectbox[0].options:
-        at.selectbox[0].select(name).run()
+    for name in at.pills(key="sample").options:
+        at.pills(key="sample").set_value(name).run()
         assert not at.exception, name
 
 
@@ -62,7 +62,7 @@ def _live_detector_available() -> bool:
 def test_uploading_a_photo_runs_the_detector_and_shows_results():
     photo = ROOT / "data" / "test_images" / "shelf_06_coffee_us.jpg"  # tracked in the repo
     at = photo_mode(600)
-    next(r for r in at.radio if r.label == "Source").set_value("Upload a photo (runs the detector)").run()
+    at.segmented_control(key="scan-source").set_value("Upload a photo").run()
     at.get("file_uploader")[0].upload(photo.name, photo.read_bytes(), "image/jpeg")
     at.run()
     assert not at.exception

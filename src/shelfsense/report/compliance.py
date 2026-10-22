@@ -196,27 +196,28 @@ def _price_violations(
     violations: list[Violation] = []
 
     for issue in check_prices(det, catalogue):
+        where = f"at {issue.slot_id}" if issue.slot_id else f"({issue.label_id})"
         if issue.issue_type == PriceIssueType.PRICE_MISMATCH and issue.low_confidence:
             # A shaky read is not evidence of a wrong price, so it counts as a label that
             # was not read reliably (an unreadable price), not as a mismatch.
             kind = ViolationKind.UNREADABLE_PRICE
             action = (
-                f"Check label {issue.label_id} by eye (low OCR confidence); "
+                f"Check the price label {where} by eye (it was hard to read): "
                 f"if it shows {issue.label_price:.2f}, reprint it at "
                 f"{issue.catalogue_price:.2f}."
             )
         elif issue.issue_type == PriceIssueType.PRICE_MISMATCH:
             kind = ViolationKind.PRICE_MISMATCH
             action = (
-                f"Reprint label {issue.label_id}: shows {issue.label_price:.2f}, "
-                f"catalogue price is {issue.catalogue_price:.2f}."
+                f"Reprint the price label {where}: it shows {issue.label_price:.2f}, "
+                f"the price list says {issue.catalogue_price:.2f}."
             )
         elif issue.issue_type == PriceIssueType.UNREADABLE_PRICE:
             kind = ViolationKind.UNREADABLE_PRICE
-            action = f"Inspect label {issue.label_id} in person; OCR could not read a price."
+            action = f"Check the price label {where} in person: it could not be read."
         else:
             kind = ViolationKind.UNKNOWN_PRODUCT
-            action = f"Check label {issue.label_id}: it does not match a known catalogue SKU."
+            action = f"Check the price label {where}: it is not under a product in the plan."
 
         violations.append(
             Violation(

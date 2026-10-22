@@ -1,0 +1,44 @@
+# shelfSense look: Google Material style (Roboto, Google blue, white cards on a light grey page).
+[server]
+enableStaticServing = true  # serves app/static/, so the font works offline
+
+[client]
+toolbarMode = "minimal"
+showSidebarNavigation = false
+
+[theme]
+base = "light"
+primaryColor = "#1a73e8"
+backgroundColor = "#f8f9fa"
+secondaryBackgroundColor = "#f1f3f4"
+textColor = "#202124"
+borderColor = "#dadce0"
+showWidgetBorder = true
+baseRadius = "12px"
+buttonRadius = "full"
+font = "Roboto"
+headingFont = "Roboto"
+headingFontWeights = [500, 500, 500, 500, 500, 500]
+metricValueFontSize = "2rem"
+metricValueFontWeight = 500
+greenColor = "#1e8e3e"
+redColor = "#d93025"
+orangeColor = "#e8710a"
+yellowColor = "#f9ab00"
+blueColor = "#1a73e8"
+grayColor = "#5f6368"
+
+[[theme.fontFaces]]
+family = "Roboto"
+url = "app/static/fonts/Roboto-Regular.ttf"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Roboto"
+url = "app/static/fonts/Roboto-Medium.ttf"
+weight = 500
+
+[[theme.fontFaces]]
+family = "Roboto"
+url = "app/static/fonts/Roboto-Bold.ttf"
+weight = 700

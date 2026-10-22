@@ -8,6 +8,7 @@ the models is the slow part (seconds); `run` after that takes a second or two on
 import re
 import shutil
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -67,12 +68,19 @@ class LiveChain:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.matcher = SkuMatcher.load(INDEX, ADAPTER, embedder=Embedder(self.device))
 
-    def run(self, image_path: str | Path, planogram: Planogram, shown_path: str | None = None, read_prices: bool = False) -> LiveResult:
-        """read_prices: also find the price labels, read them (Tesseract, plus EasyOCR if installed) and tie each to a slot."""
+    def run(
+        self, image_path: str | Path, planogram: Planogram, shown_path: str | None = None, read_prices: bool = False,
+        on_stage: Callable[[str, float], None] | None = None,
+    ) -> LiveResult:
+        """read_prices: also find the price labels, read them (Tesseract, plus EasyOCR if installed) and tie each to a slot.
+        on_stage(stage, seconds) is called as each stage finishes."""
         timings: dict[str, float] = {}
         t = time.perf_counter()
         cands = {s.sku for sh in planogram.shelves for s in sh.slots}
-        det = analyze_bay(image_path, self.blocks, self.packs, self.matcher, planogram, cands, shown_path=shown_path, void_detector=self.voids, timings=timings)
+        det = analyze_bay(
+            image_path, self.blocks, self.packs, self.matcher, planogram, cands, shown_path=shown_path,
+            void_detector=self.voids, timings=timings, on_stage=on_stage,
+        )
         if read_prices:
             from shelfsense.pricing.label_assign import assign_labels_to_slots
             from shelfsense.pricing.label_detector import detect_labels
@@ -80,6 +88,8 @@ class LiveChain:
             t_labels = time.perf_counter()
             det.labels = assign_labels_to_slots(detect_labels(Image.open(image_path)), det, planogram)
             timings["read price labels"] = time.perf_counter() - t_labels
+            if on_stage is not None:
+                on_stage("read price labels", timings["read price labels"])
         return LiveResult(det, timings, time.perf_counter() - t, self.device)
 
 
