@@ -115,8 +115,12 @@ def _easyocr_price(image: Image.Image, scale: int) -> float | None:
     grey = ImageOps.autocontrast(image.convert("L"), cutoff=1)
     if scale > 1:
         grey = grey.resize((grey.width * scale, grey.height * scale), Image.BICUBIC)
+    try:
+        words = reader.readtext(np.array(grey), allowlist="0123456789.,", text_threshold=0.5)
+    except RuntimeError:  # out of GPU memory (the GPU is shared with the vision models): Tesseract votes alone
+        return None
     best: tuple[float, float] | None = None
-    for box, word, conf in reader.readtext(np.array(grey), allowlist="0123456789.,", text_threshold=0.5):
+    for box, word, conf in words:
         if conf < 0.5 or not _MARKED_RE.search(word):
             continue
         price = parse_price(word.strip())

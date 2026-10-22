@@ -12,8 +12,8 @@
           "slot_id": "S1-01",
           "position": 0,
           "sku": "G26-23",
-          "facings": 15,
-          "min_facings": 9
+          "facings": 6,
+          "min_facings": 4
         },
         {
           "slot_id": "S1-02",
@@ -26,8 +26,8 @@
           "slot_id": "S1-03",
           "position": 2,
           "sku": "G26-6",
-          "facings": 10,
-          "min_facings": 9
+          "facings": 5,
+          "min_facings": 3
         }
       ]
     },
@@ -39,15 +39,15 @@
           "slot_id": "S2-01",
           "position": 0,
           "sku": "G26-19",
-          "facings": 6,
-          "min_facings": 4
+          "facings": 5,
+          "min_facings": 3
         },
         {
           "slot_id": "S2-02",
           "position": 1,
           "sku": "G26-27",
-          "facings": 8,
-          "min_facings": 5
+          "facings": 9,
+          "min_facings": 8
         },
         {
           "slot_id": "S2-03",

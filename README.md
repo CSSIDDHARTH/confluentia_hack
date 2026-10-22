@@ -31,10 +31,10 @@ Code decides every violation and step; the language model only writes, and its w
 
 | What | Result |
 |---|---|
-| Whole chain on the best 3 held-out shelves, correct plan (placement) | compliance score 98, 88, 86 |
-| Same shelves with planted plan changes | 31, 48, 34, with every planted change listed |
+| Whole chain on all 35 held-out shelves, correct plan (placement) | median 55; best three 98, 93, 88 (our demo shelves are the top five) |
+| Demo shelves with planted plan changes | 31 to 49, with every planted change listed |
 | Product naming, plan-restricted / open set | 81% / 49% top-1 |
-| Pack detector | mAP50 0.89 on 200 held-out SKU-110K images |
+| Pack detector | mAP50 0.89 on 200 held-out SKU-110K images; counting with bottle pieces merged: F1 0.845, median count error 5.7% |
 | Empty space vs 639 hand-labelled spots, 94 photos | precision 0.66, recall 0.62, F1 0.64 (our first method: F1 0.27) |
 | Price labels, 31 hand-boxed Grozi labels | 31 found, 30 read correctly, 0 wrong, 1 unreadable (29 with this laptop's Tesseract 5.3.4) |
 | Price labels on the demo shelves | 15 whole labels: 8 read confidently and right, 0 wrong; 6 motion-blurred |
@@ -48,7 +48,7 @@ Stated in full in [CLAUDE.md](CLAUDE.md#assumptions) (17 assumptions) and [docs/
 
 - One roughly front-facing photo per shelf bay, tagged with its planogram. Planograms are ordinal (order and facings, no measurements).
 - **No public data has real planogram violations or shelf prices.** Violations are planted by changing the plan of a real photo (never by editing the photo), and on "Edit the plan yourself" a judge can plant their own. Demo prices come from the labels read confidently on the photo, with one raised by 10%.
-- Demo shelves are the best of the held-out set (others score 80 or lower). Of their 15 whole price labels, 8 read confidently and right; 6 are motion-blurred and reported as unreadable (retake the photo). Labels cut off by the photo's edge are skipped.
+- Demo shelves are the best five of 35 held-out shelves; the median shelf scores 55 (look-alike products, misaligned blocks). Plain gaps between bottles can be missed by the empty-space detector. Of their 15 whole price labels, 8 read confidently and right; 6 are motion-blurred and reported as unreadable (retake the photo). Labels cut off by the photo's edge are skipped.
 - Value at stake is an estimate for ordering work (missing packs times price, price gaps times facings); there are no sales rates.
 - Edge speed is measured on a laptop CPU capped at 4 cores; no Jetson or phone was available.
 - Grozi-3.2K and SKU-110K are academic-use only; the empty-shelf photos are CC BY 4.0; Open Food Facts price tags are CC BY-SA 4.0.

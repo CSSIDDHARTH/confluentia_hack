@@ -170,8 +170,10 @@ def main() -> None:
         ranked.append((report.score, len(det0.items), img, plan, present, distractors, cat))
 
     ranked.sort(key=lambda r: (-r[0], -r[1]))
+    scores = sorted(r[0] for r in ranked)
     print(f"{len(ranked)} candidate shelves; compliant-plan score distribution: "
-          f"{sum(r[0] == 100 for r in ranked)} perfect, {sum(r[0] >= 85 for r in ranked)} >= 85")
+          f"{sum(r[0] == 100 for r in ranked)} perfect, {sum(r[0] >= 85 for r in ranked)} >= 85, "
+          f"median {scores[len(scores) // 2] if scores else 0:.0f}; all: {scores[::-1]}")
 
     if OUT.exists():
         shutil.rmtree(OUT)

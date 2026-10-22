@@ -1,5 +1,5 @@
 from shelfsense.contracts import DetectionOutput
-from shelfsense.vision.bay import add_gaps, assign_packs_to_blocks, drop_fragments, facings_output
+from shelfsense.vision.bay import add_gaps, assign_packs_to_blocks, drop_fragments, facings_output, merge_split_packs
 from shelfsense.vision.detect import build_detection_output
 
 
@@ -65,3 +65,17 @@ def test_add_gaps_uses_voids_when_given_and_packs_otherwise():
     given = add_gaps(base.model_copy(deep=True), packs, voids=[([10.0, 110.0, 60.0, 190.0], 0.7)]).gaps
     assert len(given) == 1 and given[0].confidence == 0.7 and given[0].bbox[0] == 10.0
     assert add_gaps(base.model_copy(deep=True), packs, voids=[]).gaps == []
+
+
+def test_bottle_pieces_merge_into_one_pack_but_stacked_packs_stay_apart():
+    # store4_9: one bottle boxed as cap, neck (overlapping the body) and body
+    bottle = [[857, 56, 1044, 425], [765, 189, 1095, 1041], [755, 604, 1092, 1430]]
+    # a narrow neck box just above its body (store4_9, bottom shelf)
+    neck = [[479, 1665, 660, 2052], [370, 2166, 722, 3044]]
+    # two cans of the same width stacked (store1_36): they only touch
+    stacked = [[608, 0, 909, 556], [579, 548, 892, 845]]
+    boxes = bottle + neck + stacked
+    merged, confs = merge_split_packs(boxes, [0.9] * len(boxes))
+    assert len(merged) == 4 and len(confs) == 4
+    assert [755, 56, 1095, 1430] in merged and [370, 1665, 722, 3044] in merged
+    assert stacked[0] in merged and stacked[1] in merged

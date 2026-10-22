@@ -32,8 +32,8 @@
           "slot_id": "S2-01",
           "position": 0,
           "sku": "G13-92",
-          "facings": 7,
-          "min_facings": 6
+          "facings": 6,
+          "min_facings": 5
         }
       ]
     },
@@ -45,8 +45,8 @@
           "slot_id": "S3-01",
           "position": 0,
           "sku": "G02-123121",
-          "facings": 9,
-          "min_facings": 5
+          "facings": 4,
+          "min_facings": 2
         }
       ]
     }

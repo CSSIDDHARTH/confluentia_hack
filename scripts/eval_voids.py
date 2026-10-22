@@ -19,6 +19,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from shelfsense.vision.gaps import find_gaps
+
 ROOT = Path(__file__).resolve().parents[1]
 SKU = ROOT / "data" / "sku110k_yolo" / "images"
 
@@ -110,6 +112,65 @@ def geometry_preds(images, weights, imgsz, conf) -> dict[str, list]:
     return out
 
 
+# Tried and rejected (measured below): adding row gaps between merged packs that the void detector missed,
+# kept only if a close look (the pack detector on the gap's crop) finds no pack there. It caught the plain gap
+# between bottles on demo bay store4_9, but on these labelled photos it added 16 true and 253 false empty
+# spaces (F1 0.64 -> 0.55; requiring gaps of 2+ pack widths: 0.60), so the chain uses the void detector alone.
+# A close look at a suspected gap: the pack detector is re-run on the gap's crop (with this share of its width as
+# margin on each side), and a pack at least CLOSE_LOOK_MIN_HEIGHT of the gap's height means the shelf is not empty
+# there: the full-photo pass had missed it.
+CLOSE_LOOK_MARGIN = 0.15
+CLOSE_LOOK_MIN_HEIGHT = 0.25
+
+
+def looks_empty(image: Image.Image, box: list[float], pack_detector) -> bool:
+    """True when the pack detector finds no pack in a close-up of `box`."""
+    m = CLOSE_LOOK_MARGIN * (box[2] - box[0])
+    crop = image.crop((max(0, box[0] - m), box[1], min(image.width, box[2] + m), box[3]))
+    res = pack_detector.model.predict(
+        crop, conf=pack_detector.conf, imgsz=640, device=pack_detector.device, verbose=False
+    )[0]
+    return not any(b[3] - b[1] >= CLOSE_LOOK_MIN_HEIGHT * crop.height for b in res.boxes.xyxy.tolist())
+
+
+def _overlaps(a: list[float], b: list[float], share: float = 0.5) -> bool:
+    i = max(0.0, min(a[2], b[2]) - max(a[0], b[0])) * max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+    return i >= share * min(area(a), area(b))
+
+
+def confirmed_geometry_gaps(
+    image: Image.Image,
+    packs: list[list[float]],
+    pack_detector,
+    voids: list[tuple[list[float], float]] = (),
+) -> list[tuple[list[float], float]]:
+    """Stretches of a row no pack covers (find_gaps), not already found by the void detector, that still look
+    empty on a close look. The void detector, trained on 416 px photos of other shops, misses some plain
+    gaps between bottles; this adds them without taking a missed pack for a gap."""
+    _, cands = find_gaps(packs)
+    return [
+        (g.bbox, g.confidence) for g in cands
+        if not any(_overlaps(g.bbox, v) for v, _ in voids) and looks_empty(image, g.bbox, pack_detector)
+    ]
+
+
+
+def combined_preds(images, pack_weights, void_model) -> dict[str, list]:
+    """The void detector at 0.3 plus confirmed geometry gaps (the rejected experiment above)."""
+    from shelfsense.vision.bay import drop_fragments, merge_split_packs
+    from shelfsense.vision.detect import ProductDetector
+
+    det = ProductDetector(pack_weights, imgsz=1024, max_det=600)
+    out = {}
+    for f in images:
+        voids = [(b, 0.3) for b in void_model.predict(str(f), imgsz=640, conf=0.3, verbose=False)[0].boxes.xyxy.tolist()]
+        boxes, confs, _ = det.boxes(f)
+        packs, _ = drop_fragments(*merge_split_packs(boxes, confs))
+        extra = confirmed_geometry_gaps(Image.open(f).convert("RGB"), packs, det, voids)
+        out[f.stem] = [b for b, _ in voids + extra]
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("dataset")
@@ -131,6 +192,7 @@ def main() -> None:
         for conf in (0.1, 0.2, 0.3, 0.4):
             preds = {f.stem: m.predict(str(f), imgsz=640, conf=conf, verbose=False)[0].boxes.xyxy.tolist() for f in images}
             report(f"trained void detector (conf {conf})", preds, refs)
+        report("void 0.3 + confirmed geometry (rejected)", combined_preds(images, a.pack_weights, m), refs)
 
 
 if __name__ == "__main__":

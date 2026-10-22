@@ -41,6 +41,68 @@ def drop_fragments(
     return [b for b, _ in kept], [c for _, c in kept]
 
 
+# Two pack boxes are pieces of one pack (a bottle's cap, neck and body, which the SKU-110K-trained detector
+# boxes separately) when they share a column (horizontal overlap of at least SAME_COLUMN of the narrower box)
+# and overlap vertically by at least SPLIT_OVERLAP of the shorter box. Stacked packs only touch, so they stay apart.
+SAME_COLUMN = 0.7
+SPLIT_OVERLAP = 0.25
+# A bottle's neck can also be boxed apart from its body with a small vertical gap: a box at most NECK_WIDTH as
+# wide as the box below it, lying (NECK_INSIDE of its width) within that box's span, with a gap of at most
+# NECK_GAP of the lower box's height. Stacked packs are as wide as the pack under them, so they stay apart.
+NECK_WIDTH = 0.6
+NECK_INSIDE = 0.9
+NECK_GAP = 0.2
+
+
+def _neck_on_body(top: list[float], body: list[float]) -> bool:
+    top_w, body_w = top[2] - top[0], body[2] - body[0]
+    inside = min(top[2], body[2]) - max(top[0], body[0])
+    return (
+        (top[1] + top[3]) / 2 < (body[1] + body[3]) / 2
+        and top_w <= NECK_WIDTH * body_w
+        and inside >= NECK_INSIDE * top_w
+        and body[1] - top[3] <= NECK_GAP * (body[3] - body[1])
+        and top[3] <= body[3]
+    )
+
+
+def merge_split_packs(
+    boxes: list[list[float]], confs: list[float]
+) -> tuple[list[list[float]], list[float]]:
+    """Merge boxes that are pieces of the same pack into one box (their union, best confidence)."""
+    parent = list(range(len(boxes)))
+
+    def root(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for i, a in enumerate(boxes):
+        for j in range(i + 1, len(boxes)):
+            b = boxes[j]
+            ox = min(a[2], b[2]) - max(a[0], b[0])
+            oy = min(a[3], b[3]) - max(a[1], b[1])
+            overlapping = (
+                ox >= SAME_COLUMN * min(a[2] - a[0], b[2] - b[0])
+                and oy >= SPLIT_OVERLAP * min(a[3] - a[1], b[3] - b[1])
+            )
+            if overlapping or _neck_on_body(a, b) or _neck_on_body(b, a):
+                parent[root(i)] = root(j)
+    groups: dict[int, list[int]] = {}
+    for i in range(len(boxes)):
+        groups.setdefault(root(i), []).append(i)
+    merged = [
+        (
+            [min(boxes[k][0] for k in g), min(boxes[k][1] for k in g), max(boxes[k][2] for k in g), max(boxes[k][3] for k in g)],
+            max(confs[k] for k in g),
+        )
+        for g in groups.values()
+    ]
+    merged.sort(key=lambda bc: (bc[0][1], bc[0][0]))
+    return [b for b, _ in merged], [c for _, c in merged]
+
+
 def assign_packs_to_blocks(blocks: list[list[float]], packs: list[list[float]]) -> list[int | None]:
     """For each pack, the index of the smallest block containing its centre (None if outside all)."""
     out: list[int | None] = []
@@ -152,7 +214,7 @@ def analyze_bay(
         assign_slots(det, planogram)
     with timed("count packs"):
         packs, confs, _ = pack_detector.boxes(image_path)
-        packs, confs = drop_fragments(packs, confs)
+        packs, confs = drop_fragments(*merge_split_packs(packs, confs))
         det = facings_output(det, packs, confs, produced_by=f"yolo:{pack_detector.name}")
     with timed("find empty spaces"):
         voids = [v for v in detect_voids(void_detector, image_path) if v[1] >= void_conf] if void_detector else None

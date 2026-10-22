@@ -27,7 +27,7 @@ A second mode, *shelf availability*, skips the planogram and gives empty spaces,
 
 ## From violation lines to steps
 
-The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, a misplaced product is told where it belongs ("Cereals #138 belongs in S1-01", from the planogram, or "the plan has no other slot for it"), and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 47 violation lines become 34 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
+The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, a misplaced product is told where it belongs ("Cereals #138 belongs in S1-01", from the planogram, or "the plan has no other slot for it"), and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 44 violation lines become 31 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
 
 The "What to do" page also has an **Edit the plan yourself** mode (`advisor/edit.py`): a person changes what a slot expects, its facings and minimum, or swaps two slots, and the score and steps recompute from the unchanged photo reading. This is how a violation gets created without us planting it. It tests the comparison, not the detector, since the photo is read once.
 
@@ -53,8 +53,9 @@ All on held-out data (different stores or different images from training).
 | Naming, planogram-restricted | 0.81 top-1 |
 | Naming with 20 extra distractors | 0.79 |
 | Naming, open set (no planogram) | 0.49 |
-| Whole chain (detect, name, align, count) on the best 3 held-out shelves | compliance score 98, 88, 86 on the correct plan |
-| Planted-change shelves | scores fall to 31 to 48 with every planted change listed (placement only; 23 to 43 with prices and label checks) |
+| Whole chain (detect, name, align, count), correct plan, 35 held-out shelves | median 55; best three 98, 93, 88; three shelves score 0 |
+| Planted-change shelves (the 5 demo shelves) | scores fall to 31 to 49 with every planted change listed (placement only; 27 to 43 with prices and label checks) |
+| Pack counting, 200 held-out SKU-110K photos, 29,876 hand-boxed packs | F1 0.845, median count error 5.7% with bottle pieces merged (0.836 and 8.1% without) |
 | Price labels, 31 hand-boxed labels on Grozi shelves | 31 found, 30 prices read correctly, 0 wrong, 1 unreadable (Tesseract alone: 27 correct, 2 wrong) |
 | Price labels on the five demo shelves | 24 boxes: 9 cut off by the photo's edge (skipped); of 15 whole labels 8 read confidently and right, 0 wrong, 6 motion-blurred (unreadable) |
 | Live run vs saved results | all 10 shelf/plan pairs: same score, same price and slot for every label |
@@ -70,7 +71,8 @@ All on held-out data (different stores or different images from training).
 - Planograms are ordinal (shelf, slot order, facings); public planograms carry no physical measurements.
 - **No public dataset has real planogram violations, real prices or price-tag text.** The violations are planted by editing the planogram of a real photo. The demo price list takes each price from the label read confidently on the photo, and the planted plan raises one by 10%; so a demo price mismatch tests reading and matching, not a real store's pricing error. We did not edit photos, because erased packs looked fake.
 - **Some demo labels cannot be read.** Of 15 whole labels, 6 are motion-blurred: a person can read them, but no OCR setting we tried could (downscaling, sharpening, binarising); the fix is a steadier photo. The label detector never saw a Grozi shelf in training. An unreadable label costs 2 points and asks for a check by eye; it never claims a mismatch or money at stake.
-- Demo shelves are the best of the held-out set. Other held-out shelves score 80 or lower.
+- Demo shelves are the best five of 35 held-out shelves. The median shelf scores 55 on its correct plan: look-alike products get confused and blocks get misaligned, and on three shelves the chain fails outright (score 0).
+- **Plain gaps between bottles can be missed.** The void detector was trained on 416 px photos of other shops; on store4_9 it rates a clear 1.5-bottle gap at 0.06. Our fix for it made things worse on the labelled photos (below), so it is not shipped.
 - Use packaged-goods shelves photographed with the whole bay in view. Loose produce and close-ups are outside what the pack detector handles.
 - The empty-space labels are 416 px photos from one Roboflow Universe project (single annotator style, many photos from the same shop types as SKU-110K). Accuracy on very different shops is not measured. Spots the annotators left unlabelled count as false alarms, so the true precision may be higher than 0.66.
 - Datasets: Grozi-3.2K and SKU-110K are academic-use only; the empty-shelf set is Policenta "Empty shelf detection" on Roboflow Universe, CC BY 4.0.
@@ -138,6 +140,8 @@ So a missed pack explains only about 30% of the false gaps. The larger share com
 | Flip and multi-scale test-time averaging | F1 0.63 vs 0.63 over 200 images; 95% interval for the difference [-0.03, +0.02]; 3x slower |
 | Merging the shipped and retrained detectors, or 1024 with 640 | F1 0.63-0.66 vs 0.66 on the held-out half, no gain |
 | Edge-of-bay or gap-size rules | precision is only 6-9 points lower at the bay edge and does not vary clearly with gap size |
+| Gaps between merged packs that a close look confirms empty, added to the void detector | caught store4_9's gap, but on the 94 labelled photos 16 true and 253 false empty spaces: F1 0.64 to 0.55 (0.60 for gaps of 2+ pack widths) |
+| Merging any narrower box above a pack into it (bottle necks) | pack F1 0.806 vs 0.848 on SKU-110K (it merged real stacked packs); only a tight version ships: 0.845 |
 | Using the gap confidence score to separate sure from possible gaps | the score is a function of gap width and does not rank correct gaps (precision 57%, 66%, 64%, 59% by quartile) |
 
 The retrain shows that box accuracy alone is not a safe proxy for shelf-level quality, so we measure the end result.

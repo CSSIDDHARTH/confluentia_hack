@@ -5,7 +5,7 @@
   "image_width": 1600,
   "image_height": 1200,
   "planogram_id": "PG-store1-36",
-  "captured_at": "2026-10-21T16:04:51+00:00",
+  "captured_at": "2026-10-22T15:00:12+00:00",
   "produced_by": {
     "vision": "yolo:product_detector",
     "matcher": "dinov2-vits14+adapter",
@@ -50,26 +50,12 @@
     {
       "bbox": [
         92.4,
-        178.9,
-        268.1,
-        406.8
-      ],
-      "item_id": "i002",
-      "det_confidence": 0.8066,
-      "sku": "G26-22",
-      "sku_confidence": 0.6953,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        94.8,
         101.8,
         279.5,
         407.9
       ],
-      "item_id": "i003",
-      "det_confidence": 0.3384,
+      "item_id": "i002",
+      "det_confidence": 0.8066,
       "sku": "G26-22",
       "sku_confidence": 0.6953,
       "shelf_id": "S1",
@@ -82,22 +68,8 @@
         437.4,
         414.4
       ],
-      "item_id": "i004",
+      "item_id": "i003",
       "det_confidence": 0.7555,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        298.0,
-        0.9,
-        443.4,
-        272.7
-      ],
-      "item_id": "i005",
-      "det_confidence": 0.5561,
       "sku": "G26-22",
       "sku_confidence": 0.9155,
       "shelf_id": "S1",
@@ -108,24 +80,10 @@
         298.0,
         0.2,
         445.5,
-        187.7
+        272.7
       ],
-      "item_id": "i006",
-      "det_confidence": 0.5097,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        299.4,
-        0.9,
-        444.7,
-        129.9
-      ],
-      "item_id": "i007",
-      "det_confidence": 0.2906,
+      "item_id": "i004",
+      "det_confidence": 0.5561,
       "sku": "G26-22",
       "sku_confidence": 0.9155,
       "shelf_id": "S1",
@@ -134,54 +92,12 @@
     {
       "bbox": [
         442.7,
-        100.0,
-        591.4,
-        422.8
-      ],
-      "item_id": "i008",
-      "det_confidence": 0.45,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        443.1,
-        278.6,
-        589.1,
-        420.4
-      ],
-      "item_id": "i009",
-      "det_confidence": 0.3026,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        449.6,
         0.0,
         594.6,
-        277.6
+        422.8
       ],
-      "item_id": "i010",
-      "det_confidence": 0.4005,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        451.2,
-        0.0,
-        594.5,
-        109.4
-      ],
-      "item_id": "i011",
-      "det_confidence": 0.4477,
+      "item_id": "i005",
+      "det_confidence": 0.45,
       "sku": "G26-22",
       "sku_confidence": 0.9155,
       "shelf_id": "S1",
@@ -191,53 +107,11 @@
       "bbox": [
         596.6,
         0.0,
-        730.2,
-        299.6
-      ],
-      "item_id": "i012",
-      "det_confidence": 0.3753,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        597.3,
-        0.3,
-        730.4,
-        143.2
-      ],
-      "item_id": "i013",
-      "det_confidence": 0.4502,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        597.8,
-        149.8,
         732.5,
         429.7
       ],
-      "item_id": "i014",
+      "item_id": "i006",
       "det_confidence": 0.6009,
-      "sku": "G26-22",
-      "sku_confidence": 0.9155,
-      "shelf_id": "S1",
-      "slot_id": "S1-01"
-    },
-    {
-      "bbox": [
-        598.0,
-        154.3,
-        732.4,
-        325.6
-      ],
-      "item_id": "i015",
-      "det_confidence": 0.3577,
       "sku": "G26-22",
       "sku_confidence": 0.9155,
       "shelf_id": "S1",
@@ -250,7 +124,7 @@
         847.0,
         428.2
       ],
-      "item_id": "i016",
+      "item_id": "i007",
       "det_confidence": 0.854,
       "sku": "G26-23",
       "sku_confidence": 0.8186,
@@ -264,7 +138,7 @@
         1025.6,
         460.0
       ],
-      "item_id": "i017",
+      "item_id": "i008",
       "det_confidence": 0.7194,
       "sku": "G26-23",
       "sku_confidence": 0.8186,
@@ -275,24 +149,10 @@
       "bbox": [
         1045.4,
         32.6,
-        1197.6,
-        217.0
-      ],
-      "item_id": "i018",
-      "det_confidence": 0.6612,
-      "sku": "G26-6",
-      "sku_confidence": 0.9985,
-      "shelf_id": "S1",
-      "slot_id": "S1-03"
-    },
-    {
-      "bbox": [
-        1054.4,
-        153.6,
         1211.2,
         441.1
       ],
-      "item_id": "i019",
+      "item_id": "i009",
       "det_confidence": 0.6821,
       "sku": "G26-6",
       "sku_confidence": 0.9985,
@@ -303,39 +163,11 @@
       "bbox": [
         1206.7,
         56.9,
-        1341.6,
-        245.5
-      ],
-      "item_id": "i020",
-      "det_confidence": 0.6785,
-      "sku": "G26-6",
-      "sku_confidence": 0.9985,
-      "shelf_id": "S1",
-      "slot_id": "S1-03"
-    },
-    {
-      "bbox": [
-        1215.0,
-        144.6,
-        1347.2,
+        1347.8,
         449.9
       ],
-      "item_id": "i021",
-      "det_confidence": 0.3678,
-      "sku": "G26-6",
-      "sku_confidence": 0.9985,
-      "shelf_id": "S1",
-      "slot_id": "S1-03"
-    },
-    {
-      "bbox": [
-        1216.4,
-        245.7,
-        1347.8,
-        446.5
-      ],
-      "item_id": "i022",
-      "det_confidence": 0.5531,
+      "item_id": "i010",
+      "det_confidence": 0.6785,
       "sku": "G26-6",
       "sku_confidence": 0.9985,
       "shelf_id": "S1",
@@ -348,7 +180,7 @@
         1509.7,
         237.9
       ],
-      "item_id": "i023",
+      "item_id": "i011",
       "det_confidence": 0.6806,
       "sku": "G26-6",
       "sku_confidence": 0.9985,
@@ -362,7 +194,7 @@
         1518.9,
         450.9
       ],
-      "item_id": "i024",
+      "item_id": "i012",
       "det_confidence": 0.7061,
       "sku": "G26-6",
       "sku_confidence": 0.9985,
@@ -376,7 +208,7 @@
         1600.0,
         450.0
       ],
-      "item_id": "i025",
+      "item_id": "i013",
       "det_confidence": 0.5311,
       "sku": null,
       "sku_confidence": 0.3057,
@@ -390,7 +222,7 @@
         52.5,
         823.4
       ],
-      "item_id": "i026",
+      "item_id": "i014",
       "det_confidence": 0.5095,
       "sku": "G26-19",
       "sku_confidence": 0.6857,
@@ -400,25 +232,11 @@
     {
       "bbox": [
         50.4,
-        915.7,
+        829.8,
         279.9,
         1086.4
       ],
-      "item_id": "i027",
-      "det_confidence": 0.3251,
-      "sku": "G26-19",
-      "sku_confidence": 0.9969,
-      "shelf_id": "S2",
-      "slot_id": "S2-01"
-    },
-    {
-      "bbox": [
-        54.8,
-        829.8,
-        279.5,
-        1069.4
-      ],
-      "item_id": "i028",
+      "item_id": "i015",
       "det_confidence": 0.5446,
       "sku": "G26-19",
       "sku_confidence": 0.9969,
@@ -432,7 +250,7 @@
         278.4,
         822.5
       ],
-      "item_id": "i029",
+      "item_id": "i016",
       "det_confidence": 0.5195,
       "sku": "G26-19",
       "sku_confidence": 0.9969,
@@ -446,7 +264,7 @@
         478.0,
         1099.0
       ],
-      "item_id": "i030",
+      "item_id": "i017",
       "det_confidence": 0.6322,
       "sku": "G26-19",
       "sku_confidence": 0.9969,
@@ -460,7 +278,7 @@
         499.9,
         842.7
       ],
-      "item_id": "i031",
+      "item_id": "i018",
       "det_confidence": 0.6555,
       "sku": "G26-19",
       "sku_confidence": 0.9969,
@@ -474,7 +292,7 @@
         782.0,
         1105.1
       ],
-      "item_id": "i032",
+      "item_id": "i019",
       "det_confidence": 0.646,
       "sku": "G26-27",
       "sku_confidence": 0.9923,
@@ -488,7 +306,7 @@
         772.2,
         808.3
       ],
-      "item_id": "i033",
+      "item_id": "i020",
       "det_confidence": 0.5165,
       "sku": "G26-27",
       "sku_confidence": 0.9923,
@@ -502,7 +320,7 @@
         1050.5,
         804.4
       ],
-      "item_id": "i034",
+      "item_id": "i021",
       "det_confidence": 0.4391,
       "sku": "G26-27",
       "sku_confidence": 0.9923,
@@ -516,7 +334,7 @@
         1078.2,
         1106.4
       ],
-      "item_id": "i035",
+      "item_id": "i022",
       "det_confidence": 0.4765,
       "sku": "G26-27",
       "sku_confidence": 0.9923,
@@ -530,7 +348,7 @@
         1246.4,
         824.1
       ],
-      "item_id": "i036",
+      "item_id": "i023",
       "det_confidence": 0.788,
       "sku": "G26-6",
       "sku_confidence": 0.9991,
@@ -544,7 +362,7 @@
         1245.9,
         1094.3
       ],
-      "item_id": "i037",
+      "item_id": "i024",
       "det_confidence": 0.8015,
       "sku": "G26-6",
       "sku_confidence": 0.9991,
@@ -555,25 +373,11 @@
       "bbox": [
         1253.0,
         576.2,
-        1464.4,
-        819.2
-      ],
-      "item_id": "i038",
-      "det_confidence": 0.5077,
-      "sku": "G26-6",
-      "sku_confidence": 0.9991,
-      "shelf_id": "S2",
-      "slot_id": "S2-02"
-    },
-    {
-      "bbox": [
-        1256.3,
-        755.9,
         1478.8,
         1090.0
       ],
-      "item_id": "i039",
-      "det_confidence": 0.4803,
+      "item_id": "i025",
+      "det_confidence": 0.5077,
       "sku": "G26-6",
       "sku_confidence": 0.9991,
       "shelf_id": "S2",
@@ -586,7 +390,7 @@
         1600.0,
         885.0
       ],
-      "item_id": "i040",
+      "item_id": "i026",
       "det_confidence": 0.5296,
       "sku": "G26-6",
       "sku_confidence": 0.996,
@@ -600,7 +404,7 @@
         1600.0,
         704.2
       ],
-      "item_id": "i041",
+      "item_id": "i027",
       "det_confidence": 0.7492,
       "sku": "G26-6",
       "sku_confidence": 0.996,
@@ -614,7 +418,7 @@
         1600.0,
         1085.7
       ],
-      "item_id": "i042",
+      "item_id": "i028",
       "det_confidence": 0.4483,
       "sku": "G26-6",
       "sku_confidence": 0.996,
