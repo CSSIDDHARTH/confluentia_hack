@@ -36,7 +36,8 @@ Code decides every violation and step; the language model only writes, and its w
 | Product naming, plan-restricted / open set | 81% / 49% top-1 |
 | Pack detector | mAP50 0.89 on 200 held-out SKU-110K images |
 | Empty space vs 639 hand-labelled spots, 94 photos | precision 0.66, recall 0.62, F1 0.64 (our first method: F1 0.27) |
-| Price labels, 31 hand-boxed Grozi labels | 31 found, 30 read correctly, 0 wrong, 1 unreadable |
+| Price labels, 31 hand-boxed Grozi labels | 31 found, 30 read correctly, 0 wrong, 1 unreadable (29 with this laptop's Tesseract 5.3.4) |
+| Price labels on the demo shelves | 15 whole labels: 8 read confidently and right, 0 wrong; 6 motion-blurred |
 | Live run vs saved results, 5 shelves x 2 plans | identical scores, identical price and slot for every label |
 | Shift summary by the SLM, 13 scenarios | 8 to 12 pass the checker (depends on sampling); every rejection read by hand was a real error |
 | Speed, whole audit with prices (median, 3264 px photo) | 2.2 s on a laptop GPU; 4.8 s on 4 CPU cores with no GPU (vision 1.4 s, price labels 3.5 s) |
@@ -47,7 +48,7 @@ Stated in full in [CLAUDE.md](CLAUDE.md#assumptions) (17 assumptions) and [docs/
 
 - One roughly front-facing photo per shelf bay, tagged with its planogram. Planograms are ordinal (order and facings, no measurements).
 - **No public data has real planogram violations or shelf prices.** Violations are planted by changing the plan of a real photo (never by editing the photo), and on "Edit the plan yourself" a judge can plant their own. Demo prices come from the labels read confidently on the photo, with one raised by 10%.
-- Demo shelves are the best of the held-out set (others score 80 or lower), and most of their labels are too blurry to read: 5 of 24 read confidently, the rest are "check by eye".
+- Demo shelves are the best of the held-out set (others score 80 or lower). Of their 15 whole price labels, 8 read confidently and right; 6 are motion-blurred and reported as unreadable (retake the photo). Labels cut off by the photo's edge are skipped.
 - Value at stake is an estimate for ordering work (missing packs times price, price gaps times facings); there are no sales rates.
 - Edge speed is measured on a laptop CPU capped at 4 cores; no Jetson or phone was available.
 - Grozi-3.2K and SKU-110K are academic-use only; the empty-shelf photos are CC BY 4.0; Open Food Facts price tags are CC BY-SA 4.0.
@@ -70,6 +71,6 @@ PYTHONPATH=src python3 scripts/audit.py data/demo_bays/store4_9 --plan scenario
 CUDA_VISIBLE_DEVICES= PYTHONPATH=src taskset -c 0-3 python3 scripts/audit.py data/demo_bays/store4_9 --plan scenario --cpu
 ```
 
-Tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src pytest` (158 pass, 1 skipped with Tesseract and EasyOCR installed). Without the data and models, the mock shelves still run: switch on **Developer inputs** in the dashboard.
+Tests: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src pytest` (160 pass, 1 skipped with Tesseract and EasyOCR installed). Without the data and models, the mock shelves still run: switch on **Developer inputs** in the dashboard.
 
 Demo script and likely questions: [docs/DEMO.md](docs/DEMO.md). Project layout, data contracts and working agreements: [CLAUDE.md](CLAUDE.md).

@@ -31,11 +31,17 @@ def _shelf_for(label: Label, det: DetectionOutput) -> str | None:
 
 
 def _slot_left_edges(det: DetectionOutput) -> dict[str, float]:
-    edges: dict[str, float] = {}
+    return {slot_id: x1 for slot_id, (x1, _) in _slot_spans(det).items()}
+
+
+def _slot_spans(det: DetectionOutput) -> dict[str, tuple[float, float]]:
+    """slot_id -> (left, right) of the items and gaps the vision stage put in it."""
+    spans: dict[str, tuple[float, float]] = {}
     for obj in [*det.items, *det.gaps]:
         if obj.slot_id is not None:
-            edges[obj.slot_id] = min(edges.get(obj.slot_id, obj.bbox[0]), obj.bbox[0])
-    return edges
+            x1, x2 = spans.get(obj.slot_id, (obj.bbox[0], obj.bbox[2]))
+            spans[obj.slot_id] = (min(x1, obj.bbox[0]), max(x2, obj.bbox[2]))
+    return spans
 
 
 def assign_labels_to_slots(
@@ -43,9 +49,9 @@ def assign_labels_to_slots(
 ) -> list[Label]:
     """Copies of `labels` with shelf_id, slot_id and sku filled in.
 
-    Each slot takes at most one label (the closest by left edge); a label
-    that finds no free slot close enough on its shelf keeps shelf_id but gets slot_id and
-    sku None, which check_prices() reports as an unknown product.
+    Each slot takes at most one label (the closest by left edge, else one whose left edge lies under the
+    slot's detected products); a label that finds no free slot on its shelf keeps shelf_id but gets
+    slot_id and sku None, which check_prices() reports as an unknown product.
     """
     slots = {s.slot_id: (shelf.shelf_id, s.sku) for shelf in planogram.shelves for s in shelf.slots}
     edges = _slot_left_edges(det)
@@ -69,6 +75,22 @@ def assign_labels_to_slots(
     chosen: dict[str, str] = {}
     taken: set[str] = set()
     for _, label_id, slot_id in pairs:
+        if label_id not in chosen and slot_id not in taken:
+            chosen[label_id] = slot_id
+            taken.add(slot_id)
+
+    # Second pass: a label not near any slot's left edge but under a free slot's products belongs to it.
+    # A slot that starts at the photo's edge has its true left edge out of frame, so its label sits
+    # mid-slot (store1_36: a slot from x=0 to 732 with its label at x=249).
+    spans = _slot_spans(det)
+    under = sorted(
+        (lb.bbox[0] - spans[slot_id][0], lb.label_id, slot_id)
+        for lb in labels
+        if lb.label_id not in chosen
+        for slot_id, (shelf_id, _) in slots.items()
+        if shelf_id == shelf_of[lb.label_id] and slot_id in spans and spans[slot_id][0] <= lb.bbox[0] < spans[slot_id][1]
+    )
+    for _, label_id, slot_id in under:
         if label_id not in chosen and slot_id not in taken:
             chosen[label_id] = slot_id
             taken.add(slot_id)

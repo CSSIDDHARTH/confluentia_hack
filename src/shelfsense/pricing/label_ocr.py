@@ -58,13 +58,18 @@ _TESSERACT_CONFIG = "--psm 6"
 # (preprocessing kwargs, page-segmentation mode) for read_label_price().
 # No single setting reads every label: blur, glare and print size each
 # break a different one. Measured on tests/fixtures/grozi_labels/: one
-# variant alone 68%, these five voting 94% (data/README.md).
+# variant alone 68%, the first five voting 94% (data/README.md). The two
+# presharpen variants recover soft print: with them, 26 instead of 25 of the
+# 31 labels read confidently and right, and on the demo shelves' 15 whole
+# labels 9 right and 0 wrong instead of 8 and 1 (none wrong confidently either way).
 _PRICE_VARIANTS = [
     ({}, 6),
     ({}, 11),
     ({"sharpen": True}, 6),
     ({"width": 900}, 6),
     ({"width": 900}, 11),
+    ({"presharpen": True}, 6),
+    ({"presharpen": True}, 11),
 ]
 
 
@@ -121,7 +126,11 @@ def _easyocr_price(image: Image.Image, scale: int) -> float | None:
     return best[1] if best else None
 
 
-def _preprocess(image: Image.Image, width: int = _TARGET_WIDTH, sharpen: bool = False) -> Image.Image:
+def _preprocess(
+    image: Image.Image, width: int = _TARGET_WIDTH, sharpen: bool = False, presharpen: bool = False
+) -> Image.Image:
+    if presharpen:  # strong sharpening of the original pixels, before any resizing: recovers soft print
+        image = image.convert("RGB").filter(ImageFilter.UnsharpMask(radius=6, percent=300, threshold=0))
     grey = image.convert("L")
     scale = max(1, width // grey.width)
     if scale > 1:

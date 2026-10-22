@@ -18,7 +18,7 @@ photo -> product-block detector -> product naming -> align to planogram -> count
 3. **Align** the detected blocks to the planogram row by row with Needleman-Wunsch sequence alignment, so a swap, a missing product or an extra product shows up as a specific mismatch.
 4. **Count** facings with a second YOLO11s detector that finds individual packs (trained on SKU-110K). Each pack becomes an item that carries its block's product and slot, so the report's rule "items in slot = facings" yields low stock and stock-outs.
 5. **Find empty space** with a third YOLO11s detector trained directly on hand-labelled empty shelf spots. Rows still come from the vertical coverage of packs; each empty space goes to its nearest row, its width over that row's median pack width is the number of missing facings, and a row more than 40% covered by empty spaces is low stock. (Our first method inferred gaps from missing packs; it is kept as the fallback when the void weights are absent, and scored far lower, see below.)
-6. **Read the price labels** with a YOLOv8n label detector (trained on Open Food Facts price tags), then vote on each price with five Tesseract variants and EasyOCR. Each label goes to the slot whose first facing it sits under. A label whose price differs from the catalogue is a price mismatch only when the OCR vote is confident (at least 0.5); otherwise staff are told to check it by eye.
+6. **Read the price labels** with a YOLOv8n label detector (trained on Open Food Facts price tags), then vote on each price with seven Tesseract variants and EasyOCR. Boxes the photo's edge cuts off are skipped. Each label goes to the slot whose first facing it sits under. A label whose price differs from the catalogue is a price mismatch only when the OCR vote is confident (at least 0.5); otherwise staff are told to check it by eye.
 7. **Report**: a compliance score with each violation and a corrective action, the money at stake (missing packs times price, price gap times facings: an estimate for ordering work), and the violations merged into a few steps for staff.
 
 The demo does not depend on saved results: the shelf audit page and the "What to do" page have a **Run it live** button that reads the photo from scratch (all three detectors, naming, alignment and, on the audit page, the price labels) and reports the seconds each stage took. On the five demo shelves it reproduces all 10 saved scores exactly, and every label's price and slot.
@@ -54,9 +54,9 @@ All on held-out data (different stores or different images from training).
 | Naming with 20 extra distractors | 0.79 |
 | Naming, open set (no planogram) | 0.49 |
 | Whole chain (detect, name, align, count) on the best 3 held-out shelves | compliance score 98, 88, 86 on the correct plan |
-| Planted-change shelves | scores fall to 31 to 48 with every planted change listed (placement only; 16 to 39 with prices and label checks) |
+| Planted-change shelves | scores fall to 31 to 48 with every planted change listed (placement only; 23 to 43 with prices and label checks) |
 | Price labels, 31 hand-boxed labels on Grozi shelves | 31 found, 30 prices read correctly, 0 wrong, 1 unreadable (Tesseract alone: 27 correct, 2 wrong) |
-| Price labels on the five demo shelves | 24 found, 19 tied to a slot, 5 read confidently; the rest are reported as "check by eye", never as a mismatch |
+| Price labels on the five demo shelves | 24 boxes: 9 cut off by the photo's edge (skipped); of 15 whole labels 8 read confidently and right, 0 wrong, 6 motion-blurred (unreadable) |
 | Live run vs saved results | all 10 shelf/plan pairs: same score, same price and slot for every label |
 | **Empty space vs real hand-labelled empty spots**, 94 held-out photos, 639 labelled spots | precision 0.66, recall 0.62, **F1 0.64** (void detector, confidence 0.3 chosen on a separate split) |
 | Same photos, our first method (gaps inferred from missing packs) | precision 0.29, recall 0.25, F1 0.27 |
@@ -69,7 +69,7 @@ All on held-out data (different stores or different images from training).
 - Front-facing photo of one shelf bay; each image is tagged with its planogram.
 - Planograms are ordinal (shelf, slot order, facings); public planograms carry no physical measurements.
 - **No public dataset has real planogram violations, real prices or price-tag text.** The violations are planted by editing the planogram of a real photo. The demo price list takes each price from the label read confidently on the photo, and the planted plan raises one by 10%; so a demo price mismatch tests reading and matching, not a real store's pricing error. We did not edit photos, because erased packs looked fake.
-- **Most labels on the demo shelves are too small and blurry to read** (5 of 24 read confidently). The label detector never saw a Grozi shelf in training. An unreadable label costs 2 points and asks for a check by eye; it never claims a mismatch or money at stake.
+- **Some demo labels cannot be read.** Of 15 whole labels, 6 are motion-blurred: a person can read them, but no OCR setting we tried could (downscaling, sharpening, binarising); the fix is a steadier photo. The label detector never saw a Grozi shelf in training. An unreadable label costs 2 points and asks for a check by eye; it never claims a mismatch or money at stake.
 - Demo shelves are the best of the held-out set. Other held-out shelves score 80 or lower.
 - Use packaged-goods shelves photographed with the whole bay in view. Loose produce and close-ups are outside what the pack detector handles.
 - The empty-space labels are 416 px photos from one Roboflow Universe project (single annotator style, many photos from the same shop types as SKU-110K). Accuracy on very different shops is not measured. Spots the annotators left unlabelled count as false alarms, so the true precision may be higher than 0.66.
@@ -157,7 +157,7 @@ The retrain shows that box accuracy alone is not a safe proxy for shelf-level qu
 
 So one shelf bay is audited in a third of a second on a laptop GPU and in about 1.6 s on four CPU cores with no GPU.
 
-**With the price labels** (`scripts/benchmark_chain.py --prices`, same photos and runs): the whole audit takes a median **2.2 s on the laptop GPU and 4.8 s on four CPU cores with no GPU** (max 9.9 s, on the shelf with 7 labels). Reading the labels is the slow part (1.9 s and 3.5 s): each label is read by five Tesseract variants side by side and by EasyOCR. Two things made it fit on four cores, both measured:
+**With the price labels** (`scripts/benchmark_chain.py --prices`, same photos and runs): the whole audit takes a median **2.2 s on the laptop GPU and 4.8 s on four CPU cores with no GPU** (max 9.9 s, on the shelf with 7 labels). Reading the labels is the slow part (1.9 s and 3.5 s): each label is read by seven Tesseract variants side by side and by EasyOCR. Two things made it fit on four cores, both measured:
 
 - Tesseract starts one thread per core and they spin while waiting, so five reads side by side on four cores took 87 s instead of 0.4 s. Each Tesseract process now gets one thread.
 - Without a GPU, EasyOCR reads each label once instead of also at 2x scale. On the 31 hand-boxed Grozi labels on four cores: both scales 29 correct (25 confident) at 2.2 s a label, one scale 29 correct (24 confident) at 0.7 s, none wrong either way. On the demo shelves, a CPU-only run gives the GPU run's score on 9 of 10 shelf/plan pairs; on store4_2's planted plan one label's confidence falls below 0.5, so it is a "check by eye" instead of a price mismatch (27 instead of 24).
@@ -185,5 +185,5 @@ PYTHONPATH=src python3 scripts/eval_pipeline.py  # whole-chain scores
 PYTHONPATH= taskset -c 0-3 .venv/bin/python scripts/benchmark_edge.py --threads 4   # edge timing, pack detector
 PYTHONPATH=src taskset -c 0-3 python3 scripts/benchmark_chain.py --device cpu --threads 4   # edge timing, whole chain
 PYTHONPATH=src python3 scripts/audit.py data/demo_bays/store4_9 --plan scenario   # the whole audit, headless
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 158 pass, 1 skipped with tesseract and EasyOCR; 153 pass, 6 skipped without
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest          # 160 pass, 1 skipped with tesseract and EasyOCR
 ```

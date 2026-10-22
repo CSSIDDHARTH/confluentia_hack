@@ -24,10 +24,10 @@ Main page (**dashboard**), shelf `store4_9`, plan "Store changed the plan (plant
 
 Say: "Real supermarket photo from a store the models never trained on. The store changed its plan: two products swapped, one product the shelf does not have, a promotion that needs two more facings, and one price raised."
 
-1. Press **Run it live**. It reads the photo from scratch: product blocks, naming, alignment with the plan, packs, empty spaces and the price labels, with the seconds per stage. The score stays **39**: the live run reproduces the saved result on all ten shelf/plan pairs.
-2. Point at the metrics: score 39, **CHF 68.20 at stake** (missing packs times price, plus price gaps; an estimate, no sales data), 7 steps for staff.
+1. Press **Run it live**. It reads the photo from scratch: product blocks, naming, alignment with the plan, packs, empty spaces and the price labels, with the seconds per stage. The score stays **43**: the live run reproduces the saved result on all ten shelf/plan pairs.
+2. Point at the metrics: score 43, **CHF 68.20 at stake** (missing packs times price, plus price gaps; an estimate, no sales data), 5 steps for staff.
 3. Read the first step: "Move Oil-Vinegar #50 out of S1-02 ... then restock Oil-Vinegar #53". Each step says how much money it puts back on the shelf.
-4. Price: "Reprint label label_000: shows 2.20, catalogue price is 3.04." The swap moved a product under another product's label. Then: "Check label label_002 by eye": OCR was not sure, so it **does not** claim a mismatch. Say: "We only call a price wrong when the OCR is confident; otherwise we ask a human."
+4. Price: "Reprint label label_000: shows 2.20, catalogue price is 3.04." The swap moved a product under another product's label. On `store1_47` show "Check label label_001 by eye": OCR read 5.50 but was not sure, so it **does not** claim a mismatch. Say: "We only call a price wrong when the OCR is confident; otherwise we ask a human."
 5. Shift briefing: the summary for the shift lead is written by a 1.5B-parameter language model on the CPU and checked against the report; if it names a wrong slot or number, the template is shown instead, and the page says which one you are reading.
 
 For the planted 10% price rise itself, switch to `store1_36`: "Reprint label label_000: shows 2.70, catalogue price is 2.97."
@@ -57,7 +57,7 @@ Sidebar, **Shelf availability**. No planogram needed.
 | Question | Answer |
 |---|---|
 | How accurate is it? | Empty space against hand-labelled spots on 94 held-out photos: precision 0.66, recall 0.62, F1 0.64. Product naming: 81% when the plan limits the candidates, 49% with no hint. Price labels: on 31 hand-boxed Grozi labels, all found, 30 read correctly, none wrong. |
-| Why do most demo labels say "check by eye"? | The Grozi photos are small and the labels blurry: 5 of 24 read confidently. The label detector never saw a Grozi shelf in training. We report an unsure read as "check by eye", never as a wrong price. |
+| Why do most demo labels say "check by eye"? | Of 15 whole labels on the demo shelves, 8 read confidently and right, none wrong. 6 are motion-blurred (store1_44): readable by a person, not by OCR; the fix is a steadier photo. Labels cut off by the photo's edge are skipped. The label detector never saw a Grozi shelf in training. We report an unsure read as "check by eye", never as a wrong price. |
 | Are the prices real? | No public data has shelf photos with a price list. The demo price list takes each price from the label read confidently, and the planted plan raises one by 10%. So it tests reading and matching, not a real store's pricing errors. |
 | Are the violations real? | No public dataset has real planogram violations, so a violation is a plan that disagrees with a real photo. We planted some, and on "Edit the plan yourself" you plant your own. We do not edit photos, because erased packs looked fake. |
 | What is "value at stake"? | Missing packs times their price, plus each confident price gap times the slot's facings. An estimate for putting work in order; there are no sales rates in the data. |
