@@ -4,49 +4,49 @@
     {
       "shelf_id": "S1",
       "packs": 25,
-      "fill_ratio": 0.903,
+      "fill_ratio": 0.934,
       "low_stock": false
     },
     {
       "shelf_id": "S2",
       "packs": 23,
-      "fill_ratio": 0.931,
+      "fill_ratio": 1.0,
       "low_stock": false
     },
     {
       "shelf_id": "S3",
       "packs": 22,
-      "fill_ratio": 0.887,
+      "fill_ratio": 0.954,
       "low_stock": false
     },
     {
       "shelf_id": "S4",
       "packs": 21,
-      "fill_ratio": 0.849,
+      "fill_ratio": 0.962,
       "low_stock": false
     },
     {
       "shelf_id": "S5",
       "packs": 24,
-      "fill_ratio": 0.867,
+      "fill_ratio": 1.0,
       "low_stock": false
     },
     {
       "shelf_id": "S6",
       "packs": 22,
-      "fill_ratio": 0.817,
+      "fill_ratio": 0.932,
       "low_stock": false
     }
   ],
-  "empty_spaces": 6,
-  "missing_facings": 8,
-  "overall_fill": 0.876,
+  "empty_spaces": 5,
+  "missing_facings": 6,
+  "overall_fill": 0.964,
   "actions": [
-    "Shelf S5: empty space on the middle, about 2 packs wide. Refill it.",
     "Shelf S6: empty space on the right, about 2 packs wide. Refill it.",
+    "Shelf S1: empty space on the middle, about 1 pack wide. Refill it.",
+    "Shelf S1: empty space on the right, about 1 pack wide. Refill it.",
     "Shelf S3: empty space on the right, about 1 pack wide. Refill it.",
-    "Shelf S4: empty space on the left, about 1 pack wide. Refill it.",
-    "Shelf S4: empty space on the right, about 1 pack wide. Refill it.",
-    "Shelf S6: empty space on the left, about 1 pack wide. Refill it."
-  ]
+    "Shelf S4: empty space on the left, about 1 pack wide. Refill it."
+  ],
+  "warnings": []
 }

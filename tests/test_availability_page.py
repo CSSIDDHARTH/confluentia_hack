@@ -27,10 +27,10 @@ def test_page_renders_saved_shelf_without_errors():
 def test_sliders_recompute_from_saved_packs():
     at = AppTest.from_file(PAGE, default_timeout=120).run()
     base = int(metrics(at)["Empty spaces"])
-    # a very large minimum gap leaves (almost) nothing counted as empty; a tiny one finds more
-    at.slider[0].set_value(2.0).run()
+    # the first slider is the empty-space confidence: a high bar keeps fewer spaces, a low one more
+    at.slider[0].set_value(0.8).run()
     strict = int(metrics(at)["Empty spaces"])
-    at.slider[0].set_value(0.4).run()
+    at.slider[0].set_value(0.1).run()
     loose = int(metrics(at)["Empty spaces"])
     assert strict <= base <= loose and strict < loose
     assert not at.exception

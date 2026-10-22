@@ -84,3 +84,23 @@ def test_a_row_of_a_single_pack_reports_no_gaps():
     boxes = row_of([0, 50, 100, 150], 0, 100) + row_of([0], 300, 400)  # one lonely pack below
     _, gaps = find_gaps(boxes)
     assert gaps == []
+
+
+def test_a_strip_of_flat_label_boxes_under_tall_packs_is_not_a_row():
+    from shelfsense.vision.gaps import find_gaps
+
+    packs = [[100.0 * k, 0.0, 100.0 * k + 90, 200.0] for k in range(8)]
+    labels = [[0.0, 260.0, 120.0, 290.0], [300.0, 260.0, 420.0, 290.0]]
+    rows, gaps = find_gaps(packs + labels)
+    assert len(rows) == 1 and len(rows[0].boxes) == 8
+
+
+def test_voids_become_gaps_in_the_nearest_row_with_missing_packs_from_pack_width():
+    from shelfsense.vision.gaps import cluster_rows, voids_as_gaps
+
+    top = [[100.0 * k, 0.0, 100.0 * k + 90, 100.0] for k in range(6)]
+    bottom = [[100.0 * k, 200.0, 100.0 * k + 90, 300.0] for k in range(6)]
+    rows = cluster_rows(top + bottom)
+    gaps = voids_as_gaps(rows, [([610.0, 210.0, 790.0, 290.0], 0.8), ([10.0, 10.0, 50.0, 90.0], 0.4)])
+    assert [(g.row, g.estimated_missing) for g in gaps] == [(0, 1), (1, 2)]
+    assert gaps[1].confidence == 0.8 and voids_as_gaps([], [([0.0, 0.0, 1.0, 1.0], 0.5)]) == []

@@ -126,7 +126,7 @@ if det.planogram_id != planogram.planogram_id:
     st.warning(f"Image is for planogram {det.planogram_id}, but {planogram.planogram_id} is loaded.")
 
 price_issues = check_prices(det, catalogue)
-report = compute_report(det, planogram, catalogue, group_items=preset.startswith("Real bay"))
+report = compute_report(det, planogram, catalogue, group_items=True)
 
 score_col, c1, c2, c3, c4, c5 = st.columns([1.3, 1, 1, 1, 1, 1])
 score_col.metric("Compliance score", f"{report.score:.0f} / 100")

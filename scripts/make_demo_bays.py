@@ -26,15 +26,15 @@ import csv
 import hashlib
 import random
 import shutil
-import textwrap
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 from shelfsense.contracts import CatalogueItem, DetectionOutput, Planogram, Shelf, Slot, save_detection_output
-from shelfsense.report.compliance import ComplianceReport, ViolationKind, compute_report
+from shelfsense.report.compliance import compute_report
 from shelfsense.vision.bay import analyze_bay
-from shelfsense.vision.detect import ProductDetector, group_into_rows
+from shelfsense.vision.detect import VOID_CONF_FLOOR, ProductDetector, group_into_rows
+from shelfsense.vision.render import draw_bay_report as draw_report
 from shelfsense.vision.grozi import VAL_STORES, labelled_boxes
 from shelfsense.vision.sku_match import SkuMatcher, class_index
 
@@ -135,45 +135,6 @@ def downscale(det: DetectionOutput, factor: float, shown_path: str) -> Detection
     return det
 
 
-def draw_report(im: Image.Image, det: DetectionOutput, report: ComplianceReport, title: str) -> Image.Image:
-    """Packs coloured by problem (red misplaced, orange unrecognised), empty spaces in red, banner on top and
-    the recommended actions under the photo."""
-    # every pack of a flagged product: (slot, sku) for misplaced, (slot, None) for unrecognised
-    bad = {(v.slot_id, v.sku): v.kind for v in report.violations if v.kind in (ViolationKind.MISPLACED, ViolationKind.UNRECOGNISED_ITEM)}
-    colours = {ViolationKind.MISPLACED: (214, 40, 40), ViolationKind.UNRECOGNISED_ITEM: (240, 160, 32)}
-    im = im.convert("RGB")
-    d = ImageDraw.Draw(im)
-    font = ImageFont.load_default(size=max(16, im.width // 60))
-    lw = max(3, im.width // 450)
-    for it in det.items:
-        d.rectangle(it.bbox, outline=colours.get(bad.get((it.slot_id, it.sku)), (46, 158, 68)), width=lw)
-    for g in det.gaps:
-        d.rectangle(g.bbox, outline=(214, 40, 40), width=lw + 2)
-        d.text((g.bbox[0] + 6, g.bbox[1] + 4), f"EMPTY ~{g.estimated_missing_facings}", fill=(255, 255, 255), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
-    seen = set()
-    for it in det.items:  # one slot label per slot, on its leftmost pack
-        if it.slot_id and it.slot_id not in seen:
-            seen.add(it.slot_id)
-            n = sum(1 for o in det.items if o.slot_id == it.slot_id)
-            label = f"{it.slot_id} x{n}"
-            tx, ty = it.bbox[0] + 6, it.bbox[1] + 6
-            d.rectangle(d.textbbox((tx, ty), label, font=font), fill=(0, 0, 0))
-            d.text((tx, ty), label, fill=(255, 255, 0), font=font)
-
-    head = f"{title}: score {report.score:.0f}  " + "  ".join(f"{k.replace('_', ' ')} {n}" for k, n in report.counts.items())
-    lines = [f"- {v.recommended_action}" for v in report.violations[:8]]
-    wrapped = [w for ln in lines for w in textwrap.wrap(ln, width=max(40, im.width // (font.size // 2 + 1)))]
-    line_h = font.size + 8
-    top = font.size + 24
-    canvas = Image.new("RGB", (im.width, top + im.height + line_h * len(wrapped) + 16), (20, 20, 20))
-    canvas.paste(im, (0, top))
-    cd = ImageDraw.Draw(canvas)
-    cd.text((10, 10), head, fill=(255, 255, 255), font=font)
-    for k, ln in enumerate(wrapped):
-        cd.text((10, top + im.height + 8 + k * line_h), ln, fill=(255, 255, 255), font=font)
-    return canvas
-
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=int, default=5)
@@ -181,6 +142,8 @@ def main() -> None:
 
     blocks = ProductDetector(ROOT / "models" / "product_detector.pt")
     packs = ProductDetector(ROOT / "models" / "pack_detector.pt", imgsz=1024, max_det=600)
+    void_weights = ROOT / "models" / "void_detector.pt"
+    voider = ProductDetector(void_weights, conf=VOID_CONF_FLOOR, imgsz=640, max_det=150) if void_weights.exists() else None
     matcher = SkuMatcher.load(GROZI / "sku_index.npz", ROOT / "models" / "sku_adapter.npy")
     names = class_index(GROZI)
     known = sorted(matcher.index.unique_skus)
@@ -228,7 +191,7 @@ def main() -> None:
         for tag, pl in (("compliant", plan), ("scenario", scenario)):
             (bay / f"planogram_{tag}.json").write_text(pl.model_dump_json(indent=2))
             cands = {s.sku for sh in pl.shelves for s in sh.slots} | distractors
-            det = downscale(analyze_bay(img, blocks, packs, matcher, pl, cands), factor, shown)
+            det = downscale(analyze_bay(img, blocks, packs, matcher, pl, cands, void_detector=voider), factor, shown)
             det.image_id = bay.name
             report = compute_report(det, pl, pool_cat, group_items=True)
             save_detection_output(det, bay / f"detection_{tag}.json")

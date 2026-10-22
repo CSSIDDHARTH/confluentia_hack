@@ -17,8 +17,15 @@ import numpy as np
 MIN_GAP_WIDTHS = 0.8
 # Rows whose fill ratio is below this are low stock.
 LOW_FILL_RATIO = 0.6
+# A height is a shelf edge when pack coverage there falls below this share of the typical row coverage.
+ROW_VALLEY = 0.3
 # Rows with fewer packs than this are too sparse to judge gaps from.
 MIN_PACKS_PER_ROW = 2
+# A "row" of at most this many boxes, each under STRIP_HEIGHT_RATIO of the bay's typical pack height, is a
+# strip of price labels or a pack cut off by the photo's edge, not a shelf row. Seen on two of 24 unseen
+# phone photos (a price-label strip under the products read as a row 38% and 47% stocked).
+STRIP_MAX_BOXES = 3
+STRIP_HEIGHT_RATIO = 0.5
 
 
 @dataclass
@@ -38,7 +45,7 @@ class GapCandidate:
     estimated_missing: int
 
 
-def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = 0.3) -> list[Row]:
+def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = ROW_VALLEY) -> list[Row]:
     """Group pack boxes into shelf rows, top to bottom, each sorted left to right.
 
     Rows are found from a vertical profile: how much pack width covers each height. Shelf
@@ -82,13 +89,46 @@ def cluster_rows(boxes: list[list[float]], bins: int = 400, valley: float = 0.3)
     return rows
 
 
-def find_gaps(boxes: list[list[float]], min_gap_widths: float = MIN_GAP_WIDTHS) -> tuple[list[Row], list[GapCandidate]]:
+def drop_label_strips(rows: list[Row]) -> list[Row]:
+    """Remove rows that are a few flat boxes (price labels, cut-off packs) under much taller packs."""
+    heights = [b[3] - b[1] for r in rows for b in r.boxes]
+    if len(rows) < 2 or not heights:
+        return rows
+    typical = median(heights)
+    kept = [
+        r for r in rows
+        if not (len(r.boxes) <= STRIP_MAX_BOXES and median(b[3] - b[1] for b in r.boxes) < STRIP_HEIGHT_RATIO * typical)
+    ]
+    if not kept:
+        return rows
+    for k, r in enumerate(kept):
+        r.index = k
+    return kept
+
+
+def voids_as_gaps(rows: list[Row], voids: list[tuple[list[float], float]]) -> list[GapCandidate]:
+    """Empty spaces from a detector trained on labelled voids: each is put in the row it is vertically
+    nearest to, and the packs missing there is its width over that row's median pack width (at least 1)."""
+    if not rows:
+        return []
+    out = []
+    for box, conf in voids:
+        cy = (box[1] + box[3]) / 2
+        row = min(rows, key=lambda r: abs((r.y1 + r.y2) / 2 - cy))
+        w_med = median(b[2] - b[0] for b in row.boxes)
+        out.append(GapCandidate(row.index, [float(v) for v in box], round(float(conf), 3), max(1, round((box[2] - box[0]) / max(w_med, 1e-6)))))
+    return sorted(out, key=lambda g: (g.row, g.bbox[0]))
+
+
+def find_gaps(
+    boxes: list[list[float]], min_gap_widths: float = MIN_GAP_WIDTHS, valley: float = ROW_VALLEY
+) -> tuple[list[Row], list[GapCandidate]]:
     """Return the shelf rows (with fill ratios set) and the empty spaces found in them.
 
     The bay's left and right edges are the outermost pack edges over all rows, so a row
     that stops short of them has a gap at its end.
     """
-    rows = cluster_rows(boxes)
+    rows = drop_label_strips(cluster_rows(boxes, valley=valley))
     if not rows:
         return [], []
     bay_left = min(r.boxes[0][0] for r in rows)

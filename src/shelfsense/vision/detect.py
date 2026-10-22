@@ -125,3 +125,13 @@ class ProductDetector:
             produced_by=f"yolo:{self.name}",
             **kw,
         )
+
+
+VOID_CONF_FLOOR = 0.1  # detect this low, then filter by the confidence the user picks
+VOID_CONF = 0.3  # default cut-off, chosen on held-out labelled photos (scripts/eval_voids.py)
+
+
+def detect_voids(detector: "ProductDetector", image_path: str | Path) -> list[tuple[list[float], float]]:
+    """Empty spaces found by a detector trained on hand-labelled voids: [(box, confidence), ...]."""
+    boxes, confs, _ = detector.boxes(image_path)
+    return list(zip(boxes, confs))

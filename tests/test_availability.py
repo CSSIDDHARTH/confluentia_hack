@@ -19,7 +19,7 @@ def test_gap_and_short_row_produce_ordered_actions():
         packs([0, 50, 150, 200], 0, 100)  # top row: one pack missing in the middle
         + packs([0, 50], 200, 300)  # bottom row: only half stocked
     )
-    det, rep = analyze_packs("img", "x.jpg", (400, 400), boxes, [0.9] * len(boxes))
+    det, rep = analyze_packs("img", "x.jpg", (400, 400), boxes, [0.9] * len(boxes), min_packs=0)
     assert {g.shelf_id for g in det.gaps} == {"S1", "S2"}
     assert rep.empty_spaces == 2 and rep.missing_facings == 1 + 3
     assert [r.low_stock for r in rep.rows] == [False, True]
@@ -40,3 +40,33 @@ def test_output_is_a_valid_contract_with_pack_items():
 def test_no_detections():
     det, rep = analyze_packs("img", "x.jpg", (300, 200), [], [])
     assert det.items == [] and rep.rows == [] and rep.overall_fill == 0.0
+
+
+def test_too_few_packs_gives_a_warning_and_no_refill_list():
+    boxes = [[100.0 * k, 100.0, 100.0 * k + 80, 200.0] for k in range(5)]
+    det, report = analyze_packs("close", "close.jpg", (800, 400), boxes, [0.9] * 5)
+    assert report.warnings and report.actions == []
+
+
+def test_enough_packs_gives_no_warning():
+    boxes = [[100.0 * k, 100.0, 100.0 * k + 80, 200.0] for k in range(10)]
+    det, report = analyze_packs("shelf", "shelf.jpg", (1200, 400), boxes, [0.9] * 10)
+    assert report.warnings == []
+
+
+def test_voids_replace_the_gaps_inferred_from_missing_packs():
+    boxes = [[100.0 * k, 100.0, 100.0 * k + 90, 200.0] for k in range(5)] + [[600.0, 100.0, 690.0, 200.0]]
+    boxes += [[100.0 * k, 300.0, 100.0 * k + 90, 400.0] for k in range(7)]
+    det, report = analyze_packs("a", "a.jpg", (800, 500), boxes, [0.9] * len(boxes), voids=[([510.0, 110.0, 590.0, 190.0], 0.7)])
+    assert report.empty_spaces == 1 and det.gaps[0].confidence == 0.7 and det.produced_by["availability"] == "voids-v1"
+    _, none = analyze_packs("a", "a.jpg", (800, 500), boxes, [0.9] * len(boxes), voids=[])
+    assert none.empty_spaces == 0
+
+
+def test_with_voids_a_row_is_low_stock_only_when_voids_cover_it():
+    top = [[100.0 * k, 100.0, 100.0 * k + 90, 200.0] for k in range(8)]
+    bottom = [[100.0 * k, 300.0, 100.0 * k + 90, 400.0] for k in range(4)]  # half-filled row
+    _, rep = analyze_packs("a", "a.jpg", (800, 500), top + bottom, [0.9] * 12, voids=[([400.0, 310.0, 790.0, 390.0], 0.8)])
+    assert [r.low_stock for r in rep.rows] == [False, True] and rep.rows[1].fill_ratio < 0.6
+    _, rep = analyze_packs("a", "a.jpg", (800, 500), top + bottom, [0.9] * 12, voids=[])
+    assert [r.fill_ratio for r in rep.rows] == [1.0, 1.0]

@@ -5,7 +5,7 @@
   "image_width": 1200,
   "image_height": 1600,
   "planogram_id": "PG-store1-47",
-  "captured_at": "2026-10-20T10:17:04+00:00",
+  "captured_at": "2026-10-21T16:04:49+00:00",
   "produced_by": {
     "vision": "yolo:product_detector",
     "matcher": "dinov2-vits14+adapter",
@@ -281,7 +281,21 @@
       "slot_id": "S3-01"
     }
   ],
-  "gaps": [],
+  "gaps": [
+    {
+      "bbox": [
+        0.0,
+        1350.5,
+        66.7,
+        1520.1
+      ],
+      "gap_id": "g001",
+      "shelf_id": "S3",
+      "slot_id": null,
+      "confidence": 0.477,
+      "estimated_missing_facings": 1
+    }
+  ],
   "labels": [
     {
       "bbox": [

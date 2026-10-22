@@ -5,10 +5,10 @@
   "image_width": 2268,
   "image_height": 4032,
   "planogram_id": "unassigned",
-  "captured_at": "2026-10-20T10:23:09+00:00",
+  "captured_at": "2026-10-21T14:46:27+00:00",
   "produced_by": {
     "vision": "yolo:pack_detector",
-    "availability": "gaps-v1"
+    "availability": "voids-v1"
   },
   "shelves": [
     {
@@ -2139,29 +2139,107 @@
   "gaps": [
     {
       "bbox": [
-        2081.5,
-        666.3,
-        2168.2,
-        884.9
+        1531.1,
+        962.6,
+        1883.2,
+        1162.1
       ],
       "gap_id": "g001",
       "shelf_id": "S1",
       "slot_id": null,
-      "confidence": 0.575,
+      "confidence": 0.616,
+      "estimated_missing_facings": 4
+    },
+    {
+      "bbox": [
+        1068.7,
+        1042.3,
+        1364.6,
+        1577.1
+      ],
+      "gap_id": "g002",
+      "shelf_id": "S2",
+      "slot_id": null,
+      "confidence": 0.408,
+      "estimated_missing_facings": 3
+    },
+    {
+      "bbox": [
+        1507.0,
+        1007.0,
+        1595.2,
+        1546.4
+      ],
+      "gap_id": "g003",
+      "shelf_id": "S2",
+      "slot_id": null,
+      "confidence": 0.322,
       "estimated_missing_facings": 1
     },
     {
       "bbox": [
-        1930.5,
-        1818.4,
-        2177.2,
-        2142.5
+        770.7,
+        1676.2,
+        953.0,
+        1826.0
       ],
-      "gap_id": "g002",
+      "gap_id": "g004",
       "shelf_id": "S3",
       "slot_id": null,
-      "confidence": 0.95,
-      "estimated_missing_facings": 3
+      "confidence": 0.343,
+      "estimated_missing_facings": 2
+    },
+    {
+      "bbox": [
+        1912.1,
+        2067.4,
+        2044.8,
+        2254.9
+      ],
+      "gap_id": "g005",
+      "shelf_id": "S3",
+      "slot_id": null,
+      "confidence": 0.314,
+      "estimated_missing_facings": 1
+    },
+    {
+      "bbox": [
+        577.9,
+        2654.4,
+        793.1,
+        2780.6
+      ],
+      "gap_id": "g006",
+      "shelf_id": "S4",
+      "slot_id": null,
+      "confidence": 0.497,
+      "estimated_missing_facings": 2
+    },
+    {
+      "bbox": [
+        1104.6,
+        2716.2,
+        1279.0,
+        2813.9
+      ],
+      "gap_id": "g007",
+      "shelf_id": "S4",
+      "slot_id": null,
+      "confidence": 0.346,
+      "estimated_missing_facings": 1
+    },
+    {
+      "bbox": [
+        1618.3,
+        3244.2,
+        1722.4,
+        3545.4
+      ],
+      "gap_id": "g008",
+      "shelf_id": "S4",
+      "slot_id": null,
+      "confidence": 0.579,
+      "estimated_missing_facings": 1
     }
   ],
   "labels": []
