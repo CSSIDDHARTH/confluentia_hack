@@ -34,9 +34,11 @@ Three pieces:
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 from collections import Counter
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 
 from PIL import Image, ImageFilter, ImageOps
@@ -71,6 +73,10 @@ _PRICE_VARIANTS = [
 # returns nothing on the blurriest ones. Optional: without the package only
 # Tesseract votes. Each variant's weight is how many Tesseract variants it counts as.
 _EASYOCR_SCALES = (1, 2)
+# Without a GPU the 2x pass is most of the cost: on the 31 Grozi labels, on 4 CPU cores, both scales read
+# 29 correct (25 confident) at 2.2 s a label, scale 1 alone 29 correct (24 confident) at 0.7 s, none wrong
+# either way. So a CPU-only device reads at scale 1 only.
+_EASYOCR_CPU_SCALES = (1,)
 _EASYOCR_WEIGHT = 1.5
 _easyocr_reader = None
 
@@ -145,6 +151,26 @@ _MARKED_RE = re.compile(
 )
 
 
+class _OneThreadEnv(Mapping):
+    """os.environ as it is at each call, plus OMP_THREAD_LIMIT=1: the environment Tesseract runs in.
+
+    Tesseract starts one OpenMP thread per core and they spin while waiting. Five reads side by side on a
+    4-core device then take minutes instead of under a second (measured: 87 s vs 0.4 s), so each Tesseract
+    process gets one thread. Only Tesseract's subprocesses see this; torch in this process is untouched."""
+
+    def _env(self) -> dict[str, str]:
+        return {**os.environ, "OMP_THREAD_LIMIT": "1"}
+
+    def __getitem__(self, key):
+        return self._env()[key]
+
+    def __iter__(self):
+        return iter(self._env())
+
+    def __len__(self):
+        return len(self._env())
+
+
 def _require_tesseract() -> None:
     if shutil.which("tesseract") is None:
         raise RuntimeError(
@@ -153,6 +179,9 @@ def _require_tesseract() -> None:
             "tesseract`); `pip install pytesseract` alone only installs "
             "the Python wrapper."
         )
+    import pytesseract.pytesseract as runner
+
+    runner.environ = _OneThreadEnv()  # pytesseract passes this module global to every tesseract subprocess
 
 
 def read_label_text(image: Image.Image) -> str:
@@ -199,12 +228,13 @@ def read_label_price(image: Image.Image) -> tuple[float | None, float]:
     # time: its reader is shared) runs alongside them. Same reads as one after another, about 3x faster.
     with ThreadPoolExecutor(max_workers=len(_PRICE_VARIANTS) + 1) as pool:
         tesseract = [pool.submit(_tallest_price, _preprocess(image, **kw), psm) for kw, psm in _PRICE_VARIANTS]
-        easy = pool.submit(lambda: [_easyocr_price(image, s) for s in _EASYOCR_SCALES]) if use_easyocr else None
+        scales = _EASYOCR_SCALES if use_easyocr and _easyocr().device != "cpu" else _EASYOCR_CPU_SCALES
+        easy = pool.submit(lambda: [_easyocr_price(image, s) for s in scales]) if use_easyocr else None
         for job in tesseract:
             if (price := job.result()) is not None:
                 votes[price] += 1
         if easy is not None:
-            total += _EASYOCR_WEIGHT * len(_EASYOCR_SCALES)
+            total += _EASYOCR_WEIGHT * len(scales)
             for price in easy.result():
                 if price is not None:
                     votes[price] += _EASYOCR_WEIGHT

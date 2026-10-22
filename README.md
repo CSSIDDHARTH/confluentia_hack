@@ -39,7 +39,7 @@ Code decides every violation and step; the language model only writes, and its w
 | Price labels, 31 hand-boxed Grozi labels | 31 found, 30 read correctly, 0 wrong, 1 unreadable |
 | Live run vs saved results, 5 shelves x 2 plans | identical scores, identical price and slot for every label |
 | Shift summary by the SLM, 13 scenarios | 8 to 12 pass the checker (depends on sampling); every rejection read by hand was a real error |
-| Speed, whole audit with prices | TIMING_GPU on a laptop GPU, TIMING_CPU on 4 CPU cores with no GPU |
+| Speed, whole audit with prices (median, 3264 px photo) | 2.2 s on a laptop GPU; 4.8 s on 4 CPU cores with no GPU (vision 1.4 s, price labels 3.5 s) |
 
 ## Assumptions and limits
 

@@ -155,7 +155,14 @@ The retrain shows that box accuracy alone is not a safe proxy for shelf-level qu
 | Find empty spaces | 51 ms | 193 ms |
 | **Whole chain** | **334 ms** | **1,567 ms** |
 
-So one shelf bay is audited in a third of a second on a laptop GPU and in about 1.6 s on four CPU cores with no GPU. The first run after loading is slower (about 2 s on the GPU). Still untested: real Jetson or phone hardware and int8 quantisation.
+So one shelf bay is audited in a third of a second on a laptop GPU and in about 1.6 s on four CPU cores with no GPU.
+
+**With the price labels** (`scripts/benchmark_chain.py --prices`, same photos and runs): the whole audit takes a median **2.2 s on the laptop GPU and 4.8 s on four CPU cores with no GPU** (max 9.9 s, on the shelf with 7 labels). Reading the labels is the slow part (1.9 s and 3.5 s): each label is read by five Tesseract variants side by side and by EasyOCR. Two things made it fit on four cores, both measured:
+
+- Tesseract starts one thread per core and they spin while waiting, so five reads side by side on four cores took 87 s instead of 0.4 s. Each Tesseract process now gets one thread.
+- Without a GPU, EasyOCR reads each label once instead of also at 2x scale. On the 31 hand-boxed Grozi labels on four cores: both scales 29 correct (25 confident) at 2.2 s a label, one scale 29 correct (24 confident) at 0.7 s, none wrong either way. On the demo shelves, a CPU-only run gives the GPU run's score on 9 of 10 shelf/plan pairs; on store4_2's planted plan one label's confidence falls below 0.5, so it is a "check by eye" instead of a price mismatch (27 instead of 24).
+
+`scripts/audit.py --cpu` runs the same audit headless and writes one JSON (report, steps, value at stake, timings): what a shelf device would send to the store server. The first run after loading is slower (about 2 s on the GPU). Still untested: real Jetson or phone hardware and int8 quantisation.
 
 The three detectors are YOLO11s (19 MB each as PyTorch weights, 38 MB as ONNX); the timings below are for the pack detector, and the void detector is the same size at 640 px (not timed separately), and the matcher is a ViT-S/14 embedder. Median time to run the pack detector on one photo (8 test photos, `scripts/benchmark_edge.py`), CPU runs pinned to 4 cores of a laptop CPU as a stand-in for a small edge device (no Jetson or phone was available):
 
