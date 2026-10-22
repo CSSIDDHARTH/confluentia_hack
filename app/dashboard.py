@@ -179,6 +179,13 @@ if bay is not None:
             f"Live run on {result.device}: {result.total:.2f} s in total ("
             + ", ".join(f"{k} {v:.2f} s" for k, v in result.timings.items()) + "). Everything below comes from this run."
         )
+    elif live.available() and not st.toggle(
+        "Show the saved reading", key="show-saved",
+        help="The result saved from an earlier run on the same photo, which the live run reproduces exactly.",
+    ):
+        # Nothing is read yet: the plain photo, so the live run is what draws the findings.
+        st.image(str(BAYS / bay / "photo.jpg"), caption=f"{bay}: not read yet. Press Run it live.")
+        st.stop()
 
 if det.planogram_id != planogram.planogram_id:
     st.warning(f"Image is for planogram {det.planogram_id}, but {planogram.planogram_id} is loaded.")
