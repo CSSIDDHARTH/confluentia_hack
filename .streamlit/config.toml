@@ -1,6 +1,8 @@
-# shelfSense look: Google Material style (Roboto, Google blue, white cards on a light grey page).
+# shelfSense look: Google's product language. Google Sans Flex and Google Sans Code (from Google Fonts, served
+# from app/static so they work offline), a cool #f6f8fc ground with white sheets, Google blue only on the one main
+# action and on selection, status in Google's own hues.
 [server]
-enableStaticServing = true  # serves app/static/, so the font works offline
+enableStaticServing = true  # serves app/static/: fonts, logo
 
 [client]
 toolbarMode = "minimal"
@@ -8,37 +10,50 @@ showSidebarNavigation = false
 
 [theme]
 base = "light"
-primaryColor = "#1a73e8"
-backgroundColor = "#f8f9fa"
-secondaryBackgroundColor = "#f1f3f4"
-textColor = "#202124"
-borderColor = "#dadce0"
+primaryColor = "#0b57d0"
+backgroundColor = "#f6f8fc"
+secondaryBackgroundColor = "#eef2f9"
+textColor = "#1f1f1f"
+borderColor = "#c4c7c5"
 showWidgetBorder = true
 baseRadius = "12px"
 buttonRadius = "full"
-font = "Roboto"
-headingFont = "Roboto"
+baseFontSize = 16
+font = "Google Sans Flex"
+headingFont = "Google Sans Flex"
+codeFont = "Google Sans Code"
 headingFontWeights = [500, 500, 500, 500, 500, 500]
 metricValueFontSize = "2rem"
 metricValueFontWeight = 500
-greenColor = "#1e8e3e"
-redColor = "#d93025"
-orangeColor = "#e8710a"
+greenColor = "#146c2e"
+redColor = "#b3261e"
+orangeColor = "#a85300"
 yellowColor = "#f9ab00"
-blueColor = "#1a73e8"
-grayColor = "#5f6368"
+blueColor = "#0b57d0"
+grayColor = "#5e5e5e"
+linkColor = "#0b57d0"
 
 [[theme.fontFaces]]
-family = "Roboto"
-url = "app/static/fonts/Roboto-Regular.ttf"
+family = "Google Sans Flex"
+url = "app/static/fonts/GoogleSansFlex-Regular.ttf"
 weight = 400
 
 [[theme.fontFaces]]
-family = "Roboto"
-url = "app/static/fonts/Roboto-Medium.ttf"
+family = "Google Sans Flex"
+url = "app/static/fonts/GoogleSansFlex-Medium.ttf"
 weight = 500
 
 [[theme.fontFaces]]
-family = "Roboto"
-url = "app/static/fonts/Roboto-Bold.ttf"
+family = "Google Sans Flex"
+url = "app/static/fonts/GoogleSansFlex-Bold.ttf"
 weight = 700
+
+[[theme.fontFaces]]
+family = "Google Sans Code"
+url = "app/static/fonts/GoogleSansCode-Regular.ttf"
+weight = 400
+
+[[theme.fontFaces]]
+family = "Google Sans Code"
+url = "app/static/fonts/GoogleSansCode-Medium.ttf"
+weight = 500

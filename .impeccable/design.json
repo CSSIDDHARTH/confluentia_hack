@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T17:23:48+00:00",
+  "title": "Design System: shelfSense",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Google Blue",
+        "canonical": "#0b57d0",
+        "tonalRamp": [
+          "#041e49",
+          "#062e6f",
+          "#0842a0",
+          "#0b57d0",
+          "#4c8df6",
+          "#a8c7fa",
+          "#d3e3fd",
+          "#ecf3fe"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Cool Ground",
+        "canonical": "#f6f8fc",
+        "tonalRamp": [
+          "#1f1f1f",
+          "#444746",
+          "#5e5e5e",
+          "#747775",
+          "#c4c7c5",
+          "#e1e3e1",
+          "#eef2f9",
+          "#f6f8fc"
+        ]
+      },
+      "status-bad": {
+        "role": "status",
+        "displayName": "Wrong or missing",
+        "canonical": "#b3261e",
+        "tonalRamp": [
+          "#410e0b",
+          "#601410",
+          "#8c1d18",
+          "#b3261e",
+          "#dc362e",
+          "#e46962",
+          "#f9dedc",
+          "#fceeee"
+        ]
+      },
+      "status-ok": {
+        "role": "status",
+        "displayName": "As planned",
+        "canonical": "#146c2e",
+        "tonalRamp": [
+          "#072711",
+          "#0a3818",
+          "#0f5223",
+          "#146c2e",
+          "#198639",
+          "#6dd58c",
+          "#c4eed0",
+          "#e6f4ea"
+        ]
+      },
+      "status-low": {
+        "role": "status",
+        "displayName": "Low stock",
+        "canonical": "#a85300",
+        "tonalRamp": [
+          "#2e1500",
+          "#5a2800",
+          "#7f3d00",
+          "#a85300",
+          "#d16a00",
+          "#ff9a4d",
+          "#ffdcbe",
+          "#fff1e6"
+        ]
+      },
+      "status-check": {
+        "role": "status",
+        "displayName": "Check by eye",
+        "canonical": "#f9ab00",
+        "tonalRamp": [
+          "#261a00",
+          "#4d3800",
+          "#735300",
+          "#a06e00",
+          "#f9ab00",
+          "#fdd663",
+          "#ffefc4",
+          "#fff8e1"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "One per screen: the aisle or the screen's name."
+      },
+      "figure-lead": {
+        "displayName": "Lead figure",
+        "purpose": "The screen's answer figure: money at stake."
+      },
+      "code": {
+        "displayName": "Code face",
+        "purpose": "Slot IDs and prices only (Google Sans Code)."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "gauge-sweep",
+        "value": "900ms cubic-bezier(.2, 0, 0, 1)",
+        "purpose": "The score gauge sweeps once to its value; none with reduced motion."
+      },
+      {
+        "name": "focus-fade",
+        "value": "opacity 200ms",
+        "purpose": "Plan tiles fade when a to-do is in focus."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "640px"
+      }
+    ],
+    "photoTags": "Drawn server-side with PIL in Google Sans Flex Medium at about 15-16px on screen, filled with the STATUS colour (dark text on yellow), placed clear of each other."
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one main action on a screen.",
+      "html": "<button class=\"ds-btn-primary\">Check the shelf now</button>",
+      "css": ".ds-btn-primary{background:#0b57d0;color:#fff;border:none;border-radius:999px;padding:10px 24px;font:500 15px 'Google Sans Flex',sans-serif;transition:background-color .2s}.ds-btn-primary:hover{background:#0842a0}.ds-btn-primary:focus-visible{outline:2px solid #0b57d0;outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Every other action.",
+      "html": "<button class=\"ds-btn\">Open</button>",
+      "css": ".ds-btn{background:#fff;color:#1f1f1f;border:1px solid #c4c7c5;border-radius:999px;padding:10px 24px;font:500 15px 'Google Sans Flex',sans-serif;transition:background-color .2s}.ds-btn:hover{background:#eef2f9}.ds-btn:focus-visible{outline:2px solid #0b57d0;outline-offset:2px}"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip-bad",
+      "description": "A problem, verdict or legend entry, always with a word.",
+      "html": "<span class=\"ds-chip\">3 wrong products</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:4px;background:#f9dedc;color:#8c1d18;border-radius:8px;padding:3px 10px 3px 8px;font:500 14px 'Google Sans Flex',sans-serif}"
+    },
+    {
+      "name": "Sheet",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "The only container: white, 1px edge, no shadow.",
+      "html": "<div class=\"ds-sheet\">The plan for this shelf</div>",
+      "css": ".ds-sheet{background:#fff;border:1px solid #e1e3e1;border-radius:16px;padding:16px;font:500 18px 'Google Sans Flex',sans-serif;color:#1f1f1f}"
+    },
+    {
+      "name": "Plan Tile",
+      "kind": "custom",
+      "refersTo": "plan-tile-bad",
+      "description": "One slot of the plan, as wide as its planned facings.",
+      "html": "<div class=\"ds-tile\"><div class=\"ds-tile-id\">S1-02</div><div class=\"ds-tile-name\">Oil-Vinegar #53</div><div>5 planned \u00b7 0 seen</div><div class=\"ds-tile-st\">wrong product</div></div>",
+      "css": ".ds-tile{background:#f9dedc;color:#8c1d18;border-radius:10px;padding:8px 10px 9px;font:400 13px/1.3 'Google Sans Flex',sans-serif;width:220px}.ds-tile-id{font:400 12px 'Google Sans Code',monospace;opacity:.85}.ds-tile-name{font-weight:500;font-size:15px}.ds-tile-st{font-weight:500;margin-top:3px}"
+    },
+    {
+      "name": "Score Gauge",
+      "kind": "custom",
+      "description": "Lighthouse-style score ring.",
+      "html": "<div class=\"ds-ring\"><div class=\"ds-ring-in\">28</div></div>",
+      "css": ".ds-ring{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#b3261e 28%,#e3e3e3 0)}.ds-ring-in{width:82%;height:82%;border-radius:50%;background:#fff;display:grid;place-items:center;color:#b3261e;font:500 28px 'Google Sans Flex',sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The shelf is the interface",
+    "overview": "Google's product language applied to one job: telling store staff what to fix on a shelf first. Photo and plan are read as one object, the to-do list beside them.",
+    "keyCharacteristics": [
+      "Google Sans Flex and Google Sans Code",
+      "Cool ground, white sheets, no resting shadows",
+      "Blue only on the main action and selection",
+      "Status as icon plus word, same on page and photo"
+    ],
+    "rules": [
+      {
+        "name": "Colour carries a status or the action",
+        "body": "No colour on chrome.",
+        "section": "colors"
+      },
+      {
+        "name": "Never colour alone",
+        "body": "Every status has an icon and a word.",
+        "section": "colors"
+      },
+      {
+        "name": "The answer figure leads",
+        "body": "Money at stake is the largest figure on a shelf.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "One main action per screen in blue",
+      "Tabular figures on changing figures"
+    ],
+    "donts": [
+      "No KPI tile rows or card grids as page structure",
+      "No shadows on resting sheets",
+      "No thick coloured side bars"
+    ]
+  }
+}

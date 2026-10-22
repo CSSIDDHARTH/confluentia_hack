@@ -77,17 +77,17 @@ def detect_upload(data: bytes, suffix: str):
     return boxes, confs, size, voids
 
 
-st.markdown("### Check any shelf photo")
-st.caption("No plan needed: finds the empty space on a shelf and tells you what to refill.")
 
 live = detector_available()
 saved = sorted(p.stem for p in DEMO.glob("*.json") if not p.name.endswith((".report.json", ".voids.json")))
 saved = sorted(saved, key=lambda s: s != FIRST)  # the most telling shelf first
 use_voids = VOID_WEIGHTS.exists()
 
-top, sens = st.columns([5, 1], vertical_alignment="center")
+title, src, sens = st.columns([3, 2, 1], vertical_alignment="bottom")
+title.html('<h1 class="ss-h1">Check any shelf photo</h1>'
+           '<p class="ss-lead">No plan needed: finds the empty space on a shelf and tells you what to refill.</p>')
 sources = ["Try a sample"] + (["Upload a photo"] if live else [])
-source = top.segmented_control("Source", sources, default=sources[0], key="scan-source", label_visibility="collapsed") or sources[0]
+source = src.segmented_control("Source", sources, default=sources[0], key="scan-source", label_visibility="collapsed") or sources[0]
 with sens.popover("Sensitivity", icon=":material/tune:", width="stretch"):
     if use_voids:
         void_conf = st.slider(
@@ -124,7 +124,8 @@ if source == "Try a sample":
 else:
     up = st.file_uploader("A shelf photo (JPG or PNG)", type=["jpg", "jpeg", "png"])
     if up is None:
-        st.info("Take a straight-on photo of a whole shelf of packaged goods, from one or two metres, and drop it here.")
+        st.info("Take a straight-on photo of a whole shelf of packaged goods, from one or two metres, and drop it here.",
+                icon=":material/photo_camera:")
         st.stop()
     boxes, confs, size, voids = detect_upload(up.getvalue(), Path(up.name).suffix or ".jpg")
     image_id, shown = Path(up.name).stem, up.name
@@ -134,32 +135,35 @@ kept = [v for v in voids if v[1] >= void_conf] if (use_voids and voids is not No
 det, report = analyze_packs(image_id, shown, size, boxes, confs, low_fill=low_fill, min_gap_widths=gap_widths, voids=kept)
 
 low_rows = [r.shelf_id for r in report.rows if r.low_stock]
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("Overall fill", f"{report.overall_fill:.0%}", border=True)
-c2.metric("Empty spaces", report.empty_spaces, border=True)
-c3.metric("Packs to refill", report.missing_facings, border=True)
-c4.metric("Low-stock rows", len(low_rows), help=", ".join(low_rows) or "none", border=True)
-c5.metric("Packs found", len(det.items), border=True)
+with st.container(border=True, key="sheet-scanfigures"):  # one sheet for the figures, not a tile each
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Overall fill", f"{report.overall_fill:.0%}")
+    c2.metric("Empty spaces", report.empty_spaces)
+    c3.metric("Packs to refill", report.missing_facings)
+    c4.metric("Low-stock rows", len(low_rows), help=", ".join(low_rows) or "none")
+    c5.metric("Packs found", len(det.items))
 
 for w in report.warnings:
-    st.warning(w)
+    st.warning(w, icon=":material/warning:")
 
-left, right = st.columns([1.35, 1])
-with left.container(border=True, key="card-scan-photo"):
+left, right = st.columns([1.2, 1], gap="medium")
+with left.container(border=True, key="sheet-scanphoto"):
     view = draw_availability(image, det, report, footer=False)
     view.thumbnail((1100, 760))
     st.image(view, width="stretch")
-    st.html(f'<div class="ss-muted">{chip("pack", "ok")} {chip("empty space", "bad")} · each shelf row shows how full it is</div>')
+    st.html(f'<div class="ss-legend">{chip("pack", "ok")}{chip("empty space", "bad")}'
+            "<span>The bar and badge on the left of each shelf row show how full it is.</span></div>")
 with right:
-    with st.container(border=True, key="card-scan-todo"):
-        st.markdown("**What to refill**")
+    with st.container(border=True, key="sheet-scantodo"):
+        st.html('<div class="ss-t2">What to refill</div>')
         if report.actions:
             for k, a in enumerate(report.actions, 1):
-                st.html(f'<div class="ss-big"><b>{k}.</b> {html.escape(a)}</div>')
+                with st.container(key=f"{'rowtop' if k == 1 else 'rowline'}-refill-{k}"):
+                    st.html(f'<div class="ss-todo"><b>{k}.</b> {html.escape(a)}</div>')
         elif not report.warnings:
-            st.success("Nothing to refill at these settings.")
-    with st.container(border=True, key="card-scan-rows"):
-        st.markdown("**How full each shelf row is**")
+            st.success("Nothing to refill at these settings.", icon=":material/check_circle:")
+    with st.container(border=True, key="sheet-scanrows"):
+        st.html('<div class="ss-t2">How full each shelf row is</div>')
         rows = pd.DataFrame(
             [{"row": r.shelf_id, "packs": r.packs, "fill": r.fill_ratio, "status": "low stock" if r.low_stock else "ok"} for r in report.rows]
         )
@@ -176,12 +180,14 @@ with st.expander("Details and downloads"):
             hide_index=True, width="stretch",
         )
     d1, d2, d3 = st.columns(3)
-    d1.download_button("Download report (JSON)", report.model_dump_json(indent=2), f"{image_id}_availability.json", "application/json", width="stretch")
-    d2.download_button("Download detections (JSON)", det.model_dump_json(indent=2), f"{image_id}_detections.json", "application/json", width="stretch")
+    d1.download_button("Download report (JSON)", report.model_dump_json(indent=2), f"{image_id}_availability.json", "application/json",
+                       icon=":material/download:", width="stretch")
+    d2.download_button("Download detections (JSON)", det.model_dump_json(indent=2), f"{image_id}_detections.json", "application/json",
+                       icon=":material/download:", width="stretch")
     d3.download_button(
         "Download empty spaces (CSV)",
         pd.DataFrame([{"gap_id": g.gap_id, "shelf": g.shelf_id, "missing_packs": g.estimated_missing_facings, "confidence": g.confidence, "bbox": g.bbox} for g in det.gaps]).to_csv(index=False),
-        f"{image_id}_empty_spaces.csv", "text/csv", width="stretch",
+        f"{image_id}_empty_spaces.csv", "text/csv", icon=":material/download:", width="stretch",
     )
 
 if source != "Try a sample" and DEFAULT_WEIGHTS.exists():

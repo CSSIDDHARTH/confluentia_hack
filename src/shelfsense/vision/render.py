@@ -113,26 +113,26 @@ def draw_bay_report(im: Image.Image, det: DetectionOutput, report: ComplianceRep
 # One palette for the photo and the drawn plan, so a slot looks the same in both: Google's Material colours.
 # STATUS: solid colour (tags and outlines on the photo); TONAL: (background, text) for chips and plan tiles.
 STATUS = {
-    "ok": "#188038",  # as planned
-    "low": "#e8710a",  # low stock
-    "bad": "#d93025",  # missing, or the wrong product
+    "ok": "#146c2e",  # as planned
+    "low": "#a85300",  # low stock
+    "bad": "#b3261e",  # missing, or the wrong product
     "check": "#f9ab00",  # product not recognised, label to check
-    "unread": "#80868b",  # not read yet
-    "label": "#1a73e8",  # price label read and fine
+    "unread": "#747775",  # not read yet
+    "label": "#0b57d0",  # price label read and fine
 }
 TONAL = {
-    "ok": ("#e6f4ea", "#137333"),
-    "low": ("#feefe3", "#b3480b"),
-    "bad": ("#fce8e6", "#c5221f"),
-    "check": ("#fef7e0", "#8a5a00"),
-    "unread": ("#f1f3f4", "#5f6368"),
-    "label": ("#e8f0fe", "#1967d2"),
+    "ok": ("#c4eed0", "#0a3818"),
+    "low": ("#ffdcbe", "#5a2800"),
+    "bad": ("#f9dedc", "#8c1d18"),
+    "check": ("#ffefc4", "#4d3800"),
+    "unread": ("#eef0f4", "#444746"),
+    "label": ("#d3e3fd", "#041e49"),
 }
-_TAG_TEXT = {"check": (32, 33, 36)}  # dark text on yellow, white on the rest
+_TAG_TEXT = {"check": (31, 31, 31)}  # dark text on yellow, white on the rest
 _PACK_OUTLINE = {"ok": (52, 168, 83), "bad": (234, 67, 53), "check": (251, 188, 4)}
-_FONTS = (
+_FONTS = (  # Google Sans Flex, served by the app (app/static/fonts), then fallbacks
+    Path(__file__).resolve().parents[3] / "app" / "static" / "fonts" / "GoogleSansFlex-Medium.ttf",
     Path(__file__).resolve().parents[3] / "app" / "static" / "fonts" / "Roboto-Medium.ttf",
-    Path("/usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Medium.ttf"),
     Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
 )
 

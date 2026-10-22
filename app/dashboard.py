@@ -1,9 +1,10 @@
 """shelfSense dashboard.
 
-Home: one card per shelf (score, money at stake, to-dos) and one switch for the whole store: the current plan or
-the new plan from head office. A shelf: check it live from its photo, see the photo and the plan side by side in
-the same colours, and work through the to-do list. "Check any shelf photo": empty space and what to refill, no
-plan needed (app/views/availability.py). Mock shelves and custom files are behind the sidebar's "Developer inputs".
+Home: today's shelves in one list, worst first (score, money at stake, to-dos), with one switch for the whole store:
+the current plan or the new plan from head office. A shelf: check it live from its photo, see the photo and the plan
+side by side in the same colours, and work down the to-do list beside them. "Check a photo": empty space and what to
+refill on any photo, no plan needed (app/views/availability.py). Mock shelves and custom files are behind the
+sidebar's "Developer inputs". The look (Google Sans, Google's colours) is set in .streamlit/config.toml and CSS below.
 
     streamlit run app/dashboard.py
 """
@@ -26,7 +27,7 @@ from shelfsense.pricing.label_assign import assign_labels_to_slots
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
 from shelfsense.report.briefing import DEFAULT_MODEL as SLM_MODEL
 from shelfsense.report.briefing import write_briefing
-from shelfsense.report.compliance import WEIGHTS, ComplianceReport, compute_report
+from shelfsense.report.compliance import WEIGHTS, ComplianceReport, ViolationKind, compute_report
 from shelfsense.report.export import report_to_json, violations_to_csv
 from shelfsense.report.impact import at_stake, currency
 from shelfsense.vision import live
@@ -41,7 +42,7 @@ PLAN_HELP = {
     "compliant": "The plan this shelf was stocked to.",
     "scenario": "Head office swapped two products, added one this shelf doesn't carry, gave one product more space "
     "and raised a price. The shelf hasn't been changed yet.",
-    EDIT: "Change what any slot should hold, and watch the check update. The photo stays the same.",
+    EDIT: "Change what any slot should hold and watch the check update. The photo stays the same.",
 }
 AISLES = {"Oil-Vinegar": "Oil & vinegar", "Canned": "Canned food", "Cereals": "Breakfast cereals"}
 STAGES = {
@@ -52,6 +53,9 @@ STAGES = {
     "find empty spaces": "Looked for empty space",
     "read price labels": "Read the price labels",
 }
+ICONS = {"ok": "check_circle", "low": "warning", "bad": "cancel", "check": "help", "label": "sell", "unread": "schedule"}
+STAKE_HELP = ("Missing packs times their price, plus wrong prices times the packs they apply to. "
+              "An estimate for putting work in order, not accounting.")
 MOCK_PLANOGRAM = "contracts/planogram.example.json"
 MOCK_CATALOGUE = "contracts/catalogue.example.csv"
 MOCKS = {  # name -> (detection output, planogram, catalogue)
@@ -62,54 +66,122 @@ MOCKS = {  # name -> (detection output, planogram, catalogue)
 
 CSS = """
 <style>
-.block-container {padding-top: 3.6rem; max-width: 1440px;}
+@font-face {font-family: "SS Symbols"; font-style: normal; font-weight: 400; font-display: block;
+  src: url("app/static/fonts/MaterialSymbolsRounded-subset.woff2") format("woff2");}
+@property --p {syntax: "\\3C number>"; inherits: false; initial-value: 0;}  /* \\3C is the less-than sign, escaped: the HTML sanitiser drops a style block with tag-like text */
+@keyframes ss-sweep {from {--p: 0;}}
+:root {--ss-ground: #f6f8fc; --ss-sheet: #ffffff; --ss-edge: #e1e3e1; --ss-rule: #eceef1; --ss-ink: #1f1f1f;
+  --ss-muted: #444746; --ss-faint: #5e5e5e; --ss-blue: #0b57d0; --ss-blue-soft: #d3e3fd; --ss-track: #e3e3e3;}
+html {scrollbar-color: #c4c7c5 transparent; -webkit-font-smoothing: antialiased;}
+::selection {background: var(--ss-blue-soft); color: #041e49;}
+:focus-visible {outline: 2px solid var(--ss-blue) !important; outline-offset: 2px;}
+.block-container {padding-top: 3.4rem; padding-bottom: 4rem; max-width: 1480px;}
 [data-testid="stHeader"] {background: transparent;}
-div[class*="st-key-card-photo"] [data-testid="stFullScreenFrame"] > div,
-div[class*="st-key-card-scan-photo"] [data-testid="stFullScreenFrame"] > div {width: 100%; display: flex; justify-content: center;}
-div[class*="st-key-card-photo"] img, div[class*="st-key-card-scan-photo"] img {max-height: 70vh; width: auto !important;
-  max-width: 100%; display: block; margin: 0 auto; object-fit: contain;}
-div[class*="st-key-card"] {background: #fff; border: none !important; border-radius: 16px;
-  box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);}
-.ss-bar {display: flex; align-items: center; gap: 14px;}
-.ss-name {font-size: 1.55rem; font-weight: 500; color: #202124; line-height: 1.1;}
-.ss-tagline {font-size: .95rem; color: #5f6368;}
-.ss-ring {border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none;}
-.ss-ring-in {width: 80%; height: 80%; border-radius: 50%; background: #fff; display: flex; align-items: center;
-  justify-content: center; font-weight: 500;}
-.ss-chip {display: inline-block; padding: 2px 12px; border-radius: 16px; font-size: .82rem; font-weight: 500;}
-.ss-muted {color: #5f6368; font-size: .9rem;}
-.ss-shelf {margin-bottom: 10px;}
-.ss-shelf-name {font-size: .78rem; color: #5f6368; margin: 0 0 4px 2px; letter-spacing: .02em;}
-.ss-row {display: flex; gap: 6px; padding-bottom: 8px; border-bottom: 3px solid #dadce0;}
-.ss-tile {min-width: 0; border-radius: 10px; padding: 8px 10px; line-height: 1.3; overflow: hidden;}
-.ss-tile-id {font-size: .72rem; opacity: .8;}
-.ss-tile-name {font-weight: 500; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.ss-tile-meta {font-size: .78rem;}
-.ss-tile-status {font-size: .78rem; font-weight: 500; margin-top: 2px;}
-.ss-big {font-size: 1.05rem; line-height: 1.5;}
-.ss-done {text-decoration: line-through; color: #80868b;}
+[data-testid="stMetricValue"], .ss-num {font-variant-numeric: tabular-nums;}
+[data-testid="stMetricLabel"] p {color: var(--ss-muted); font-size: .875rem;}
+div[class*="st-key-metric-todo"] [data-testid="stMetricValue"] {font-size: 1.5rem;}  /* money at stake leads; to-dos is its sibling */
+/* sheets: white on the ground, one 1px edge, no resting shadow */
+div[class*="st-key-sheet"] {background: var(--ss-sheet); border: 1px solid var(--ss-edge) !important;
+  border-radius: 16px; box-shadow: none;}
+div[class*="st-key-rowline"] {border-top: 1px solid var(--ss-rule); padding-top: 14px;}
+div[class*="st-key-sheet-photo"] [data-testid="stFullScreenFrame"] > div,
+div[class*="st-key-sheet-scanphoto"] [data-testid="stFullScreenFrame"] > div {width: 100%; display: flex; justify-content: center;}
+div[class*="st-key-sheet-photo"] img, div[class*="st-key-sheet-scanphoto"] img {max-height: 70vh; width: auto !important;
+  max-width: 100%; display: block; margin: 0 auto; object-fit: contain; border-radius: 4px;
+  outline: 1px solid rgba(0,0,0,.1); outline-offset: -1px;}
+div[class*="st-key-thumb"] img {border-radius: 8px; outline: 1px solid rgba(0,0,0,.1); outline-offset: -1px;}
+.ss-i {font-family: "SS Symbols"; font-weight: normal; font-style: normal; font-size: 1.15em; line-height: 1;
+  display: inline-block; vertical-align: -0.2em; letter-spacing: normal; text-transform: none; white-space: nowrap;
+  font-feature-settings: "liga"; -webkit-font-smoothing: antialiased; font-variation-settings: "FILL" 1;}
+.ss-bar {display: flex; align-items: center; gap: 12px;}
+.ss-name {font-size: 1.375rem; font-weight: 500; color: var(--ss-ink); letter-spacing: -0.01em;}
+.ss-where {font-size: .9375rem; color: var(--ss-muted); padding-left: 12px; margin-left: 4px; border-left: 1px solid var(--ss-edge);}
+.ss-h1 {font-size: 1.75rem; line-height: 1.2; font-weight: 500; color: var(--ss-ink); margin: 0; letter-spacing: -0.015em; text-wrap: balance;}
+.ss-lead {font-size: 1.0625rem; line-height: 1.5; color: var(--ss-ink); margin: 6px 0 0; text-wrap: pretty; max-width: 70ch;}
+.ss-meta {font-size: .9375rem; color: var(--ss-muted); margin-top: 4px;}
+.ss-help {font-size: .875rem; color: var(--ss-muted); margin-top: 2px; text-wrap: pretty;}
+.ss-t2 {font-size: 1.125rem; font-weight: 500; color: var(--ss-ink);}
+.ss-label {font-size: .875rem; color: var(--ss-muted);}
+.ss-fig {font-size: 1.75rem; font-weight: 500; color: var(--ss-ink); font-variant-numeric: tabular-nums; line-height: 1.2;}
+.ss-fig-s {font-size: 1.5rem; font-weight: 500; color: var(--ss-ink); font-variant-numeric: tabular-nums; line-height: 1.2;}
+.ss-code {font-family: "Google Sans Code", monospace; font-variant-numeric: tabular-nums;}
+.ss-chips {display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;}
+.ss-chip {display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 8px; border-radius: 8px;
+  font-size: .875rem; font-weight: 500; line-height: 1.3;}
+.ss-ring {--p: 0; border-radius: 50%; display: grid; place-items: center; flex: none;
+  background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--ss-track) 0);
+  animation: ss-sweep 900ms cubic-bezier(.2, 0, 0, 1) both;}
+.ss-ring-in {width: 82%; height: 82%; border-radius: 50%; background: var(--ss-sheet); display: grid; place-items: center;
+  font-weight: 500; font-variant-numeric: tabular-nums;}
+.ss-gauge {display: flex; align-items: center; gap: 14px;}
+@media (prefers-reduced-motion: reduce) {.ss-ring {animation: none;}}
+.ss-shelf {margin-bottom: 12px;}
+.ss-shelf-name {font-size: .8125rem; color: var(--ss-muted); margin: 0 0 6px 2px;}
+.ss-row {display: flex; gap: 6px; padding-bottom: 6px;}
+.ss-edge {height: 4px; background: #c4c7c5; border-radius: 2px;}  /* the shelf edge under each row of slots */
+.ss-tile {min-width: 0; border-radius: 10px; padding: 8px 10px 9px; line-height: 1.3; overflow: hidden;
+  transition-property: opacity; transition-duration: 200ms;}
+.ss-tile-id {font-family: "Google Sans Code", monospace; font-size: .75rem; opacity: .85;}
+.ss-tile-name {font-weight: 500; font-size: .9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.ss-tile-meta {font-size: .8125rem; font-variant-numeric: tabular-nums;}
+.ss-tile-status {font-size: .8125rem; font-weight: 500; margin-top: 3px; display: flex; align-items: center; gap: 4px;}
+.ss-todo {font-size: 1rem; line-height: 1.5; color: var(--ss-ink); text-wrap: pretty;}
+.ss-todo b {font-variant-numeric: tabular-nums;}
+.ss-done {text-decoration: line-through; color: var(--ss-faint);}
+.ss-legend {display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: .875rem; color: var(--ss-muted); margin-top: 6px;}
+.ss-summary {font-size: 1.125rem; line-height: 1.55; color: var(--ss-ink); max-width: 70ch; text-wrap: pretty;}
 </style>
 """
 
-LOGO = '<img src="app/static/logo.svg" width="40" height="40" alt="">'  # served from app/static (st.html strips inline SVG)
+LOGO = '<img src="app/static/logo.svg" width="32" height="32" alt="">'  # served from app/static (st.html strips inline SVG)
 
 
 # ---------- small pieces of HTML ----------
 
+def icon(name: str) -> str:
+    return f'<span class="ss-i" aria-hidden="true">{name}</span>'
+
+
 def ring(score: float, size: int = 96) -> str:
-    """A score ring in the style of Google's Lighthouse: green from 90, orange from 50, red below."""
+    """A score gauge in the style of Google's Lighthouse: green from 90, orange from 50, red below. It sweeps to its
+    value once when drawn (not with reduced motion)."""
     key = "ok" if score >= 90 else "low" if score >= 50 else "bad"
-    colour = STATUS[key]
     return (
-        f'<div class="ss-ring" data-score="{score:.0f}" style="width:{size}px;height:{size}px;'
-        f'background:conic-gradient({colour} 0 {score:.0f}%, #e8eaed {score:.0f}% 100%)">'
-        f'<div class="ss-ring-in" style="color:{colour};font-size:{size * 0.32:.0f}px">{score:.0f}</div></div>'
+        f'<div class="ss-ring" role="img" aria-label="Shelf score {score:.0f} out of 100" data-score="{score:.0f}" '
+        f'style="--p:{score:.0f};--c:{STATUS[key]};width:{size}px;height:{size}px">'
+        f'<div class="ss-ring-in" style="color:{STATUS[key]};font-size:{size * 0.34:.0f}px">{score:.0f}</div></div>'
     )
 
 
-def chip(text: str, key: str) -> str:
+def chip(text: str, key: str, with_icon: bool = True) -> str:
     bg, fg = TONAL[key]
-    return f'<span class="ss-chip" style="background:{bg};color:{fg}">{html.escape(text)}</span>'
+    return (f'<span class="ss-chip" style="background:{bg};color:{fg}">'
+            f'{icon(ICONS[key]) if with_icon else ""}{html.escape(text)}</span>')
+
+
+def plural(n: int, word: str, many: str | None = None) -> str:
+    return f"{n} {word if n == 1 else (many or word + 's')}"
+
+
+def problem_chips(report: ComplianceReport) -> list[str]:
+    """What is wrong on a shelf, in a few words each, worst first."""
+    status = slot_status(report)
+    keys = Counter(words for _, words in status.values())
+    out = []
+    if keys["wrong product"]:
+        out.append(chip(plural(keys["wrong product"], "wrong product"), "bad"))
+    if keys["missing"]:
+        out.append(chip(plural(keys["missing"], "product") + " missing", "bad"))
+    wrong_prices = report.counts.get(ViolationKind.PRICE_MISMATCH.value, 0)
+    if wrong_prices:
+        out.append(chip(plural(wrong_prices, "wrong price"), "bad"))
+    if keys["low stock"]:
+        out.append(chip(plural(keys["low stock"], "slot") + " low", "low"))
+    to_check = keys["check product"] + report.counts.get(ViolationKind.UNREADABLE_PRICE.value, 0) \
+        + report.counts.get(ViolationKind.UNKNOWN_PRODUCT.value, 0)
+    if to_check:
+        out.append(chip(f"{to_check} to check by eye", "check"))
+    return out or [chip("All as planned", "ok")]
 
 
 def plan_html(
@@ -122,37 +194,38 @@ def plan_html(
     status = slot_status(report) if report else {}
     price_note: dict[str, str] = {}
     for v in report.violations if report else []:
-        if v.kind.value == "price_mismatch":
+        if v.kind == ViolationKind.PRICE_MISMATCH:
             price_note[v.slot_id] = "price label wrong"
-        elif v.kind.value == "unreadable_price":
-            price_note.setdefault(v.slot_id, "check price label")
+        elif v.kind == ViolationKind.UNREADABLE_PRICE:
+            price_note.setdefault(v.slot_id, "check the price label")
     shelves = []
     for shelf in planogram.shelves:
         tiles = []
         for slot in shelf.slots:
             item = catalogue.get(slot.sku)
             name = html.escape(item.name if item else slot.sku)
+            is_done = bool(report is not None and done and slot.slot_id in done and slot.slot_id not in status)
             key, words = ("unread", "not checked yet") if report is None else status.get(
-                slot.slot_id, ("ok", "done \u2713" if done and slot.slot_id in done else "as planned")
+                slot.slot_id, ("ok", "done" if is_done else "as planned")
             )
             bg, fg = TONAL[key]
             seen = "" if det is None or report is None else (
                 f" · {sum(i.slot_id == slot.slot_id and i.sku == slot.sku for i in det.items)} seen"
             )
             note = f'<div class="ss-tile-meta">{price_note[slot.slot_id]}</div>' if slot.slot_id in price_note else ""
-            faded = ";opacity:.3" if highlight and slot.slot_id not in highlight else ""
+            faded = "opacity:.28;" if highlight and slot.slot_id not in highlight else ""
             tiles.append(
-                f'<div class="ss-tile" style="flex:{slot.facings} 1 0;background:{bg};color:{fg};'
-                f'border-left:5px solid {STATUS[key]}{faded}">'
+                f'<div class="ss-tile" data-slot="{slot.slot_id}" data-status="{"done" if is_done else key}" '
+                f'style="flex:{slot.facings} 1 0;background:{bg};color:{fg};{faded}">'
                 f'<div class="ss-tile-id">{slot.slot_id}</div><div class="ss-tile-name">{name}</div>'
                 f'<div class="ss-tile-meta">{slot.facings} planned{seen}</div>'
-                f'<div class="ss-tile-status">{words}</div>{note}</div>'
+                f'<div class="ss-tile-status">{icon(ICONS[key]) if key != "unread" else ""}{words}</div>{note}</div>'
             )
         shelves.append(
-            f'<div class="ss-shelf"><div class="ss-shelf-name">SHELF {shelf.index + 1}</div>'
-            f'<div class="ss-row">{"".join(tiles)}</div></div>'
+            f'<div class="ss-shelf"><div class="ss-shelf-name">Shelf {shelf.index + 1}</div>'
+            f'<div class="ss-row">{"".join(tiles)}</div><div class="ss-edge"></div></div>'
         )
-    return "".join(shelves)
+    return '<div role="group" aria-label="The plan for this shelf">' + "".join(shelves) + "</div>"
 
 
 def label_notes(price_issues: list) -> dict[str, tuple[str, str]]:
@@ -198,19 +271,16 @@ def bay_title(bay: str) -> tuple[str, str]:
 
 @st.cache_data(show_spinner=False)
 def bay_summary(bay: str, plan: str) -> dict:
-    """Score, money at stake, to-dos and the worst problem from the saved reading, for the home cards."""
+    """Score, money at stake, to-dos and what is wrong, from the saved reading, for the home list."""
     det_p, pg_p, cat_p = bay_files(bay, plan)
     det, pg, cat = load_detection_output(ROOT / det_p), load_planogram(ROOT / pg_p), load_catalogue(ROOT / cat_p)
     report = compute_report(det, pg, cat, group_items=True)
-    steps = plan_steps(report, cat, pg)
-    status = slot_status(report)
-    worst = next(((key, w) for k in ("bad", "low", "check") for key, w in status.values() if key == k), None)
     expected = {s.slot_id: s.sku for sh in pg.shelves for s in sh.slots}
     im = draw_audit(Image.open(ROOT / det.image_path), det, report, expected, label_notes(check_prices(det, cat)))
-    im = ImageOps.fit(im, (720, 540), centering=(0.5, 0.35))  # every card the same shape
     return {
         "score": report.score, "money": sum(at_stake(report, det, pg, cat).values()), "currency": currency(cat),
-        "todo": len(steps), "worst": worst, "image": im,
+        "todo": len(plan_steps(report, cat, pg)), "chips": problem_chips(report),
+        "image": ImageOps.fit(im, (480, 360), centering=(0.5, 0.35)),  # every thumbnail the same shape
     }
 
 
@@ -234,15 +304,13 @@ def go(view: str, bay: str | None = None) -> None:
     st.session_state.pop("focus", None)
 
 
-def app_bar() -> None:
+def app_bar(where: str) -> None:
     left, right = st.columns([5, 1], vertical_alignment="center")
-    left.html(
-        f'<div class="ss-bar">{LOGO}<div><div class="ss-name">shelfSense</div>'
-        '<div class="ss-tagline">One photo of a shelf. Every problem on it. What to fix first.</div></div></div>'
-    )
-    with right.popover("How it works", width="stretch"):
+    left.html(f'<div class="ss-bar">{LOGO}<span class="ss-name">shelfSense</span>'
+              f'<span class="ss-where">{html.escape(where)}</span></div>')
+    with right.popover("How it works", icon=":material/info:", width="stretch"):
         st.markdown(
-            "**From one photo to a to-do list**\n"
+            "**One photo of a shelf. Every problem on it. What to fix first.**\n\n"
             "1. Find every product on the shelf\n"
             "2. Recognise each one, from product photos\n"
             "3. Match them to the store's plan, shelf by shelf\n"
@@ -277,41 +345,46 @@ def plan_switch(key: str, with_edit: bool) -> str:
 # ---------- home ----------
 
 def view_home(bays: list[str]) -> None:
-    st.markdown("### Today's shelf check")
-    plan = plan_switch("plan-home", with_edit=False)
-    st.caption(PLAN_HELP[plan])
+    left, right = st.columns([3, 2], vertical_alignment="bottom")
+    with right:
+        plan = plan_switch("plan-home", with_edit=False)
+        st.html(f'<div class="ss-help">{PLAN_HELP[plan]}</div>')
     summaries = {b: bay_summary(b, plan) for b in bays}
-    order = sorted(bays, key=lambda b: -summaries[b]["money"])
-    money = summaries[order[0]]["currency"] if order else ""
-    k1, k2, k3 = st.columns(3)
-    k1.metric("Shelves checked", len(bays), border=True)
-    k2.metric("Money at stake", f"{money} {sum(s['money'] for s in summaries.values()):.2f}".strip(), border=True,
-              help="Missing packs times their price, plus wrong prices times the packs they apply to. An estimate for putting work in order.")
-    k3.metric("To-dos", sum(s["todo"] for s in summaries.values()), border=True)
+    order = sorted(bays, key=lambda b: (-summaries[b]["money"], summaries[b]["score"]))
+    cur = summaries[order[0]]["currency"] if order else ""
+    total, todos = sum(s["money"] for s in summaries.values()), sum(s["todo"] for s in summaries.values())
+    if not order or (total == 0 and todos == 0):
+        finding = "Every shelf matches its plan."
+    else:
+        first = summaries[order[0]]
+        finding = (f"<b>{html.escape(bay_title(order[0])[0])}</b> needs you first: {cur} {first['money']:.2f} at stake, "
+                   f"{plural(first['todo'], 'to-do')}. Across {plural(len(bays), 'shelf', 'shelves')}: "
+                   f'{cur} {total:.2f} at stake and {plural(todos, "to-do")}.')
+    left.html(f'<h1 class="ss-h1">Today\'s shelf check</h1><p class="ss-lead">{finding}</p>')
 
-    cols = st.columns(len(order) + 1)
-    for col, bay in zip(cols, order):
-        s = summaries[bay]
-        aisle, where = bay_title(bay)
-        with col.container(border=True, key=f"card-{bay}"):
-            st.image(s["image"], width="stretch")
-            top, ring_col = st.columns([3, 2], vertical_alignment="center")
-            top.markdown(f"**{aisle}**  \n<span class='ss-muted'>{where}</span>", unsafe_allow_html=True)
-            ring_col.html(ring(s["score"], 72))
-            st.html(
-                f'<div class="ss-big"><b>{s["currency"]} {s["money"]:.2f}</b> at stake · <b>{s["todo"]}</b> to-do'
-                f'{"" if s["todo"] == 1 else "s"}</div>'
-                + (f'<div style="margin-top:6px">{chip(s["worst"][1], s["worst"][0])}</div>'
-                   if s["worst"] else f'<div style="margin-top:6px">{chip("all as planned", "ok")}</div>')
-            )
-            if st.button("Open shelf", key=f"open-{bay}", type="primary", width="stretch"):
-                go("shelf", bay)
-                st.rerun()
-    with cols[-1].container(border=True, key="card-scan"):
-        st.markdown("#### Check any shelf photo")
-        st.markdown("<span class='ss-muted'>No plan needed. Finds empty space and tells you what to refill, "
-                    "on a photo from any shop.</span>", unsafe_allow_html=True)
-        if st.button("Check a photo", key="open-scan", width="stretch"):
+    with st.container(border=True, key="sheet-list"):
+        for i, bay in enumerate(order):
+            s = summaries[bay]
+            aisle, where = bay_title(bay)
+            with st.container(key=f"{'rowtop' if i == 0 else 'rowline'}-{bay}"):
+                c_img, c_info, c_score, c_money, c_todo, c_go = st.columns([1.5, 3.2, 1.1, 1.5, 0.9, 1.2], vertical_alignment="center")
+                with c_img.container(key=f"thumb-{bay}"):
+                    st.image(s["image"], width="stretch")
+                c_info.html(f'<div class="ss-t2">{html.escape(aisle)}</div><div class="ss-meta">{where}</div>'
+                            f'<div class="ss-chips">{"".join(s["chips"])}</div>')
+                c_score.html(ring(s["score"], 68))
+                c_money.html(f'<div class="ss-label">At stake</div><div class="ss-fig ss-num">{s["currency"]} {s["money"]:.2f}</div>')
+                c_todo.html(f'<div class="ss-label">To-dos</div><div class="ss-fig-s ss-num">{s["todo"]}</div>')
+                if c_go.button("Open", key=f"open-{bay}", type="primary" if i == 0 else "secondary",
+                               icon=":material/arrow_forward:", icon_position="right", width="stretch"):
+                    go("shelf", bay)
+                    st.rerun()
+
+    with st.container(border=True, key="sheet-scan"):
+        a, b = st.columns([5, 1.2], vertical_alignment="center")
+        a.html('<div class="ss-t2">No plan for a shelf?</div>'
+               '<div class="ss-meta">Check any shop photo for empty space and get a refill list.</div>')
+        if b.button("Check a photo", key="open-scan", icon=":material/photo_camera:", width="stretch"):
             go("scan")
             st.rerun()
 
@@ -320,15 +393,17 @@ def view_home(bays: list[str]) -> None:
 
 def view_shelf(bay: str | None, files: tuple[str, str, str] | None = None) -> None:
     """A demo bay (bay) or, in developer mode, any files (detection, planogram, catalogue)."""
+    run = False
     if bay is not None:
-        if st.button("← All shelves", key="back", type="tertiary"):
+        if st.button("All shelves", key="back", type="tertiary", icon=":material/arrow_back:"):
             go("home")
             st.rerun()
         aisle, where = bay_title(bay)
-        st.markdown(f"### {aisle}")
-        st.caption(f"{where} · a real supermarket photo from a store the models never saw")
-        plan = plan_switch("plan-shelf", with_edit=True)
-        st.caption(PLAN_HELP[plan])
+        c_title, c_plan, c_check = st.columns([2.2, 2.4, 1.4], vertical_alignment="bottom")
+        c_title.html(f'<h1 class="ss-h1">{html.escape(aisle)}</h1>'
+                     f'<div class="ss-meta">{where} · a real supermarket photo from a store the models never saw</div>')
+        with c_plan:
+            plan = plan_switch("plan-shelf", with_edit=True)
         det_path, pg_path, cat_path = bay_files(bay, plan)
     else:
         plan, (det_path, pg_path, cat_path) = "compliant", files
@@ -337,47 +412,49 @@ def view_shelf(bay: str | None, files: tuple[str, str, str] | None = None) -> No
     catalogue = load_catalogue(ROOT / cat_path)
     base_score = None
 
-    if bay is not None and plan == EDIT:
-        planogram, base_score, det = plan_editor(bay, planogram, catalogue, det)
-
     if bay is not None:
         photo, _ = live.bay_photo(BAYS / bay)
+        with c_plan:
+            st.html(f'<div class="ss-help">{PLAN_HELP[plan]}</div>')
+        if plan == EDIT:
+            planogram, base_score, det = plan_editor(bay, planogram, catalogue, det)
         live_key = f"live-{bay}-{plan}-{hashlib.md5(planogram.model_dump_json().encode()).hexdigest()[:10]}"
-        with st.container(border=True, key="card-read"):
-            if not live.available():
-                st.info("Checking live needs the product index and the detectors in `models/`; showing the saved check of this photo.")
-            else:
-                b, t = st.columns([2, 3], vertical_alignment="center")
-                run = b.button("Check the shelf now", key=f"run-{live_key}", type="primary", icon=":material/photo_camera:")
-                result = st.session_state.get(live_key)
-                if result is not None:
-                    t.html(chip(f"Checked live in {result.total:.1f} s on this laptop's {'GPU' if result.device == 'cuda' else 'CPU'}", "ok"))
-                elif plan != EDIT:
-                    t.toggle("Show the saved check", key="show-saved",
-                             help="The result of an earlier check of the same photo; checking now gives the same result.")
-                if run:
-                    with st.status("Checking the shelf...", expanded=True) as status:
-                        def on_stage(stage: str, seconds: float) -> None:
-                            status.write(f"✓ {STAGES.get(stage, stage)} · {seconds:.2f} s")
-
-                        result = load_chain().run(
-                            photo, planogram, read_prices=live.prices_available(), on_stage=on_stage,
-                            shown_path=str(photo.relative_to(ROOT)) if photo.is_relative_to(ROOT) else photo.name,
-                        )
-                        st.session_state[live_key] = result
-                        status.update(label=f"Checked in {result.total:.1f} s", state="complete", expanded=False)
-                    st.rerun()
         result = st.session_state.get(live_key)
+        with c_check:
+            if not live.available():
+                st.html('<div class="ss-help">Checking live needs the product index and the detectors in models/; '
+                        "this is the saved check of the photo.</div>")
+            else:
+                run = st.button("Check the shelf now", key=f"run-{live_key}", type="primary",
+                                icon=":material/photo_camera:", width="stretch")
+                if result is not None:
+                    st.html(chip(f"Checked live in {result.total:.1f} s on this laptop's "
+                                 f"{'GPU' if result.device == 'cuda' else 'CPU'}", "ok"))
+                elif plan != EDIT:
+                    st.toggle("Show the saved check", key="show-saved",
+                              help="The result of an earlier check of the same photo; checking now gives the same result.")
+        if run:
+            with st.status("Checking the shelf...", expanded=True) as status:
+                def on_stage(stage: str, seconds: float) -> None:
+                    status.write(f":material/check_circle: {STAGES.get(stage, stage)} · {seconds:.2f} s")
+
+                result = load_chain().run(
+                    photo, planogram, read_prices=live.prices_available(), on_stage=on_stage,
+                    shown_path=str(photo.relative_to(ROOT)) if photo.is_relative_to(ROOT) else photo.name,
+                )
+                st.session_state[live_key] = result
+                status.update(label=f"Checked in {result.total:.1f} s", state="complete", expanded=False)
+            st.rerun()
         if result is not None:
             det = result.det
         elif plan != EDIT and live.available() and not st.session_state.get("show-saved"):
-            left, right = st.columns([1.35, 1])
-            with left.container(border=True, key="card-photo"):
+            left, right = st.columns([1.2, 1], gap="medium")
+            with left.container(border=True, key="sheet-photo"):
                 st.image(shown(Image.open(BAYS / bay / "photo.jpg")), width="stretch")
-            with right.container(border=True, key="card-plan"):
-                st.markdown("**The plan for this shelf**")
+            with right.container(border=True, key="sheet-plan"):
+                st.html('<div class="ss-t2">The plan for this shelf</div>')
                 st.html(plan_html(planogram, catalogue, None, None))
-                st.caption("Press **Check the shelf now** to compare the photo with it.")
+                st.html('<div class="ss-help">Press <b>Check the shelf now</b> to compare the photo with it.</div>')
             return
 
     report = compute_report(det, planogram, catalogue, group_items=True)
@@ -399,36 +476,40 @@ def view_shelf(bay: str | None, files: tuple[str, str, str] | None = None) -> No
     done_slots = {v.slot_id for v in report.violations if v.violation_id in done_ids} - {v.slot_id for v in open_}
     fixed = sum(stake.get(v, 0.0) for v in done_ids)
 
-    left, right = st.columns([1.35, 1])
-    with left.container(border=True, key="card-photo"):
+    left, right = st.columns([1.2, 1], gap="medium")
+    with left.container(border=True, key="sheet-photo"):
         photo_path = ROOT / det.image_path
         base = Image.open(photo_path) if photo_path.exists() else Image.new("RGB", (det.image_width, det.image_height), "white")
         expected = {s.slot_id: s.sku for sh in planogram.shelves for s in sh.slots}
         st.image(shown(draw_audit(base, det, report, expected, label_notes(price_issues), focus_slots)), width="stretch")
         st.html(
-            f'<div class="ss-muted">{chip("right product", "ok")} {chip("wrong product", "bad")} '
-            f'{chip("not recognised / check", "check")} {chip("price label", "label")} · red fill = empty space'
-            + (" · the photo shows the shelf as checked" if done_steps else "") + "</div>"
+            f'<div class="ss-legend">{chip("right product", "ok")}{chip("wrong product", "bad")}'
+            f'{chip("not recognised", "check")}{chip("price label", "label")}<span>Red fill: empty space</span>'
+            + ("<span>The photo shows the shelf as it was checked.</span>" if done_steps else "") + "</div>"
         )
     with right:
-        with st.container(border=True, key="card-score"):
-            r, m1, m2 = st.columns([1.1, 1.3, 1], vertical_alignment="center")
-            change = "" if base_score is None else f" · {report.score - base_score:+.0f} vs current plan"
+        with st.container(border=True, key="sheet-score"):
+            g, m1, m2 = st.columns([1.25, 1.35, 0.9], vertical_alignment="center")
+            change = "" if base_score is None else f"{report.score - base_score:+.0f} vs current plan"
             if done_steps:
-                change += f" · checked {report.score:.0f}, {after.score - report.score:+.0f} with {len(done_steps)} done"
-            r.html(ring(after.score, 92) + f'<div class="ss-muted" style="margin-top:4px">Shelf score{change}</div>')
-            m1.metric("Money at stake", f"{money} {sum(stake.values()) - fixed:.2f}".strip(),
-                      delta=f"-{(money + ' ') if money else ''}{fixed:.2f} done" if fixed else None, delta_color="inverse",
-                      help="Missing packs times their price, plus wrong prices times the packs they apply to. An estimate for putting work in order.")
-            m2.metric("To-dos", len(steps) - len(done_steps),
-                      delta=f"-{len(done_steps)} done" if done_steps else None, delta_color="inverse")
-        with st.container(border=True, key="card-plan"):
-            st.markdown("**The plan for this shelf**")
+                change = (change + " · " if change else "") + \
+                    f"checked {report.score:.0f}, {after.score - report.score:+.0f} with {len(done_steps)} done"
+            g.html(f'<div class="ss-gauge">{ring(after.score, 84)}<div><div class="ss-label">Shelf score</div>'
+                   f'<div class="ss-help">{change or "out of 100"}</div></div></div>')
+            with m1.container(key="metric-money"):
+                st.metric("Money at stake", f"{money} {sum(stake.values()) - fixed:.2f}".strip(),
+                          delta=f"-{(money + ' ') if money else ''}{fixed:.2f} done" if fixed else None,
+                          delta_color="inverse", help=STAKE_HELP)
+            with m2.container(key="metric-todo"):
+                st.metric("To-dos", len(steps) - len(done_steps),
+                          delta=f"-{len(done_steps)} done" if done_steps else None, delta_color="inverse")
+        with st.container(border=True, key="sheet-plan"):
+            st.html('<div class="ss-t2">The plan for this shelf</div>')
             st.html(plan_html(planogram, catalogue, det, after, focus_slots, done_slots))
+        with st.container(border=True, key="sheet-todos"):
+            todo_list(steps, report, stake, money, done_key, fixed)
 
-    todo, prices, summary, details = st.tabs(["To-do list", "Prices", "Shift summary", "Details"])
-    with todo:
-        todo_list(steps, report, stake, money, done_key, fixed)
+    prices, summary, details = st.tabs(["Prices", "Shift summary", "Details"])
     with prices:
         price_list(det, catalogue, price_issues, base)
     with summary:
@@ -445,8 +526,8 @@ def plan_editor(bay, shelf_plan, catalogue, det):
     original = plan_rows(shelf_plan)
     names = {sku: f"{c.name} ({sku})" for sku, c in sorted(catalogue.items())}
     to_sku = {label: sku for sku, label in names.items()}
-    with st.container(border=True, key="card-edit"):
-        st.markdown("**Change the plan**")
+    with st.container(border=True, key="sheet-edit"):
+        st.html('<div class="ss-t2">Change the plan</div>')
         table = pd.DataFrame(st.session_state[rows_key])
         table["product"] = table["sku"].map(names).fillna(table["sku"])
         editor = st.data_editor(
@@ -467,17 +548,18 @@ def plan_editor(bay, shelf_plan, catalogue, det):
         c1, c2, c3, c4 = st.columns(4, vertical_alignment="bottom")
         a = c1.selectbox("Swap this slot", slots, index=0, key=f"swap-a-{bay}")
         b = c2.selectbox("with this slot", slots, index=min(1, len(slots) - 1), key=f"swap-b-{bay}")
-        if c3.button("Swap their products", disabled=a == b, width="stretch"):
+        if c3.button("Swap their products", disabled=a == b, icon=":material/swap_horiz:", width="stretch"):
             st.session_state[rows_key] = swap_products(rows, a, b)
             st.session_state[ver_key] += 1
             st.rerun()
-        if c4.button("Reset to the shelf's plan", width="stretch"):
+        if c4.button("Reset to the shelf's plan", icon=":material/restart_alt:", width="stretch"):
             st.session_state[rows_key] = original
             st.session_state[ver_key] += 1
             st.rerun()
         planogram = apply_rows(shelf_plan, rows)
         edits = changes(original, rows)
-        st.caption(f"{len(edits)} change{'s' if len(edits) != 1 else ''}" + (": " + "; ".join(edits) if edits else ". The photo stays the same."))
+        st.html(f'<div class="ss-help">{plural(len(edits), "change")}'
+                + (": " + html.escape("; ".join(edits)) if edits else ". The photo stays the same.") + "</div>")
     # labels sit under the same slots, which now expect the edited products (a swap leaves each label under the other product)
     det = det.model_copy(update={"labels": assign_labels_to_slots(det.labels, det, planogram)})
     base_score = compute_report(
@@ -487,54 +569,57 @@ def plan_editor(bay, shelf_plan, catalogue, det):
 
 
 def todo_list(steps, report, stake, money, done_key: str, fixed: float) -> None:
+    st.html('<div class="ss-t2">To-do list</div>')
     if not steps:
-        st.success("Nothing to do: the shelf matches the plan.")
+        st.success("Nothing to do: the shelf matches the plan.", icon=":material/check_circle:")
         return
     n_done = sum(bool(st.session_state.get(f"{done_key}-{k}")) for k in range(1, len(steps) + 1))
     total = sum(stake.values())
     st.progress(n_done / len(steps), text=f"{n_done} of {len(steps)} done" + (f" · {money} {fixed:.2f} of {total:.2f} sorted" if total else ""))
     if n_done == len(steps):
-        st.success("All done. Press **Check the shelf now** with a new photo to confirm the shelf matches the plan.")
+        st.success("All done. Check the shelf again with a new photo to confirm it matches the plan.", icon=":material/task_alt:")
     slots_of = {v.violation_id: v.slot_id for v in report.violations}
     focus = st.session_state.get("focus")
-    if focus:
-        if st.button(f"Showing to-do {focus[0]} on the photo. Show everything", key="focus-clear", type="tertiary"):
-            st.session_state.pop("focus", None)
-            st.rerun()
+    if focus and st.button(f"Showing to-do {focus[0]} on the photo and plan. Show everything", key="focus-clear",
+                           type="tertiary", icon=":material/close:"):
+        st.session_state.pop("focus", None)
+        st.rerun()
     for k, step in enumerate(steps, 1):
         value = sum(stake.get(v, 0.0) for v in step.violation_ids)
         slots = sorted({slots_of[v] for v in step.violation_ids if slots_of.get(v)})
-        with st.container(border=True, key=f"card-todo-{k}"):
-            c0, c1, c2 = st.columns([0.5, 8, 2.2], vertical_alignment="center")
-            done = c0.checkbox("done", key=f"{done_key}-{k}", label_visibility="collapsed")
-            text = html.escape(step.text)
-            c1.html(f'<div class="ss-big{" ss-done" if done else ""}"><b>{k}.</b> {text}</div>'
-                    + (f'<div style="margin-top:4px">{chip(f"{money} {value:.2f} at stake", "bad")}</div>' if value else ""))
-            if slots and c2.button("Show on photo", key=f"show-{k}", width="stretch", icon=":material/center_focus_strong:"):
+        with st.container(key=f"{'rowtop' if k == 1 else 'rowline'}-todo-{k}"):
+            c0, c1, c2 = st.columns([0.35, 6, 1.5], vertical_alignment="top")
+            done = c0.checkbox("Done", key=f"{done_key}-{k}", label_visibility="collapsed")
+            c1.html(f'<div class="ss-todo{" ss-done" if done else ""}"><b>{k}.</b> {html.escape(step.text)}</div>'
+                    + (f'<div class="ss-chips">{chip(f"{money} {value:.2f} at stake", "bad", with_icon=False)}</div>' if value else ""))
+            if slots and c2.button("Show", key=f"show-{k}", type="tertiary", icon=":material/center_focus_strong:",
+                                   help="Show this to-do's slots on the photo and the plan"):
                 st.session_state["focus"] = (k, slots)
                 st.rerun()
 
 
 def price_list(det, catalogue, price_issues, photo: Image.Image) -> None:
     if not det.labels:
-        st.info("No price labels were read on this photo.")
+        st.info("No price labels were read on this photo.", icon=":material/info:")
         return
     notes = label_notes(price_issues)
-    for lb in det.labels:
-        text, key = notes.get(lb.label_id, (f"{lb.price:.2f}" if lb.price is not None else "?", "label"))
-        item = catalogue.get(lb.sku) if lb.sku else None
-        with st.container(border=True, key=f"card-label-{lb.label_id}"):
-            c0, c1 = st.columns([1, 3], vertical_alignment="center")
-            c0.image(photo.crop(tuple(int(v) for v in lb.bbox)).convert("RGB"), width="stretch")
-            verdict = {"bad": "wrong price", "check": "check by eye", "label": "price is right"}[key]
-            read = f"Label reads <b>{lb.price:.2f}</b>" if lb.price is not None else "Label could not be read"
-            where = (f"{html.escape(item.name)} in {lb.slot_id} · price list {item.price:.2f}" if item
-                     else "not under a product in the plan")
-            c1.html(
-                f'<div class="ss-big">{read}</div><div class="ss-muted">{where}</div>'
-                f'<div style="margin-top:6px">{chip(verdict, key)}</div>'
-            )
-    st.caption("A price is called wrong only when the text readers are confident; otherwise the label is marked to check by eye.")
+    with st.container(border=True, key="sheet-prices"):
+        for i, lb in enumerate(det.labels):
+            text, key = notes.get(lb.label_id, (f"{lb.price:.2f}" if lb.price is not None else "?", "label"))
+            item = catalogue.get(lb.sku) if lb.sku else None
+            with st.container(key=f"{'rowtop' if i == 0 else 'rowline'}-label-{lb.label_id}"):
+                c0, c1, c2 = st.columns([1.1, 3, 1.4], vertical_alignment="center")
+                with c0.container(key=f"thumb-label-{lb.label_id}"):
+                    st.image(photo.crop(tuple(int(v) for v in lb.bbox)).convert("RGB"), width="stretch")
+                read = (f'Label reads <span class="ss-code">{lb.price:.2f}</span>' if lb.price is not None
+                        else "The label could not be read")
+                where = (f'{html.escape(item.name)} in <span class="ss-code">{lb.slot_id}</span> · price list '
+                         f'<span class="ss-code">{item.price:.2f}</span>' if item else "Not under a product in the plan")
+                c1.html(f'<div class="ss-t2">{read}</div><div class="ss-meta">{where}</div>')
+                verdict = {"bad": "Wrong price", "check": "Check by eye", "label": "Price is right"}[key]
+                c2.html(chip(verdict, key))
+    st.html('<div class="ss-help">A price is called wrong only when the text readers are confident; '
+            "otherwise the label is marked to check by eye.</div>")
 
 
 def shift_summary(report, cat_path: str) -> None:
@@ -545,15 +630,16 @@ def shift_summary(report, cat_path: str) -> None:
     )
     with st.spinner("Writing the summary..."):
         briefing = cached_briefing(report.model_dump_json(), cat_path, use_slm)
-    with st.container(border=True, key="card-summary"):
-        st.markdown(f"<div class='ss-big'>{html.escape(briefing.summary)}</div>", unsafe_allow_html=True)
-    if briefing.summary_source == "slm":
-        st.html(chip(f"Written by the model in {briefing.seconds:.1f} s and checked: right slots, right problems, no invented numbers", "ok"))
-    elif briefing.rejected_summary:
-        st.html(chip("The model got a detail wrong, so the checked template is shown", "check"))
-        st.caption(f"The model wrote: “{briefing.rejected_summary}”")
-    st.caption("The to-do list is always built by rules. The model only writes these two lines, and a checker rejects them "
-               "if they name a wrong slot, a wrong problem or a number that is not in the report.")
+    with st.container(border=True, key="sheet-summary"):
+        st.html(f'<p class="ss-summary">{html.escape(briefing.summary)}</p>')
+        if briefing.summary_source == "slm":
+            st.html(chip(f"Written by the model in {briefing.seconds:.1f} s and checked: right slots, right problems, "
+                         "no invented numbers", "ok"))
+        elif briefing.rejected_summary:
+            st.html(chip("The model got a detail wrong, so the checked template is shown", "check"))
+            st.html(f'<div class="ss-help">The model wrote: “{html.escape(briefing.rejected_summary)}”</div>')
+    st.html('<div class="ss-help">The to-do list is always built by rules. The model only writes these two lines, and a '
+            "checker rejects them if they name a wrong slot, a wrong problem or a number that is not in the report.</div>")
 
 
 def details_tab(det, planogram, catalogue, report, stake) -> None:
@@ -582,8 +668,10 @@ def details_tab(det, planogram, catalogue, report, stake) -> None:
             hide_index=True, width="stretch",
         )
     d1, d2 = st.columns(2)
-    d1.download_button("Download report (JSON)", report_to_json(report), f"{det.image_id}_report.json", "application/json", width="stretch")
-    d2.download_button("Download findings (CSV)", violations_to_csv(report), f"{det.image_id}_findings.csv", "text/csv", width="stretch")
+    d1.download_button("Download report (JSON)", report_to_json(report), f"{det.image_id}_report.json", "application/json",
+                       icon=":material/download:", width="stretch")
+    d2.download_button("Download findings (CSV)", violations_to_csv(report), f"{det.image_id}_findings.csv", "text/csv",
+                       icon=":material/download:", width="stretch")
     with st.expander("Raw reading of the photo (JSON)"):
         st.json(det.model_dump())
 
@@ -606,16 +694,19 @@ with st.sidebar:
             pg_path = st.text_input("Planogram", "", placeholder=default_pg) or default_pg
             cat_path = st.text_input("Catalogue", "", placeholder=default_cat) or default_cat
 
-app_bar()
 view = st.session_state.get("view", "home")
 if developer:
+    app_bar("Developer inputs")
     view_shelf(None, (det_path, pg_path, cat_path))
 elif view == "scan":
-    if st.button("← All shelves", key="back", type="tertiary"):
+    app_bar("Check a photo")
+    if st.button("All shelves", key="back", type="tertiary", icon=":material/arrow_back:"):
         go("home")
         st.rerun()
     runpy.run_path(str(ROOT / "app" / "views" / "availability.py"))
 elif view == "shelf" and st.session_state.get("bay") in bays:
+    app_bar("Today's shelf check")
     view_shelf(st.session_state["bay"])
 else:
+    app_bar("Today's shelf check")
     view_home(bays)

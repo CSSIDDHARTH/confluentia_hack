@@ -29,15 +29,16 @@ def open_shelf(at, bay: str, plan: str, saved: bool = True):
     return at
 
 
-def test_home_shows_one_card_per_shelf_on_both_plans(monkeypatch):
+def test_home_lists_every_shelf_on_both_plans(monkeypatch):
     at = app(monkeypatch)
     assert not at.exception
-    assert [m.label for m in at.metric] == ["Shelves checked", "Money at stake", "To-dos"]
+    assert any("Today's shelf check" in h.value for h in at.html)
     current = scores(at)
     assert len(current) == len(BAYS)
     at.segmented_control(key="plan-home").set_value("scenario").run()
     assert not at.exception
     assert sum(scores(at)) < sum(current)  # head office's new plan does not match the shelves yet
+    assert any("needs you first" in h.value for h in at.html)  # the finding line names the shelf to start with
 
 
 def test_every_shelf_and_plan_renders(monkeypatch):
@@ -47,7 +48,8 @@ def test_every_shelf_and_plan_renders(monkeypatch):
             at = open_shelf(app(monkeypatch), bay, plan)
             assert not at.exception, (bay, plan)
             assert len(scores(at)) == 1, (bay, plan)
-            assert [t.label for t in at.tabs] == ["To-do list", "Prices", "Shift summary", "Details"]
+            assert [t.label for t in at.tabs] == ["Prices", "Shift summary", "Details"]
+            assert any("To-do list" in h.value for h in at.html)
             assert [m.label for m in at.metric] == ["Money at stake", "To-dos"]
 
 
@@ -65,7 +67,7 @@ def test_before_a_check_only_the_photo_and_the_plan_are_shown(monkeypatch):
 def test_back_and_scan_navigation(monkeypatch):
     at = open_shelf(app(monkeypatch), BAYS[0], "compliant")
     at.button(key="back").click().run()
-    assert [m.label for m in at.metric][:1] == ["Shelves checked"]
+    assert len(scores(at)) == len(BAYS)
     at.button(key="open-scan").click().run()
     assert not at.exception and any(m.label == "Overall fill" for m in at.metric)
 
@@ -104,7 +106,7 @@ def test_ticking_to_dos_updates_the_score_the_money_and_the_plan(monkeypatch):
     assert not at.exception
     assert scores(at)[0] > before and at.metric[0].value != money
     assert int(at.metric[1].value) == len(todos) - 1
-    assert any("done ✓" in h.value for h in at.html)
+    assert any('data-status="done"' in h.value for h in at.html)
     for c in [c for c in at.checkbox if (c.key or "").startswith("done-")]:
         c.set_value(True)
     at.run()
