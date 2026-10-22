@@ -31,3 +31,6 @@ outputs/
 .DS_Store
 .claude/
 runs/
+!models/label_det/
+!models/label_det/weights/
+!models/label_det/weights/best.pt
