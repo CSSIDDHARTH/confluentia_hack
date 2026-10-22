@@ -26,7 +26,7 @@ from shelfsense.pricing.label_assign import assign_labels_to_slots
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
 from shelfsense.report.briefing import DEFAULT_MODEL as SLM_MODEL
 from shelfsense.report.briefing import write_briefing
-from shelfsense.report.compliance import ComplianceReport, compute_report
+from shelfsense.report.compliance import WEIGHTS, ComplianceReport, compute_report
 from shelfsense.report.export import report_to_json, violations_to_csv
 from shelfsense.report.impact import at_stake, currency
 from shelfsense.vision import live
@@ -112,9 +112,13 @@ def chip(text: str, key: str) -> str:
     return f'<span class="ss-chip" style="background:{bg};color:{fg}">{html.escape(text)}</span>'
 
 
-def plan_html(planogram, catalogue, det: DetectionOutput | None, report: ComplianceReport | None, highlight: set[str] | None = None) -> str:
+def plan_html(
+    planogram, catalogue, det: DetectionOutput | None, report: ComplianceReport | None,
+    highlight: set[str] | None = None, done: set[str] | None = None,
+) -> str:
     """The plan shelf by shelf, top first: one tile per slot, as wide as its planned facings, coloured by what the
-    photo shows there (grey before the photo is read). Price problems get a note on the tile."""
+    photo shows there (grey before the photo is read). Price problems get a note on the tile. `done`: slots whose
+    problems were all ticked off on the to-do list."""
     status = slot_status(report) if report else {}
     price_note: dict[str, str] = {}
     for v in report.violations if report else []:
@@ -128,7 +132,9 @@ def plan_html(planogram, catalogue, det: DetectionOutput | None, report: Complia
         for slot in shelf.slots:
             item = catalogue.get(slot.sku)
             name = html.escape(item.name if item else slot.sku)
-            key, words = ("unread", "not checked yet") if report is None else status.get(slot.slot_id, ("ok", "as planned"))
+            key, words = ("unread", "not checked yet") if report is None else status.get(
+                slot.slot_id, ("ok", "done \u2713" if done and slot.slot_id in done else "as planned")
+            )
             bg, fg = TONAL[key]
             seen = "" if det is None or report is None else (
                 f" · {sum(i.slot_id == slot.slot_id and i.sku == slot.sku for i in det.items)} seen"
@@ -382,6 +388,17 @@ def view_shelf(bay: str | None, files: tuple[str, str, str] | None = None) -> No
     focus = st.session_state.get("focus")
     focus_slots = set(focus[1]) if focus else None
 
+    # to-dos ticked off: their findings count as fixed in the score, the money and the plan (the photo stays as checked)
+    done_key = f"done-{hashlib.md5(det_path.encode()).hexdigest()[:6]}"
+    done_steps = [k for k in range(1, len(steps) + 1) if st.session_state.get(f"{done_key}-{k}")]
+    done_ids = {v for k in done_steps for v in steps[k - 1].violation_ids}
+    open_ = [v for v in report.violations if v.violation_id not in done_ids]
+    after = report.model_copy(update={
+        "violations": open_, "score": round(max(0.0, 100.0 - sum(WEIGHTS[v.kind] for v in open_)), 1),
+    })
+    done_slots = {v.slot_id for v in report.violations if v.violation_id in done_ids} - {v.slot_id for v in open_}
+    fixed = sum(stake.get(v, 0.0) for v in done_ids)
+
     left, right = st.columns([1.35, 1])
     with left.container(border=True, key="card-photo"):
         photo_path = ROOT / det.image_path
@@ -390,23 +407,28 @@ def view_shelf(bay: str | None, files: tuple[str, str, str] | None = None) -> No
         st.image(shown(draw_audit(base, det, report, expected, label_notes(price_issues), focus_slots)), width="stretch")
         st.html(
             f'<div class="ss-muted">{chip("right product", "ok")} {chip("wrong product", "bad")} '
-            f'{chip("not recognised / check", "check")} {chip("price label", "label")} · red fill = empty space</div>'
+            f'{chip("not recognised / check", "check")} {chip("price label", "label")} · red fill = empty space'
+            + (" · the photo shows the shelf as checked" if done_steps else "") + "</div>"
         )
     with right:
         with st.container(border=True, key="card-score"):
             r, m1, m2 = st.columns([1.1, 1.3, 1], vertical_alignment="center")
             change = "" if base_score is None else f" · {report.score - base_score:+.0f} vs current plan"
-            r.html(ring(report.score, 92) + f'<div class="ss-muted" style="margin-top:4px">Shelf score{change}</div>')
-            m1.metric("Money at stake", f"{money} {sum(stake.values()):.2f}".strip(),
+            if done_steps:
+                change += f" · checked {report.score:.0f}, {after.score - report.score:+.0f} with {len(done_steps)} done"
+            r.html(ring(after.score, 92) + f'<div class="ss-muted" style="margin-top:4px">Shelf score{change}</div>')
+            m1.metric("Money at stake", f"{money} {sum(stake.values()) - fixed:.2f}".strip(),
+                      delta=f"-{(money + ' ') if money else ''}{fixed:.2f} done" if fixed else None, delta_color="inverse",
                       help="Missing packs times their price, plus wrong prices times the packs they apply to. An estimate for putting work in order.")
-            m2.metric("To-dos", len(steps))
+            m2.metric("To-dos", len(steps) - len(done_steps),
+                      delta=f"-{len(done_steps)} done" if done_steps else None, delta_color="inverse")
         with st.container(border=True, key="card-plan"):
             st.markdown("**The plan for this shelf**")
-            st.html(plan_html(planogram, catalogue, det, report, focus_slots))
+            st.html(plan_html(planogram, catalogue, det, after, focus_slots, done_slots))
 
     todo, prices, summary, details = st.tabs(["To-do list", "Prices", "Shift summary", "Details"])
     with todo:
-        todo_list(steps, report, stake, money, det_path)
+        todo_list(steps, report, stake, money, done_key, fixed)
     with prices:
         price_list(det, catalogue, price_issues, base)
     with summary:
@@ -464,10 +486,15 @@ def plan_editor(bay, shelf_plan, catalogue, det):
     return planogram, base_score, det
 
 
-def todo_list(steps, report, stake, money, key: str) -> None:
+def todo_list(steps, report, stake, money, done_key: str, fixed: float) -> None:
     if not steps:
         st.success("Nothing to do: the shelf matches the plan.")
         return
+    n_done = sum(bool(st.session_state.get(f"{done_key}-{k}")) for k in range(1, len(steps) + 1))
+    total = sum(stake.values())
+    st.progress(n_done / len(steps), text=f"{n_done} of {len(steps)} done" + (f" · {money} {fixed:.2f} of {total:.2f} sorted" if total else ""))
+    if n_done == len(steps):
+        st.success("All done. Press **Check the shelf now** with a new photo to confirm the shelf matches the plan.")
     slots_of = {v.violation_id: v.slot_id for v in report.violations}
     focus = st.session_state.get("focus")
     if focus:
@@ -479,7 +506,7 @@ def todo_list(steps, report, stake, money, key: str) -> None:
         slots = sorted({slots_of[v] for v in step.violation_ids if slots_of.get(v)})
         with st.container(border=True, key=f"card-todo-{k}"):
             c0, c1, c2 = st.columns([0.5, 8, 2.2], vertical_alignment="center")
-            done = c0.checkbox("done", key=f"done-{hashlib.md5(key.encode()).hexdigest()[:6]}-{k}", label_visibility="collapsed")
+            done = c0.checkbox("done", key=f"{done_key}-{k}", label_visibility="collapsed")
             text = html.escape(step.text)
             c1.html(f'<div class="ss-big{" ss-done" if done else ""}"><b>{k}.</b> {text}</div>'
                     + (f'<div style="margin-top:4px">{chip(f"{money} {value:.2f} at stake", "bad")}</div>' if value else ""))

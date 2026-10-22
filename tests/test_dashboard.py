@@ -92,3 +92,21 @@ def test_live_check_with_prices_reproduces_the_saved_audit(monkeypatch):
     assert not at.exception
     assert any("Checked live in" in h.value for h in at.html)
     assert scores(at) == saved
+
+
+def test_ticking_to_dos_updates_the_score_the_money_and_the_plan(monkeypatch):
+    at = app(monkeypatch)
+    at.segmented_control(key="plan-home").set_value("scenario").run()
+    at = open_shelf(at, "store4_9", "scenario")
+    before, money = scores(at)[0], at.metric[0].value
+    todos = [c for c in at.checkbox if (c.key or "").startswith("done-")]
+    todos[0].set_value(True).run()
+    assert not at.exception
+    assert scores(at)[0] > before and at.metric[0].value != money
+    assert int(at.metric[1].value) == len(todos) - 1
+    assert any("done ✓" in h.value for h in at.html)
+    for c in [c for c in at.checkbox if (c.key or "").startswith("done-")]:
+        c.set_value(True)
+    at.run()
+    assert scores(at)[0] == 100 and int(at.metric[1].value) == 0
+    assert any(s.value.startswith("All done") for s in at.success)
