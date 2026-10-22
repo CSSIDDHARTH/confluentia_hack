@@ -10,30 +10,45 @@ from shelfsense.report.compliance import ComplianceReport, ViolationKind
 from shelfsense.vision.availability import AvailabilityReport
 
 
+# The dashboard shows photos shrunk to fit this box; tags and lines are sized for that, not for the original.
+SHOWN_BOX = (1100, 760)
+
+
+def _shown_scale(im: Image.Image) -> float:
+    """Original pixels per on-screen pixel when the photo is shown in SHOWN_BOX (at least 1)."""
+    return max(1.0, im.width / SHOWN_BOX[0], im.height / SHOWN_BOX[1])
+
+
 def draw_availability(
     im: Image.Image, det: DetectionOutput, report: AvailabilityReport, footer: bool = True
 ) -> Image.Image:
     """Packs outlined green, empty spaces filled red with 'EMPTY ~n', per-row fill % at each row's left
     edge (red when low stock) and, if footer, the replenishment actions under the photo."""
     im = im.convert("RGB")
-    lw = max(2, im.width // 700)
+    k = _shown_scale(im)
+    lw = max(2, round(2 * k))
     overlay = Image.new("RGBA", im.size, (0, 0, 0, 0))
     od = ImageDraw.Draw(overlay)
     for g in det.gaps:
         od.rectangle(g.bbox, fill=(217, 48, 37, 80), outline=(234, 67, 53, 255), width=lw + 2)
     im = Image.alpha_composite(im.convert("RGBA"), overlay).convert("RGB")
     d = ImageDraw.Draw(im)
-    font = _font(max(16, im.width // 60))
+    font = _font(round(16 * k))  # about 16 px on screen
     pad = max(4, font.size // 3)
     for it in det.items:
         d.rectangle(it.bbox, outline=_PACK_OUTLINE["ok"], width=lw)
-    for g in det.gaps:
-        _tag(d, (g.bbox[0] + lw, g.bbox[1] + lw), f"EMPTY ~{g.estimated_missing_facings}", "bad", font, pad)
+    # each shelf row: a bar down the photo's left edge over the row's height, and a badge with its name and fill
     shelf = {s.shelf_id: s for s in det.shelves}
+    bar = max(6, round(7 * k))
+    taken: list[list[float]] = []
     for r in report.rows:
-        _, y1, _, _ = shelf[r.shelf_id].bbox
-        _tag(d, (8, y1 + 4), f"{r.shelf_id}: {r.fill_ratio:.0%} full" + ("  LOW" if r.low_stock else ""),
-             "bad" if r.low_stock else "ok", font, pad)
+        _, y1, _, y2 = shelf[r.shelf_id].bbox
+        key = "bad" if r.low_stock else "ok"
+        d.rectangle((0, y1, bar, y2), fill=STATUS[key])
+        _tag(d, (bar + lw, y1 + lw), f"{r.shelf_id} · {r.fill_ratio:.0%} full" + (" · LOW" if r.low_stock else ""),
+             key, font, pad, taken, im.size)
+    for g in det.gaps:
+        _tag_centred(d, g.bbox, f"EMPTY ~{g.estimated_missing_facings}", "bad", font, pad, im.size, taken)
     if not footer:
         return im
 
@@ -151,14 +166,41 @@ def _font(size: int) -> ImageFont.ImageFont:
     return ImageFont.load_default(size=size)
 
 
-def _tag(d: ImageDraw.ImageDraw, xy: tuple[float, float], text: str, key: str, font, pad: int) -> list[float]:
-    """A rounded label with the status colour; returns its box."""
-    x, y = xy
-    _, _, r, b = d.textbbox((x + pad, y + pad), text, font=font)
-    box = [x, y, r + pad, b + pad]
+def _tag(
+    d: ImageDraw.ImageDraw, xy: tuple[float, float], text: str, key: str, font, pad: int,
+    taken: list[list[float]] | None = None, size: tuple[int, int] | None = None,
+) -> list[float]:
+    """A rounded label with the status colour; returns its box. With `taken` (boxes of tags already drawn) it
+    slides right of any tag in its way, or below it when there is no room, and is added to `taken`."""
+    l, t, r, b = d.textbbox((0, 0), text, font=font)
+    w, h = r - l + 2 * pad, b - t + 2 * pad
+    x0, (x, y) = xy[0], xy
+    for _ in range(40 if taken else 0):
+        hit = next((o for o in taken if x < o[2] and o[0] < x + w and y < o[3] and o[1] < y + h), None)
+        if hit is None:
+            break
+        if size is None or hit[2] + 2 + w <= size[0]:
+            x = hit[2] + 2
+        else:
+            x, y = x0, hit[3] + 2
+    if size is not None:
+        x, y = min(max(0, x), size[0] - w), min(max(0, y), size[1] - h)
+    box = [x, y, x + w, y + h]
     d.rounded_rectangle(box, radius=pad, fill=STATUS[key])
-    d.text((x + pad, y + pad), text, fill=_TAG_TEXT.get(key, (255, 255, 255)), font=font)
+    d.text((x + pad - l, y + pad - t), text, fill=_TAG_TEXT.get(key, (255, 255, 255)), font=font)
+    if taken is not None:
+        taken.append(box)
     return box
+
+
+def _tag_centred(
+    d: ImageDraw.ImageDraw, box: list[float], text: str, key: str, font, pad: int, size: tuple[int, int],
+    taken: list[list[float]] | None = None,
+) -> None:
+    """A tag in the middle of box (kept inside the photo, and clear of the tags in `taken`)."""
+    l, t, r, b = d.textbbox((0, 0), text, font=font)
+    w, h = r - l + 2 * pad, b - t + 2 * pad
+    _tag(d, ((box[0] + box[2]) / 2 - w / 2, (box[1] + box[3]) / 2 - h / 2), text, key, font, pad, taken, size)
 
 
 def draw_audit(
@@ -174,9 +216,10 @@ def draw_audit(
     price label tagged with what was read (label_notes: label_id -> (text, status key)).
     expected: slot_id -> the sku the plan puts there. highlight: slot ids to keep bright, the rest is faded."""
     im = im.convert("RGB")
-    lw = max(3, im.width // 400)
-    font = _font(max(18, im.width // 55))
-    pad = max(5, font.size // 3)
+    k = _shown_scale(im)
+    lw = max(2, round(2 * k))
+    font = _font(round(15 * k))  # about 15 px on screen
+    pad = max(4, font.size // 3)
 
     shade = Image.new("RGBA", im.size, (0, 0, 0, 0))
     sd = ImageDraw.Draw(shade)
@@ -188,10 +231,8 @@ def draw_audit(
     for it in det.items:
         key = "check" if it.sku is None else ("ok" if expected.get(it.slot_id) == it.sku else "bad")
         d.rectangle(it.bbox, outline=_PACK_OUTLINE[key], width=lw)
-    for g in det.gaps:
-        _tag(d, (g.bbox[0] + lw, g.bbox[1] + lw), f"EMPTY ~{g.estimated_missing_facings}", "bad", font, pad)
-
     status = slot_status(report)
+    taken: list[list[float]] = []
     regions: dict[str, list[float]] = {}  # each slot's area on the photo, for highlighting
     first: dict[str, list[float]] = {}
     for it in det.items:  # each slot's tag sits on its leftmost, highest pack
@@ -203,16 +244,19 @@ def draw_audit(
             first[it.slot_id] = it.bbox
     for slot_id, box in first.items():
         key, words = status.get(slot_id, ("ok", ""))
-        _tag(d, (box[0] + lw, box[1] + lw), f"{slot_id} {words}".strip(), key, font, pad)
+        _tag(d, (box[0] + lw, box[1] + lw), f"{slot_id} {words}".strip(), key, font, pad, taken, im.size)
 
     for lb in det.labels:
         text, key = label_notes.get(lb.label_id, (f"{lb.price:.2f}" if lb.price is not None else "?", "label"))
         d.rectangle(lb.bbox, outline=STATUS[key], width=lw)
         th = font.size + 2 * pad
-        tag = _tag(d, (lb.bbox[0], max(0, lb.bbox[1] - th - lw)), text, key, font, pad)
+        tag = _tag(d, (lb.bbox[0], max(0, lb.bbox[1] - th - lw)), text, key, font, pad, taken, im.size)
         if lb.slot_id:
             r = regions.setdefault(lb.slot_id, list(lb.bbox))
             r[:] = [min(r[0], tag[0]), min(r[1], tag[1]), max(r[2], lb.bbox[2]), max(r[3], lb.bbox[3])]
+
+    for g in det.gaps:
+        _tag_centred(d, g.bbox, f"EMPTY ~{g.estimated_missing_facings}", "bad", font, pad, im.size, taken)
 
     if highlight:
         faded = Image.blend(im, Image.new("RGB", im.size, (255, 255, 255)), 0.65)
