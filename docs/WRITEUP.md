@@ -21,7 +21,7 @@ photo -> product-block detector -> product naming -> align to planogram -> count
 6. **Read the price labels** with a YOLOv8n label detector (trained on Open Food Facts price tags), then vote on each price with seven Tesseract variants and EasyOCR. Boxes the photo's edge cuts off are skipped. Each label goes to the slot whose first facing it sits under. A label whose price differs from the catalogue is a price mismatch only when the OCR vote is confident (at least 0.5); otherwise staff are told to check it by eye.
 7. **Report**: a compliance score with each violation and a corrective action, the money at stake (missing packs times price, price gap times facings: an estimate for ordering work), and the violations merged into a few steps for staff.
 
-The demo does not depend on saved results: the shelf audit page and the "What to do" page have a **Run it live** button that reads the photo from scratch (all three detectors, naming, alignment and, on the audit page, the price labels) and reports the seconds each stage took. On the five demo shelves it reproduces all 10 saved scores exactly, and every label's price and slot.
+The demo does not depend on saved results: the dashboard has a **Run it live** button that reads the photo from scratch (all three detectors, naming, alignment and the price labels) and reports the seconds each stage took. On the five demo shelves it reproduces all 10 saved scores exactly, and every label's price and slot.
 
 A second mode, *shelf availability*, skips the planogram and gives empty spaces, per-row fill and a refill list for any shelf photo, uploaded live.
 
@@ -29,7 +29,7 @@ A second mode, *shelf availability*, skips the planogram and gives empty spaces,
 
 The compliance report lists one line per violation, so one swap of two products is four lines (a stock-out and a misplaced item in each slot). `advisor/plan.py` merges them with rules: a swap becomes one step naming both slots, a wrong product in a slot that lacks the right one becomes one "move out, then restock" step, a misplaced product is told where it belongs ("Cereals #138 belongs in S1-01", from the planogram, or "the plan has no other slot for it"), and steps are ordered by severity. Across the 10 demo reports (5 shelves, correct plan and planted changes) 44 violation lines become 31 steps, and each violation lands in exactly one step. The planted swap shows up as a clean swap in the report on 2 of the 5 shelves, and the planner merged both. On the other 3 the vision output assigned a product block's packs across both slots, so the report shows low stock instead of two stock-outs and there is nothing to merge.
 
-The "What to do" page also has an **Edit the plan yourself** mode (`advisor/edit.py`): a person changes what a slot expects, its facings and minimum, or swaps two slots, and the score and steps recompute from the unchanged photo reading. This is how a violation gets created without us planting it. It tests the comparison, not the detector, since the photo is read once.
+The dashboard also has an **Edit the plan yourself** mode (`advisor/edit.py`): a person changes what a slot expects, its facings and minimum, or swaps two slots, and the score and steps recompute from the unchanged photo reading. This is how a violation gets created without us planting it. It tests the comparison, not the detector, since the photo is read once.
 
 ### Where the small language model is used, and where it is not
 

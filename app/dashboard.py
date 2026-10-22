@@ -1,20 +1,26 @@
-"""shelfSense dashboard: the shelf audit.
+"""shelfSense dashboard: the whole app on one page.
 
-One flow: pick a real shelf and its planogram, optionally read the photo live (products, packs, empty
+"A shelf and its plan": pick a real shelf and its planogram, read the photo live (products, packs, empty
 space and price labels), and get one report: a compliance score, the money at stake, the steps for staff,
-and a shift-briefing summary written by a small language model and checked against the report. Mock shelves
-and custom file paths are behind the "Developer inputs" switch.
+and a shift-briefing summary written by a small language model and checked against the report. "Edit the
+plan yourself" changes the plan on the same reading, so anyone can plant a violation. Mock shelves and
+custom file paths are behind the "Developer inputs" switch.
+
+"Just a photo": empty space, row fill and a refill list for any shelf photo, no planogram (app/views/availability.py).
 
     streamlit run app/dashboard.py
 """
 
+import hashlib
 import os
+import runpy
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 from PIL import Image, ImageDraw
 
+from shelfsense.advisor.edit import apply_rows, changes, plan_rows, swap_products
 from shelfsense.advisor.plan import plan as plan_steps
 from shelfsense.contracts import (
     DetectionOutput,
@@ -22,6 +28,7 @@ from shelfsense.contracts import (
     load_detection_output,
     load_planogram,
 )
+from shelfsense.pricing.label_assign import assign_labels_to_slots
 from shelfsense.pricing.label_detector import DEFAULT_WEIGHTS, detect_labels
 from shelfsense.pricing.price_check import PriceIssueType, check_prices
 from shelfsense.report.briefing import DEFAULT_MODEL as SLM_MODEL
@@ -94,7 +101,7 @@ def slot_table(det, planogram, catalogue) -> pd.DataFrame:
 
 @st.cache_resource(show_spinner="Loading the detectors and the product index...")
 def load_chain() -> live.LiveChain:
-    return live.shared()  # the same models as the What to do page
+    return live.shared()
 
 
 @st.cache_data(show_spinner=False)
@@ -105,12 +112,24 @@ def cached_briefing(report_json: str, catalogue_path: str, use_model: bool):
 
 st.set_page_config(page_title="shelfSense", layout="wide")
 st.title("shelfSense: shelf audit")
+if "show-saved" in st.session_state:  # keep the switch's value on runs where it is not drawn (edit mode)
+    st.session_state["show-saved"] = st.session_state["show-saved"]
+
+MODES = ["A shelf and its plan", "Just a photo"]
+with st.sidebar:
+    mode = st.radio("What do you have?", MODES, key="mode", help="With a planogram: placement, facings, prices and empty "
+                    "space against the plan. Just a photo: empty space and what to refill, on any shop photo.")
+if mode == MODES[1]:
+    runpy.run_path(str(ROOT / "app" / "views" / "availability.py"))
+    st.stop()
+
 st.caption(
     "One photo of a shelf bay, checked against its planogram and price list: right product, right place, right count, "
     "right price, and no empty space. Rules decide every violation; a small language model only writes the summary."
 )
 
-PLANS = {"compliant": "Matches the shelf", "scenario": "Store changed the plan (planted)"}
+EDIT = "edit"
+PLANS = {"compliant": "Matches the shelf", "scenario": "Store changed the plan (planted)", EDIT: "Edit the plan yourself"}
 MOCK_PLANOGRAM = "contracts/planogram.example.json"
 MOCK_CATALOGUE = "contracts/catalogue.example.csv"
 # name -> (detection output, planogram, catalogue)
@@ -122,7 +141,9 @@ MOCKS = {
 
 
 def bay_files(bay: str, plan: str) -> tuple[str, str, str]:
+    """Detection, planogram and catalogue for a saved plan; `edit` starts from the compliant plan on the same reading."""
     rel = BAYS.relative_to(ROOT) / bay
+    plan = "compliant" if plan == EDIT else plan
     catalogue = "catalogue_scenario.csv" if plan == "scenario" and (BAYS / bay / "catalogue_scenario.csv").exists() else "catalogue.csv"
     return f"{rel}/detection_{plan}.json", f"{rel}/planogram_{plan}.json", f"{rel}/{catalogue}"
 
@@ -144,15 +165,66 @@ with st.sidebar:
         plan = st.radio("Planogram", list(PLANS), index=1, format_func=PLANS.get)
         det_path, pg_path, cat_path = bay_files(bay, plan)
         st.caption("The planted plan swaps two products, expects one the shelf does not have, raises one product's "
-                   "facings by two, and raises one price by 10% in the price list.")
+                   "facings by two, and raises one price by 10% in the price list. Or edit the plan yourself.")
 
 det = load_detection_output(ROOT / det_path)
 planogram = load_planogram(ROOT / pg_path)
 catalogue = load_catalogue(ROOT / cat_path)
+base_score = None
+
+if bay is not None and plan == EDIT:
+    shelf_plan = planogram  # the plan that matches the photo
+    rows_key, ver_key = f"edit-rows-{bay}", f"edit-ver-{bay}"
+    if rows_key not in st.session_state:
+        st.session_state[rows_key], st.session_state[ver_key] = plan_rows(shelf_plan), 0
+    original = plan_rows(shelf_plan)
+    names = {sku: f"{c.name} ({sku})" for sku, c in sorted(catalogue.items())}
+    to_sku = {label: sku for sku, label in names.items()}
+    with st.container(border=True):
+        st.markdown("**Edit the plan**")
+        st.caption(
+            "The photo has been read once and is fixed. Change what a slot **expects** and the score moves because the shelf no longer "
+            "matches. Raise *facings planned* and *minimum* together to simulate a promotion reset. Low stock means fewer packs than the minimum."
+        )
+        table = pd.DataFrame(st.session_state[rows_key])
+        table["product"] = table["sku"].map(names).fillna(table["sku"])
+        editor = st.data_editor(
+            table[["slot", "product", "facings", "minimum"]], hide_index=True, width="stretch", key=f"editor-{bay}-{st.session_state[ver_key]}",
+            disabled=["slot"],
+            column_config={
+                "slot": st.column_config.TextColumn("Slot"),
+                "product": st.column_config.SelectboxColumn("Expected product", options=list(names.values()), required=True),
+                "facings": st.column_config.NumberColumn("Facings planned", min_value=1, max_value=30, step=1),
+                "minimum": st.column_config.NumberColumn("Minimum (low stock below)", min_value=1, max_value=30, step=1),
+            },
+        )
+        rows = [
+            {"slot": r.slot, "sku": to_sku.get(r.product, r.product), "facings": int(r.facings), "minimum": int(r.minimum)}
+            for r in editor.itertuples()
+        ]
+        slots = [r["slot"] for r in rows]
+        c1, c2, c3, c4 = st.columns(4)
+        a = c1.selectbox("Swap this slot", slots, index=0, key=f"swap-a-{bay}")
+        b = c2.selectbox("with this slot", slots, index=min(1, len(slots) - 1), key=f"swap-b-{bay}")
+        if c3.button("Swap their products", disabled=a == b):
+            st.session_state[rows_key] = swap_products(rows, a, b)
+            st.session_state[ver_key] += 1
+            st.rerun()
+        if c4.button("Reset to the shelf's plan"):
+            st.session_state[rows_key] = original
+            st.session_state[ver_key] += 1
+            st.rerun()
+        planogram = apply_rows(shelf_plan, rows)
+        edits = changes(original, rows)
+        st.caption(f"{len(edits)} change{'s' if len(edits) != 1 else ''} to the plan" + (": " + "; ".join(edits) if edits else "."))
+    # labels sit under the same slots, which now expect the edited products (a swap leaves each label under the other product)
+    det = det.model_copy(update={"labels": assign_labels_to_slots(det.labels, det, planogram)})
+    base_score = compute_report(det.model_copy(update={"labels": assign_labels_to_slots(det.labels, det, shelf_plan)}),
+                                shelf_plan, catalogue, group_items=True).score
 
 if bay is not None:
     photo, is_original = live.bay_photo(BAYS / bay)
-    live_key = f"audit-live-{bay}-{plan}"
+    live_key = f"audit-live-{bay}-{plan}-{hashlib.md5(planogram.model_dump_json().encode()).hexdigest()[:10]}"
     with st.container(border=True):
         st.markdown("**Read the photo now**")
         with_prices = live.prices_available()
@@ -179,7 +251,7 @@ if bay is not None:
             f"Live run on {result.device}: {result.total:.2f} s in total ("
             + ", ".join(f"{k} {v:.2f} s" for k, v in result.timings.items()) + "). Everything below comes from this run."
         )
-    elif live.available() and not st.toggle(
+    elif plan != EDIT and live.available() and not st.toggle(
         "Show the saved reading", key="show-saved",
         help="The result saved from an earlier run on the same photo, which the live run reproduces exactly.",
     ):
@@ -199,7 +271,10 @@ firm = report.counts.get(ViolationKind.PRICE_MISMATCH.value, 0)
 to_check = report.counts.get(ViolationKind.UNREADABLE_PRICE.value, 0)
 
 score_col, c1, c2, c3, c4 = st.columns([1.2, 1.2, 1, 1, 1])
-score_col.metric("Compliance score", f"{report.score:.0f} / 100")
+score_col.metric(
+    "Compliance score", f"{report.score:.0f} / 100",
+    delta=None if base_score is None else f"{report.score - base_score:+.0f} vs the real plan",
+)
 c1.metric(
     "Value at stake (estimate)", f"{money} {sum(stake.values()):.2f}".strip(),
     help="Missing packs (planned facings minus matching packs seen) times their price, plus each firm price "

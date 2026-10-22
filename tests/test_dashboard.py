@@ -38,12 +38,13 @@ def test_every_real_shelf_and_plan_renders(monkeypatch):
     monkeypatch.setenv("SHELFSENSE_SLM", "0")  # template summary: the model is checked by scripts/eval_briefing.py
     at = _app()
     _check(at, "first load")
-    shelves = at.selectbox[0].options
+    shelf_box = lambda: next(b for b in at.selectbox if b.label == "Real shelf (held-out Grozi photo)")  # noqa: E731
+    shelves = shelf_box().options
     assert shelves, "no demo bays"
     for shelf in shelves:
-        for plan in ("compliant", "scenario"):
-            at.selectbox[0].set_value(shelf)
-            at.radio[0].set_value(plan).run()
+        for plan in ("compliant", "scenario", "edit"):
+            shelf_box().set_value(shelf)
+            next(r for r in at.radio if r.label == "Planogram").set_value(plan).run()
             _check(at, (shelf, plan))
             assert at.metric[1].label == "Value at stake (estimate)"
 
@@ -67,7 +68,7 @@ def test_live_run_with_prices_reproduces_the_saved_audit(monkeypatch):
     monkeypatch.setenv("SHELFSENSE_SLM", "0")
     at = _app()
     at.selectbox[0].set_value("store4_9")
-    at.radio[0].set_value("scenario").run()
+    next(r for r in at.radio if r.label == "Planogram").set_value("scenario").run()
     saved = at.metric[0].value
     next(b for b in at.button if b.label == "Run it live").click().run()
     assert not at.exception

@@ -10,8 +10,8 @@ PYTHONPATH=src .venv/bin/streamlit run app/dashboard.py     # http://localhost:8
 ```
 
 - Tesseract must be on PATH for live price reading (`sudo apt install tesseract-ocr`); without it the audit page says so and reads placement only. EasyOCR's models must already be in `~/.EasyOCR/model` (`python scripts/download_data.py easyocr`); it never downloads during the demo.
-- Open the app and press **Run it live** once on each page, so the models are loaded (the first press takes a few seconds; later ones about 2 s with prices, a third of a second without).
-- Have 2-3 fresh shop photos on the desktop for the availability page, **already tried once**. Good photos: shelves of packaged goods, whole bay in view, 1-2 m, straight on. Avoid fruit and vegetables, close-ups, and price tags alone (the page then shows a "retake" warning).
+- Open the app and press **Run it live** once, so the models are loaded (the first press takes a few seconds; later ones about 2 s with prices, a third of a second without).
+- Have 2-3 fresh shop photos on the desktop for the "Just a photo" mode, **already tried once**. Good photos: shelves of packaged goods, whole bay in view, 1-2 m, straight on. Avoid fruit and vegetables, close-ups, and price tags alone (the page then shows a "retake" warning).
 - Fallback if the live run fails: every page shows the saved reading of the same photo, which the live run reproduces exactly. Nothing needs the internet.
 
 ## 1. The problem, in one breath (30 s)
@@ -34,16 +34,16 @@ For the planted 10% price rise itself, switch to `store1_36`: "Reprint label lab
 
 ## 3. Let a judge plant the violation (90 s, the strongest part)
 
-Sidebar, **What to do**, shelf `store1_47`. This page scores placement and facings only.
+Same page, shelf `store1_47`.
 
-1. Plan "Matches the shelf": **98**. Plan "Store changed the plan (planted)": **31**; the report's 8 violation lines become 4 steps, the swap is one step ("Swap Cereals #88 with Cereals #138"). Open the expander to show the 8 lines it replaced.
-2. Choose **Edit the plan yourself**: "Those changes were ours. Now you pick." A judge swaps two slots, changes a slot's expected product, or raises *facings planned* and *minimum* together (a promotion reset). Score and steps update at once. Be clear: the photo is read once; only the plan changes.
+1. Plan "Store changed the plan (planted)": **27**; the report's 10 violation lines become 6 steps, and the swap is one step ("Swap Cereals #88 with Cereals #138"). Open "All 10 violation lines" to show what the steps replaced.
+2. Plan **Edit the plan yourself**: it starts at **94**, the real plan. "Those changes were ours. Now you pick." A judge swaps two slots (for example S1-01 with S1-02: the score drops to 54 and the step "Swap Cereals #88 with Cereals #138" appears), changes a slot's expected product in the table, or raises *facings planned* and *minimum* together (a promotion reset). Score and steps update at once, with the change versus the real plan under the score. Be clear: the photo is read once; only the plan changes.
 
-Other shelves on this page (correct plan, then planted): store4_9 88 then 48, store1_36 93 then 41. Do not use store1_44 or store4_2 here; they score 80 on the correct plan.
+Other shelves for this (correct plan, placement only, then planted): store4_9 88 then 48, store1_36 93 then 41. Do not use store1_44 or store4_2 here; they score 80 on the correct plan.
 
 ## 4. Empty space on any photo (60 s)
 
-Sidebar, **Shelf availability**. No planogram needed.
+Sidebar, **What do you have?** → **Just a photo**. No planogram needed.
 
 1. Saved shelf `shelf_02_toothpaste_uk`: 9 empty spaces, 16 packs to refill, fill 89%. Drag the "Empty-space confidence" slider: results recompute instantly.
 2. **Upload a fresh photo**: refill list and annotated image, live. Download the CSV.

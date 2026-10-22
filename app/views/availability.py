@@ -1,10 +1,8 @@
-"""shelfSense: shelf availability (wide-shelf mode).
+"""shelfSense: shelf availability (the "Just a photo" mode of app/dashboard.py, which runs this file).
 
 Empty spaces, per-row fill and a replenishment list for any shelf photo, with no planogram.
 Works from saved pack detections (no GPU needed) or, when the detector is installed, from an
 uploaded photo. The two sliders recompute from the saved packs instantly.
-
-Part of the same app as dashboard.py (Streamlit multipage): `streamlit run app/dashboard.py`.
 """
 
 import json
@@ -63,8 +61,7 @@ def detect_upload(data: bytes, suffix: str):
     return boxes, confs, size, voids
 
 
-st.set_page_config(page_title="shelfSense: availability", layout="wide")
-st.title("Shelf availability")
+st.subheader("Shelf availability: any photo, no planogram")
 st.caption(
     "Empty spaces, low stock and what to refill, from one photo and no planogram. Packs come from a detector "
     "trained on SKU-110K (rows and fill). Empty spaces come from a second detector trained on 727 hand-labelled "

@@ -6,7 +6,7 @@ pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGE = str(ROOT / "app" / "pages" / "1_Shelf_availability.py")
+APP = str(ROOT / "app" / "dashboard.py")
 DEMO = ROOT / "data" / "availability_demo"
 
 pytestmark = pytest.mark.skipif(not any(DEMO.glob("*.json")), reason="no saved availability results")
@@ -16,8 +16,15 @@ def metrics(at):
     return {m.label: m.value for m in at.metric}
 
 
+def photo_mode(timeout: int = 120):
+    """The dashboard in its "Just a photo" mode (the availability view)."""
+    at = AppTest.from_file(APP, default_timeout=timeout).run()
+    at.radio(key="mode").set_value("Just a photo").run()
+    return at
+
+
 def test_page_renders_saved_shelf_without_errors():
-    at = AppTest.from_file(PAGE, default_timeout=120).run()
+    at = photo_mode()
     assert not at.exception
     m = metrics(at)
     assert {"Overall fill", "Empty spaces", "Packs to refill", "Low-stock rows", "Packs found"} <= m.keys()
@@ -25,7 +32,7 @@ def test_page_renders_saved_shelf_without_errors():
 
 
 def test_sliders_recompute_from_saved_packs():
-    at = AppTest.from_file(PAGE, default_timeout=120).run()
+    at = photo_mode()
     base = int(metrics(at)["Empty spaces"])
     # the first slider is the empty-space confidence: a high bar keeps fewer spaces, a low one more
     at.slider[0].set_value(0.8).run()
@@ -37,7 +44,7 @@ def test_sliders_recompute_from_saved_packs():
 
 
 def test_every_saved_shelf_loads():
-    at = AppTest.from_file(PAGE, default_timeout=120).run()
+    at = photo_mode()
     for name in at.selectbox[0].options:
         at.selectbox[0].select(name).run()
         assert not at.exception, name
@@ -54,8 +61,8 @@ def _live_detector_available() -> bool:
 @pytest.mark.skipif(not _live_detector_available(), reason="needs ultralytics and models/pack_detector.pt")
 def test_uploading_a_photo_runs_the_detector_and_shows_results():
     photo = ROOT / "data" / "test_images" / "shelf_06_coffee_us.jpg"  # tracked in the repo
-    at = AppTest.from_file(PAGE, default_timeout=600).run()
-    at.radio[0].set_value("Upload a photo (runs the detector)").run()
+    at = photo_mode(600)
+    next(r for r in at.radio if r.label == "Source").set_value("Upload a photo (runs the detector)").run()
     at.get("file_uploader")[0].upload(photo.name, photo.read_bytes(), "image/jpeg")
     at.run()
     assert not at.exception

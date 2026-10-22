@@ -74,23 +74,21 @@ def test_a_clean_shelf_has_no_steps():
     assert len(plan(r.model_copy(update={"violations": []}), cat)) == 0
 
 
-def test_what_to_do_page_shows_fewer_steps_than_violation_lines():
-    pytest.importorskip("streamlit")
-    from streamlit.testing.v1 import AppTest
-
-    page = str(Path(__file__).resolve().parents[1] / "app" / "pages" / "2_What_to_do.py")
-    at = AppTest.from_file(page, default_timeout=120).run()
-    assert not at.exception
-    m = {x.label: x.value for x in at.metric}
-    assert m["Compliance score"] == "31 / 100" and int(m["Steps for staff"]) < int(m["Violation lines"])
-
-
 def _page():
+    """The dashboard on demo shelf store1_47, showing the saved reading."""
     pytest.importorskip("streamlit")
     from streamlit.testing.v1 import AppTest
 
-    page = str(Path(__file__).resolve().parents[1] / "app" / "pages" / "2_What_to_do.py")
-    return AppTest.from_file(page, default_timeout=120).run()
+    page = str(Path(__file__).resolve().parents[1] / "app" / "dashboard.py")
+    at = AppTest.from_file(page, default_timeout=600).run()
+    _by_label(at.selectbox, "Real shelf (held-out Grozi photo)").select("store1_47").run()
+    if any(t.key == "show-saved" for t in at.toggle):
+        at.toggle(key="show-saved").set_value(True).run()
+    return at
+
+
+def _plan(at, value):
+    _by_label(at.radio, "Planogram").set_value(value).run()
 
 
 def _metrics(at):
@@ -101,33 +99,41 @@ def _by_label(elements, label):
     return next(e for e in elements if e.label == label)
 
 
-def test_edit_mode_starts_at_the_real_plan_and_a_swap_lowers_the_score():
+def test_the_page_shows_fewer_steps_than_violation_lines(monkeypatch):
+    monkeypatch.setenv("SHELFSENSE_SLM", "0")
     at = _page()
-    _by_label(at.selectbox, "Demo shelf").select("store1_47").run()
-    at.radio[0].set_value("edit").run()
-    assert not at.exception and _metrics(at)["Compliance score"] == "98 / 100"
+    _plan(at, "scenario")
+    assert not at.exception
+    lines = next(int(e.label.split()[1]) for e in at.expander if e.label.startswith("All ") and "violation lines" in e.label)
+    assert _metrics(at)["Compliance score"] == "27 / 100" and int(_metrics(at)["Steps for staff"]) < lines
+
+
+def test_edit_mode_starts_at_the_real_plan_and_a_swap_lowers_the_score(monkeypatch):
+    monkeypatch.setenv("SHELFSENSE_SLM", "0")
+    at = _page()
+    _plan(at, "edit")
+    assert not at.exception and _metrics(at)["Compliance score"] == "94 / 100"
     _by_label(at.selectbox, "Swap this slot").select("S1-01").run()
     _by_label(at.selectbox, "with this slot").select("S1-02").run()
     _by_label(at.button, "Swap their products").click().run()
     assert not at.exception
-    assert int(_metrics(at)["Compliance score"].split()[0]) < 98
+    assert int(_metrics(at)["Compliance score"].split()[0]) < 94
     assert any("Swap" in m.value for m in at.markdown)
     assert "vs the real plan" in [m.delta for m in at.metric][0]
     _by_label(at.button, "Reset to the shelf's plan").click().run()
-    assert _metrics(at)["Compliance score"] == "98 / 100"
+    assert _metrics(at)["Compliance score"] == "94 / 100"
 
 
-def test_live_run_reproduces_the_saved_score_and_reports_its_timing():
+def test_live_run_reproduces_the_saved_score_and_reports_its_timing(monkeypatch):
     from shelfsense.vision import live
 
     if not live.available():
         pytest.skip("needs the Grozi product index and the detectors")
+    monkeypatch.setenv("SHELFSENSE_SLM", "0")
     at = _page()
-    _by_label(at.selectbox, "Demo shelf").select("store1_47").run()
-    at.radio[0].set_value("compliant").run()
-    assert _metrics(at)["Compliance score"] == "98 / 100"
-    _by_label_prefix = next(b for b in at.button if b.label == "Run it live")
-    _by_label_prefix.click().run()
+    _plan(at, "compliant")
+    saved = _metrics(at)["Compliance score"]
+    _by_label(at.button, "Run it live").click().run()
     assert not at.exception
-    assert _metrics(at)["Compliance score"] == "98 / 100"
+    assert _metrics(at)["Compliance score"] == saved
     assert any("Live run on" in s.value and "in total" in s.value for s in at.success)
