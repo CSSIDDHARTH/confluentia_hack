@@ -102,7 +102,8 @@ if source == "Saved test shelves":
         st.error(f"No saved results in {DEMO.relative_to(ROOT)}. Run: python scripts/run_availability.py --images data/test_images --out data/availability_demo")
         st.stop()
     with st.sidebar:
-        image_id = st.selectbox("Shelf", saved)
+        default = "shelf_06_coffee_us"  # clear empty spaces and a low-stock row: the most telling of the saved shelves
+        image_id = st.selectbox("Shelf", saved, index=saved.index(default) if default in saved else 0)
     saved_det = load_detection_output(DEMO / f"{image_id}.json")
     boxes = [i.bbox for i in saved_det.items]
     confs = [i.det_confidence for i in saved_det.items]

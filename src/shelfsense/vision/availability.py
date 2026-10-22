@@ -38,7 +38,7 @@ class AvailabilityReport(BaseModel):
 
 def _where(x_center: float, left: float, right: float) -> str:
     third = (x_center - left) / max(right - left, 1e-6)
-    return "left" if third < 1 / 3 else "right" if third > 2 / 3 else "middle"
+    return "on the left" if third < 1 / 3 else "on the right" if third > 2 / 3 else "in the middle"
 
 
 def analyze_packs(
@@ -115,7 +115,7 @@ def analyze_packs(
         centre = (g.bbox[0] + g.bbox[2]) / 2
         n = g.estimated_missing
         actions.append(
-            f"Shelf S{g.row + 1}: empty space on the {_where(centre, bay_left, bay_right)}, about {n} pack{'s' if n != 1 else ''} wide. Refill it."
+            f"Shelf S{g.row + 1}: empty space {_where(centre, bay_left, bay_right)}, about {n} pack{'s' if n != 1 else ''} wide. Refill it."
         )
     for s in sorted((s for s in statuses if s.low_stock), key=lambda s: s.fill_ratio):
         actions.append(f"Shelf {s.shelf_id} is only {s.fill_ratio:.0%} stocked ({s.packs} packs). Replenish the whole row.")

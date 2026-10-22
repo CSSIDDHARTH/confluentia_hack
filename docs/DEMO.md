@@ -45,8 +45,8 @@ The edit works on all three shelves (correct plan with prices, then planted): st
 
 Sidebar, **What do you have?** → **Just a photo**. No planogram needed.
 
-1. Saved shelf `shelf_02_toothpaste_uk`: 9 empty spaces, 16 packs to refill, fill 89%. Drag the "Empty-space confidence" slider: results recompute instantly.
-2. **Upload a fresh photo**: refill list and annotated image, live. Download the CSV.
+1. Saved shelf `shelf_06_coffee_us` (the default): fill 88%, 5 empty spaces, about 11 packs to refill, and shelf S5 flagged **low stock** ("Shelf S5: empty space on the left, about 6 packs wide. Refill it."). Drag the "Empty-space confidence" slider: results recompute instantly.
+2. **Upload a fresh photo** (your own, or `data/test_images/shelf_02_toothpaste_uk.jpg`: 9 empty spaces): refill list and annotated image, live. Download the CSV.
 
 ## 5. Close: edge (30 s)
 
